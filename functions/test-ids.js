@@ -50,7 +50,7 @@ function applyUserTheme() {
   const presetKey = cleanId ? `fy_theme_preset_${cleanId}` : 'fy_theme_preset';
   const mode = localStorage.getItem(modeKey);
   const preset = localStorage.getItem(presetKey);
-  if (mode === 'light') {
+  if (mode !== 'dark') {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');
@@ -177,10 +177,7 @@ async function loadTestsFromSupabase() {
 
     filterTests();
 
-    // Auto-select first test if none selected
-    if (!selectedTest && allTests.length > 0) {
-      selectTest(allTests[0].id);
-    }
+    // Leave the collection visible until the user chooses a paper.
   } catch (err) {
     if (loadingEl) loadingEl.textContent = 'Error: ' + (err.message || err);
   }
@@ -204,7 +201,7 @@ function renderTestsList(tests) {
     const yearStr = t.academic_year || t.academicYear ? ` · ${t.academic_year || t.academicYear}` : '';
     const mode = t.mode || getTestModeLabel(t);
     return `
-      <div class="test-item-card ${isSelected ? 'active' : ''}" id="test-card-${t.id}" onclick="selectTest('${t.id}')">
+      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" class="test-item-card ${isSelected ? 'active' : ''}" id="test-card-${t.id}" onclick="selectTest('${t.id}')">
         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
           <div class="test-item-name">${escapeHtml(t.name || 'Unnamed Test')}</div>
           ${getModeBadgeHtml(mode)}
@@ -248,6 +245,8 @@ function selectTest(testId) {
   const test = allTests.find(t => String(t.id) === String(testId));
   if (!test) return;
   selectedTest = test;
+  const detailSheet = document.getElementById('test-detail-dialog');
+  if (detailSheet && !detailSheet.open) detailSheet.showModal();
 
   // Highlight in sidebar
   document.querySelectorAll('.test-item-card').forEach(el => el.classList.remove('active'));

@@ -1,1807 +1,1093 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Attempt Test - Portal Exam Hall</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test session — ntsc.</title>
     <!-- Google Fonts matching portal -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Main portal styles -->
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles.css?v=6440e9bd3a2e" />
     <!-- Minimal Portal Theme Exam Hall Styles -->
-    <style>
-        :root {
-            --font: 'Outfit', 'DM Sans', -apple-system, sans-serif;
-            --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
-            --r: 10px;
-            --r2: 14px;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            height: 100dvh;
-            width: 100vw;
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font);
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .exam-app {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* ── TOPBAR ── */
-        .exam-header {
-            height: 56px;
-            background: var(--bg2);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            flex-shrink: 0;
-            z-index: 20;
-            gap: 12px;
-        }
-
-        .exam-title-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 0;
-        }
-
-        .topbar-back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: var(--r);
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            font-size: 12.5px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-
-        .topbar-back-btn:hover {
-            background: var(--bg4);
-            border-color: var(--border2);
-            color: var(--text);
-        }
-
-        .portal-brand-logo {
-            width: 28px;
-            height: 28px;
-            background: var(--accent);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-mono);
-            font-size: 11.5px;
-            font-weight: 700;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .exam-badge {
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .exam-name {
-            font-size: 14.5px;
-            font-weight: 600;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 320px;
-        }
-
-        /* Countdown Timer */
-        .exam-timer-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.25s ease;
-            flex-shrink: 0;
-        }
-
-        .exam-timer-box svg {
-            color: var(--text2);
-            transition: color 0.2s;
-        }
-
-        .exam-timer-box.warning {
-            border-color: rgba(245, 158, 11, 0.4);
-            background: rgba(245, 158, 11, 0.12);
-            color: var(--amber);
-        }
-
-        .exam-timer-box.warning svg {
-            color: var(--amber);
-        }
-
-        .exam-timer-box.danger {
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--red);
-            animation: pulse-danger 1s infinite;
-        }
-
-        .exam-timer-box.danger svg {
-            color: var(--red);
-        }
-
-        @keyframes pulse-danger {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.65; }
-        }
-
-        /* Topbar Right Candidate */
-        .exam-header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .exam-candidate {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-        }
-
-        .candidate-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11.5px;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .candidate-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text);
-            max-width: 130px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .palette-toggle-btn {
-            display: inline-flex;
-            width: 34px;
-            height: 34px;
-            border-radius: var(--r);
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            color: var(--text2);
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .palette-toggle-btn:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .palette-toggle-btn.active {
-            background: var(--accent-glow);
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        /* ── SUBJECTS STRIP ── */
-        .subject-strip {
-            height: 46px;
-            background: var(--bg2);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 18px;
-            gap: 8px;
-            overflow-x: auto;
-            flex-shrink: 0;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .subject-strip::-webkit-scrollbar {
-            height: 3px;
-        }
-
-        .subject-strip::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 3px;
-        }
-
-        .subject-tab-btn {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 12.5px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            white-space: nowrap;
-        }
-
-        .subject-tab-btn:hover {
-            color: var(--text);
-            background: var(--bg4);
-            border-color: var(--border2);
-        }
-
-        .subject-tab-btn.active {
-            background: var(--accent-glow);
-            color: var(--accent);
-            border-color: var(--accent);
-            font-weight: 600;
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        /* ── EXAM WORKSPACE ── */
-        .exam-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* Question Section (Center) */
-        .question-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--bg);
-        }
-
-        .question-header {
-            height: 48px;
-            padding: 0 18px;
-            background: var(--bg2);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12.5px;
-            flex-shrink: 0;
-        }
-
-        .question-info-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .q-number-pill {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .q-type-pill {
-            font-size: 11px;
-            color: var(--text3);
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            padding: 2.5px 8px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-
-        .q-marks-pill {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--green);
-            background: rgba(34, 197, 94, 0.12);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            padding: 2.5px 8px;
-            border-radius: 6px;
-        }
-
-        .question-controls {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .zoom-btn {
-            height: 28px;
-            padding: 0 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            color: var(--text2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.15s;
-            gap: 4px;
-        }
-
-        .zoom-btn:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .zoom-btn.active {
-            background: var(--accent-glow);
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        /* Question Scrollable View */
-        .question-content-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .question-content-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .question-content-scroll::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 4px;
-        }
-
-        .question-img-card {
-            position: relative;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--r2);
-            padding: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            overflow: auto;
-            min-height: 180px;
-            transition: all 0.2s ease;
-        }
-
-        .question-img-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 6px;
-            transform-origin: top center;
-            transition: transform 0.15s ease, filter 0.2s ease;
-            background: #ffffff;
-            cursor: zoom-in;
-            display: block;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
-        }
-
-        .question-img-card.inverted img,
-        .fs-img-wrapper.inverted img {
-            filter: invert(0.92) hue-rotate(180deg) contrast(1.1);
-        }
-
-        .img-fullscreen-overlay-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(22, 27, 37, 0.85);
-            border: 1px solid var(--border2);
-            color: var(--text);
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 11.5px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            transition: all 0.15s ease;
-            z-index: 5;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        }
-
-        .img-fullscreen-overlay-btn:hover {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-            transform: translateY(-1px);
-        }
-
-        /* Answer Options Area - Compact for Image-Embedded Options */
-        .answer-options-card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--r2);
-            padding: 12px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .options-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text2);
-            letter-spacing: 0.4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .mcq-options-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .option-label-card {
-            width: 52px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg3);
-            border: 1.5px solid var(--border);
-            border-radius: var(--r);
-            cursor: pointer;
-            transition: all 0.12s ease;
-            user-select: none;
-            position: relative;
-        }
-
-        .option-label-card:hover {
-            border-color: var(--accent);
-            background: var(--bg4);
-            transform: translateY(-1px);
-        }
-
-        .option-label-card.selected {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 0 2px var(--accent-glow), 0 3px 12px rgba(61, 127, 255, 0.4);
-            transform: scale(1.05);
-        }
-
-        .opt-badge {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--text);
-            transition: all 0.12s;
-        }
-
-        .option-label-card.selected .opt-badge {
-            color: #fff;
-        }
-
-        .opt-key-hint {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 8.5px;
-            font-family: var(--font-mono);
-            color: var(--text3);
-            opacity: 0.7;
-        }
-
-        .option-label-card.selected .opt-key-hint {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Numerical Input */
-        .numerical-box {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 320px;
-        }
-
-        .numerical-input-field {
-            font-family: var(--font-mono);
-            font-size: 20px;
-            font-weight: 700;
-            padding: 10px 14px;
-            background: var(--bg3);
-            border: 1.5px solid var(--border);
-            border-radius: var(--r);
-            color: var(--text);
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-        }
-
-        .numerical-input-field:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        .keypad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .keypad-btn {
-            height: 40px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: var(--font-mono);
-            font-size: 14.5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.1s ease;
-        }
-
-        .keypad-btn:hover {
-            background: var(--bg4);
-            border-color: var(--border2);
-        }
-
-        .keypad-btn:active {
-            transform: scale(0.97);
-        }
-
-        /* ── QUESTION FOOTER ── */
-        .question-footer {
-            height: 60px;
-            background: var(--bg2);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            flex-shrink: 0;
-            gap: 10px;
-        }
-
-        .exam-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            padding: 9px 18px;
-            border-radius: var(--r);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.15s ease;
-            white-space: nowrap;
-        }
-
-        .exam-btn:active {
-            transform: translateY(1px);
-        }
-
-        .btn-outline {
-            background: var(--bg3);
-            border-color: var(--border);
-            color: var(--text2);
-            font-weight: 500;
-        }
-
-        .btn-outline:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .btn-review {
-            background: rgba(167, 139, 250, 0.12);
-            border-color: rgba(167, 139, 250, 0.35);
-            color: var(--purple);
-        }
-
-        .btn-review:hover {
-            background: rgba(167, 139, 250, 0.22);
-            color: #c4b5fd;
-        }
-
-        .btn-save-next {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-
-        .btn-save-next:hover {
-            background: var(--accent2);
-            border-color: var(--accent2);
-        }
-
-        /* ── PALETTE SIDEBAR (RIGHT) ── */
-        .palette-section {
-            width: 300px;
-            background: var(--bg2);
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            overflow: hidden;
-            position: relative;
-            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .palette-section.collapsed {
-            width: 0 !important;
-            min-width: 0 !important;
-            border-left: none !important;
-            visibility: hidden;
-        }
-
-        .palette-minimize-btn {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text2);
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .palette-minimize-btn:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .palette-expand-pill {
-            display: none;
-            position: fixed;
-            right: 16px;
-            bottom: 74px;
-            z-index: 120;
-            background: var(--bg2);
-            border: 1px solid var(--accent);
-            color: var(--text);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-
-        .palette-expand-pill:hover {
-            background: var(--accent);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(61, 127, 255, 0.4);
-        }
-
-        .palette-expand-pill.visible {
-            display: inline-flex;
-            animation: fadeInRight 0.2s ease;
-        }
-
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(12px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* ── FULLSCREEN EXAM FOCUS MODE ── */
-        .image-fullscreen-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 13, 20, 0.98);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            z-index: 5000;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            animation: fsFadeIn 0.18s ease;
-        }
-
-        @keyframes fsFadeIn {
-            from { opacity: 0; transform: scale(0.99); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* Small Timer on Top */
-        .fs-timer-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-            transition: all 0.2s ease;
-        }
-
-        .fs-timer-pill svg {
-            color: var(--text2);
-            transition: color 0.2s;
-        }
-
-        .fs-timer-pill.warning {
-            border-color: rgba(245, 158, 11, 0.45);
-            background: rgba(245, 158, 11, 0.14);
-            color: var(--amber);
-        }
-
-        .fs-timer-pill.warning svg {
-            color: var(--amber);
-        }
-
-        .fs-timer-pill.danger {
-            border-color: rgba(239, 68, 68, 0.45);
-            background: rgba(239, 68, 68, 0.18);
-            color: var(--red);
-            animation: pulse-danger 1s infinite;
-        }
-
-        .fs-timer-pill.danger svg {
-            color: var(--red);
-        }
-
-        /* Slim Top Bar */
-        .fs-header {
-            height: 46px;
-            background: rgba(18, 22, 32, 0.94);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-
-        .fs-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .fs-q-badge {
-            font-size: 13.5px;
-            font-weight: 700;
-            color: var(--text);
-            font-family: var(--font-mono);
-        }
-
-        .fs-q-type {
-            font-size: 10.5px;
-            color: var(--text3);
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            padding: 2px 7px;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-
-        .fs-controls {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .fs-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            color: var(--text2);
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .fs-btn:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .fs-btn.active {
-            background: var(--accent-glow);
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        /* Exit button to return to normal mode where Submit/Portal live */
-        .fs-btn-exit {
-            height: 28px;
-            padding: 0 10px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text2);
-            font-size: 11.5px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: all 0.15s;
-            margin-left: 4px;
-        }
-
-        .fs-btn-exit:hover {
-            background: var(--bg4);
-            border-color: var(--border2);
-            color: var(--text);
-        }
-
-        /* Image Display Center */
-        .fs-body {
-            flex: 1;
-            overflow: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            cursor: grab;
-            position: relative;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .fs-body.dragging {
-            cursor: grabbing;
-            user-select: none;
-        }
-
-        .fs-img-wrapper {
-            display: inline-block;
-            transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1);
-            transform-origin: center center;
-        }
-
-        .fs-img-wrapper img {
-            max-width: 96vw;
-            max-height: calc(100dvh - 110px);
-            display: block;
-            border-radius: 6px;
-            background: #ffffff;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            transition: filter 0.2s ease;
-            pointer-events: none;
-            object-fit: contain;
-        }
-
-        /* Compact Bottom Bar */
-        .fs-footer {
-            height: 54px;
-            min-height: 54px;
-            background: rgba(18, 22, 32, 0.95);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 16px;
-            gap: 12px;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-
-        /* Small ABCD buttons */
-        .fs-abcd-group {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .fs-opt-btn {
-            width: 44px;
-            height: 36px;
-            border-radius: 8px;
-            border: 1.5px solid var(--border);
-            background: var(--bg3);
-            color: var(--text);
-            font-family: var(--font-mono);
-            font-size: 14.5px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.12s ease;
-            user-select: none;
-        }
-
-        .fs-opt-btn:hover {
-            border-color: var(--accent);
-            background: var(--bg4);
-            transform: translateY(-1px);
-        }
-
-        .fs-opt-btn.selected {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #ffffff;
-            box-shadow: 0 0 0 2px var(--accent-glow), 0 2px 10px rgba(61, 127, 255, 0.4);
-            transform: scale(1.05);
-        }
-
-        /* Small Next Button */
-        .fs-btn-next {
-            height: 36px;
-            padding: 0 16px;
-            background: var(--accent);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.12s ease;
-            box-shadow: 0 2px 8px rgba(61, 127, 255, 0.3);
-            white-space: nowrap;
-        }
-
-        .fs-btn-next:hover {
-            background: var(--accent2);
-            border-color: var(--accent2);
-            transform: translateY(-1px);
-        }
-
-        .fs-btn-prev {
-            height: 36px;
-            padding: 0 12px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text2);
-            font-size: 12.5px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            transition: all 0.12s ease;
-            white-space: nowrap;
-        }
-
-        .fs-btn-prev:hover {
-            background: var(--bg4);
-            color: var(--text);
-            border-color: var(--border2);
-        }
-
-        .palette-stats-card {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            font-size: 11.5px;
-            background: var(--bg);
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text2);
-        }
-
-        .legend-badge {
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        /* Minimal Portal Palette Status Badges */
-        .st-not-visited {
-            background: var(--bg3) !important;
-            border: 1px solid var(--border) !important;
-            color: var(--text3) !important;
-        }
-
-        .st-not-answered {
-            background: rgba(239, 68, 68, 0.15) !important;
-            border: 1px solid rgba(239, 68, 68, 0.38) !important;
-            color: #f87171 !important;
-        }
-
-        .st-answered {
-            background: rgba(34, 197, 94, 0.15) !important;
-            border: 1px solid rgba(34, 197, 94, 0.38) !important;
-            color: #4ade80 !important;
-        }
-
-        .st-review {
-            background: rgba(167, 139, 250, 0.15) !important;
-            border: 1px solid rgba(167, 139, 250, 0.38) !important;
-            color: #c084fc !important;
-        }
-
-        .st-answered-review {
-            background: linear-gradient(135deg, rgba(167, 139, 250, 0.35) 50%, rgba(34, 197, 94, 0.35) 50%) !important;
-            border: 1px solid rgba(167, 139, 250, 0.5) !important;
-            color: #e8edf5 !important;
-            position: relative;
-        }
-
-        .palette-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .palette-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .palette-scroll::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 4px;
-        }
-
-        .palette-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
-
-        .palette-circle {
-            aspect-ratio: 1;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.12s ease;
-        }
-
-        .palette-circle:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.15);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .palette-circle.active-q {
-            box-shadow: 0 0 0 2px var(--accent), 0 0 8px var(--accent-glow) !important;
-            transform: scale(1.05);
-            font-weight: 700;
-        }
-
-        .palette-footer {
-            padding: 14px 16px;
-            border-top: 1px solid var(--border);
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .btn-submit-exam {
-            background: var(--accent);
-            color: #fff;
-            border: 1px solid var(--accent);
-            font-size: 13.5px;
-            font-weight: 600;
-            padding: 11px;
-            border-radius: var(--r);
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .btn-submit-exam:hover {
-            background: var(--accent2);
-            border-color: var(--accent2);
-            transform: translateY(-1px);
-        }
-
-        /* ── MODALS & OVERLAYS (PORTAL GLASSMORPHISM) ── */
-        .exam-overlay-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 17, 23, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .modal-card {
-            max-width: 680px;
-            width: 90%;
-            margin: auto;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--r2);
-            padding: 28px;
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
-        }
-
-        /* Toast Popup */
-        .toast-popup {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--bg2);
-            border: 1px solid var(--accent);
-            color: var(--text);
-            padding: 10px 18px;
-            border-radius: var(--r);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 9999;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.25s ease;
-            pointer-events: none;
-        }
-
-        .toast-popup.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ── MOBILE RESPONSIVENESS ── */
-        @media (max-width: 860px) {
-            .palette-section {
-                position: fixed;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 85vw;
-                max-width: 320px;
-                z-index: 500;
-                transform: translateX(100%);
-                box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6);
-            }
-
-            .palette-section.open {
-                transform: translateX(0);
-            }
-
-            .palette-backdrop {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.6);
-                z-index: 490;
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
-            }
-
-            .palette-backdrop.open {
-                display: block;
-            }
-
-            .palette-toggle-btn {
-                display: inline-flex;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .exam-header {
-                padding: 0 12px;
-                height: 52px;
-            }
-
-            .exam-name {
-                display: none;
-            }
-
-            .candidate-name {
-                display: none;
-            }
-
-            .topbar-back-btn span {
-                display: none;
-            }
-
-            .exam-badge {
-                font-size: 10px;
-                padding: 2px 6px;
-            }
-
-            .exam-timer-box {
-                font-size: 13px;
-                padding: 4px 10px;
-                gap: 5px;
-            }
-
-            .subject-strip {
-                height: 40px;
-                padding: 0 10px;
-                gap: 6px;
-            }
-
-            .subject-tab-btn {
-                padding: 4px 11px;
-                font-size: 11.5px;
-            }
-
-            .question-header {
-                padding: 0 12px;
-            }
-
-            .q-number-pill {
-                font-size: 13px;
-            }
-
-            .question-content-scroll {
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .question-img-card {
-                padding: 12px;
-                min-height: 140px;
-            }
-
-            .answer-options-card {
-                padding: 14px;
-            }
-
-            .mcq-options-grid {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-
-            .option-label-card {
-                padding: 10px 14px;
-                min-height: 44px;
-            }
-
-            .numerical-box {
-                max-width: 100%;
-            }
-
-            .numerical-input-field {
-                font-size: 18px;
-                padding: 8px 12px;
-            }
-
-            .keypad-btn {
-                height: 42px;
-                font-size: 16px;
-            }
-
-            .question-footer {
-                height: auto;
-                min-height: 56px;
-                padding: 10px 12px;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .footer-btn-group {
-                width: 100%;
-                display: flex;
-                gap: 8px;
-            }
-
-            .footer-btn-group .exam-btn {
-                flex: 1;
-                padding: 9px 8px;
-                font-size: 12px;
-                min-height: 40px;
-            }
-
-            .modal-card {
-                padding: 20px 16px;
-                width: 94%;
-                border-radius: var(--r);
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-        }
-    </style>
-</head>
-
-<body>
+    <link
+      rel="stylesheet"
+      href="../src/styles/tools/attempt-test.css?v=1768d0efd378"
+    />
+    <link rel="stylesheet" href="../src/styles/workbench.css?v=9e16e78839e9" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body class="tool-workbench studio-tool light-mode" data-tool="attempt-test">
+    <header class="workbench-bar" aria-label="Study space">
+      <a
+        href="../index.html?module=settings&amp;panel=functions"
+        class="workbench-home"
+        data-workbench-return=""
+        ><span class="brand-mark">n.</span><b>ntsc.</b></a
+      ><a
+        class="tool-back"
+        href="../index.html?module=settings&amp;panel=functions"
+        >← Settings <span>/ Test session</span></a
+      ><button
+        class="tool-theme"
+        type="button"
+        aria-label="Toggle light and dark theme"
+      >
+        ◐
+      </button>
+    </header>
     <div class="exam-app">
-        <!-- Minimal Portal Top Bar -->
-        <header class="exam-header">
-            <div class="exam-title-box">
-                <button class="topbar-back-btn" onclick="exitExam()" title="Exit Exam Hall">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    <span>Portal</span>
-                </button>
-                <div class="portal-brand-logo" title="FY Portal">FY</div>
-                <span class="exam-badge" id="exam-badge">REATTEMPT</span>
-                <div class="exam-name" id="top-exam-name">Loading Exam...</div>
-            </div>
-
-            <!-- Countdown Timer -->
-            <div class="exam-timer-box" id="exam-timer-box" title="Remaining time">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span id="exam-timer-display">00:00:00</span>
-            </div>
-
-            <!-- Candidate Profile & Mobile Palette Toggle -->
-            <div class="exam-header-right">
-                <div class="exam-candidate">
-                    <div class="candidate-avatar" id="candidate-avatar">ST</div>
-                    <div class="candidate-name" id="candidate-name">Student</div>
-                </div>
-                <button class="palette-toggle-btn" id="btn-toggle-palette" onclick="togglePaletteCollapse()" title="Toggle Question Palette (Ctrl+B / P)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-                    </svg>
-                </button>
-            </div>
-        </header>
-
-        <!-- Subjects Strip -->
-        <nav class="subject-strip" id="subject-tabs-container">
-            <!-- Rendered dynamically -->
-        </nav>
-
-        <!-- Exam Workspace -->
-        <div class="exam-body">
-            <!-- Left: Question Viewer & Actions -->
-            <section class="question-section">
-                <div class="question-header">
-                    <div class="question-info-left">
-                        <span class="q-number-pill" id="q-label-number">Question 1</span>
-                        <span class="q-type-pill" id="q-label-type">Single Choice</span>
-                        <span class="q-marks-pill" id="q-label-marks">+4, -1</span>
-                    </div>
-                    <div class="question-controls">
-                        <button class="zoom-btn" onclick="zoomImage(1.15)" title="Zoom In (+)">+</button>
-                        <button class="zoom-btn" onclick="zoomImage(0.85)" title="Zoom Out (-)">-</button>
-                        <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">↺</button>
-                        <button class="zoom-btn" id="btn-toggle-invert" onclick="toggleImageInvert()" title="Invert Colors / Night Reading (I)">🌗</button>
-                        <button class="zoom-btn" onclick="openImageFullscreen()" style="font-size: 11.5px; padding: 0 9px;" title="Full Screen Question (F)">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                            <span>Full Screen</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="question-content-scroll" id="question-scroll-area">
-                    <!-- Question Image Card -->
-                    <div class="question-img-card" id="q-img-card">
-                        <button class="img-fullscreen-overlay-btn" onclick="openImageFullscreen()" title="Full Screen View (F)">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                            <span>Full Screen</span>
-                        </button>
-                        <img id="q-image-element" src="" alt="Question Image" onclick="openImageFullscreen()" title="Click to view full screen" />
-                    </div>
-
-                    <!-- Options Area -->
-                    <div class="answer-options-card" id="answer-options-container">
-                        <div class="options-title" id="options-type-title">Select Your Answer:</div>
-                        <!-- Options or Numerical Input dynamically injected -->
-                        <div id="options-inner-box"></div>
-                    </div>
-                </div>
-
-                <!-- Footer Navigation -->
-                <footer class="question-footer">
-                    <div class="footer-btn-group left" style="display: flex; gap: 8px;">
-                        <button class="exam-btn btn-outline" id="btn-prev-q" onclick="goToPreviousQuestion()">
-                            &larr; Previous
-                        </button>
-                        <button class="exam-btn btn-outline" onclick="clearCurrentResponse()">
-                            Clear Response
-                        </button>
-                    </div>
-                    <div class="footer-btn-group right" style="display: flex; gap: 8px;">
-                        <button class="exam-btn btn-review" onclick="markForReviewAndNext()">
-                            Mark for Review &amp; Next
-                        </button>
-                        <button class="exam-btn btn-save-next" onclick="saveAndNext()">
-                            Save &amp; Next &rarr;
-                        </button>
-                    </div>
-                </footer>
-            </section>
-
-            <!-- Right: Question Palette -->
-            <aside class="palette-section" id="palette-sidebar">
-                <!-- Status Counters -->
-                <div class="palette-stats-card">
-                    <div class="legend-item">
-                        <span class="legend-badge st-answered" id="stat-answered">0</span>
-                        <span>Answered</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-badge st-not-answered" id="stat-not-answered">0</span>
-                        <span>Not Answered</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-badge st-review" id="stat-review">0</span>
-                        <span>Marked for Review</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-badge st-not-visited" id="stat-not-visited">0</span>
-                        <span>Not Visited</span>
-                    </div>
-                </div>
-
-                <div style="padding: 11px 16px; font-size: 12px; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
-                    <div>Question Palette &bull; <span id="palette-active-subject" style="color: var(--accent);">Physics</span></div>
-                    <button class="palette-minimize-btn" onclick="togglePaletteCollapse()" title="Minimize Palette (Ctrl+B / P)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                </div>
-
-                <!-- Circle Palette Grid -->
-                <div class="palette-scroll">
-                    <div class="palette-grid" id="palette-grid-circles">
-                        <!-- Numbered circles rendered dynamically -->
-                    </div>
-                </div>
-
-                <!-- Palette Footer / Submit -->
-                <div class="palette-footer">
-                    <button class="btn-submit-exam" onclick="openSubmitConfirmModal()">
-                        Submit Test
-                    </button>
-                </div>
-            </aside>
-            <!-- Mobile Palette Backdrop -->
-            <div class="palette-backdrop" id="palette-backdrop" onclick="togglePaletteMobile(true)"></div>
+      <!-- Minimal Portal Top Bar -->
+      <header class="exam-header">
+        <div class="exam-title-box">
+          <button
+            class="topbar-back-btn"
+            onclick="exitExam()"
+            title="Exit Exam Hall"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7"></path>
+            </svg>
+            <span>Portal</span>
+          </button>
+          <div class="portal-brand-logo" title="ntsc.">n.</div>
+          <span class="exam-badge" id="exam-badge">Practice attempt</span>
+          <div class="exam-name" id="top-exam-name">Loading Exam...</div>
         </div>
+
+        <!-- Countdown Timer -->
+        <div class="exam-timer-box" id="exam-timer-box" title="Remaining time">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="exam-timer-display">00:00:00</span>
+        </div>
+
+        <!-- Candidate Profile & Mobile Palette Toggle -->
+        <div class="exam-header-right">
+          <div class="exam-candidate">
+            <div class="candidate-avatar" id="candidate-avatar">ST</div>
+            <div class="candidate-name" id="candidate-name">Student</div>
+          </div>
+          <button
+            class="palette-toggle-btn"
+            id="btn-toggle-palette"
+            onclick="togglePaletteCollapse()"
+            title="Toggle Question Palette (Ctrl+B / P)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Subjects Strip -->
+      <nav class="subject-strip" id="subject-tabs-container">
+        <!-- Rendered dynamically -->
+      </nav>
+
+      <!-- Exam Workspace -->
+      <div class="exam-body">
+        <!-- Left: Question Viewer & Actions -->
+        <section class="question-section">
+          <div class="question-header">
+            <div class="question-info-left">
+              <span class="q-number-pill" id="q-label-number">Question 1</span>
+              <span class="q-type-pill" id="q-label-type">Single Choice</span>
+              <span class="q-marks-pill" id="q-label-marks">+4, -1</span>
+            </div>
+            <div class="question-controls">
+              <button
+                class="zoom-btn"
+                onclick="zoomImage(1.15)"
+                title="Zoom In (+)"
+              >
+                +
+              </button>
+              <button
+                class="zoom-btn"
+                onclick="zoomImage(0.85)"
+                title="Zoom Out (-)"
+              >
+                -
+              </button>
+              <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">
+                ↺
+              </button>
+              <button
+                class="zoom-btn"
+                id="btn-toggle-invert"
+                onclick="toggleImageInvert()"
+                title="Invert Colors / Night Reading (I)"
+              >
+                🌗
+              </button>
+              <button
+                class="zoom-btn"
+                onclick="openImageFullscreen()"
+                style="font-size: 11.5px; padding: 0 9px"
+                title="Full Screen Question (F)"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                >
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                </svg>
+                <span>Full Screen</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="question-content-scroll" id="question-scroll-area">
+            <!-- Question Image Card -->
+            <div class="question-img-card" id="q-img-card">
+              <button
+                class="img-fullscreen-overlay-btn"
+                onclick="openImageFullscreen()"
+                title="Full Screen View (F)"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                >
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                </svg>
+                <span>Full Screen</span>
+              </button>
+              <img
+                id="q-image-element"
+                src=""
+                alt="Question Image"
+                onclick="openImageFullscreen()"
+                title="Click to view full screen"
+              />
+            </div>
+
+            <!-- Options Area -->
+            <div class="answer-options-card" id="answer-options-container">
+              <div class="options-title" id="options-type-title">
+                Select Your Answer:
+              </div>
+              <!-- Options or Numerical Input dynamically injected -->
+              <div id="options-inner-box"></div>
+            </div>
+          </div>
+
+          <!-- Footer Navigation -->
+          <footer class="question-footer">
+            <div class="footer-btn-group left" style="display: flex; gap: 8px">
+              <button
+                class="exam-btn btn-outline"
+                id="btn-prev-q"
+                onclick="goToPreviousQuestion()"
+              >
+                ← Previous
+              </button>
+              <button
+                class="exam-btn btn-outline"
+                onclick="clearCurrentResponse()"
+              >
+                Clear Response
+              </button>
+            </div>
+            <div class="footer-btn-group right" style="display: flex; gap: 8px">
+              <button
+                class="exam-btn btn-review"
+                onclick="markForReviewAndNext()"
+              >
+                Mark for Review &amp; Next
+              </button>
+              <button class="exam-btn btn-save-next" onclick="saveAndNext()">
+                Save &amp; Next →
+              </button>
+            </div>
+          </footer>
+        </section>
+
+        <!-- Right: Question Palette -->
+        <aside class="palette-section" id="palette-sidebar">
+          <!-- Status Counters -->
+          <div class="palette-stats-card">
+            <div class="legend-item">
+              <span class="legend-badge st-answered" id="stat-answered">0</span>
+              <span>Answered</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge st-not-answered" id="stat-not-answered"
+                >0</span
+              >
+              <span>Not Answered</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge st-review" id="stat-review">0</span>
+              <span>Marked for Review</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge st-not-visited" id="stat-not-visited"
+                >0</span
+              >
+              <span>Not Visited</span>
+            </div>
+          </div>
+
+          <div
+            style="
+              padding: 11px 16px;
+              font-size: 12px;
+              font-weight: 700;
+              color: var(--text);
+              border-bottom: 1px solid var(--border);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <div>
+              Question Palette •
+              <span id="palette-active-subject" style="color: var(--accent)"
+                >Physics</span
+              >
+            </div>
+            <button
+              class="palette-minimize-btn"
+              onclick="togglePaletteCollapse()"
+              title="Minimize Palette (Ctrl+B / P)"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              >
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Circle Palette Grid -->
+          <div class="palette-scroll">
+            <div class="palette-grid" id="palette-grid-circles">
+              <!-- Numbered circles rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Palette Footer / Submit -->
+          <div class="palette-footer">
+            <button class="btn-submit-exam" onclick="openSubmitConfirmModal()">
+              Submit Test
+            </button>
+          </div>
+        </aside>
+        <!-- Mobile Palette Backdrop -->
+        <div
+          class="palette-backdrop"
+          id="palette-backdrop"
+          onclick="togglePaletteMobile(true)"
+        ></div>
+      </div>
     </div>
 
     <!-- Floating Expand Palette Pill (When Sidebar Collapsed) -->
-    <button class="palette-expand-pill" id="palette-expand-pill" onclick="togglePaletteCollapse()" title="Show Question Palette (Ctrl+B / P)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-        </svg>
-        <span id="pill-q-label">Palette</span>
+    <button
+      class="palette-expand-pill"
+      id="palette-expand-pill"
+      onclick="togglePaletteCollapse()"
+      title="Show Question Palette (Ctrl+B / P)"
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+      >
+        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+      </svg>
+      <span id="pill-q-label">Palette</span>
     </button>
 
     <!-- Modal 0: Passcode Lock Gate -->
-    <div class="exam-overlay-modal" id="modal-passcode-lock" style="display: none; z-index: 2500;">
-        <div class="modal-card" style="max-width: 440px; text-align: center;">
-            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: var(--red); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-            </div>
-            <h3 style="margin: 0; font-size: 19px; color: var(--text);">Reattempt Feature Locked</h3>
-            <p style="font-size: 13px; color: var(--text3); margin: 8px 0 20px; line-height: 1.5;">
-                This exam hall feature is currently restricted. Enter the authorization passcode to unlock and proceed.
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
-                <div>
-                    <label style="display: block; font-size: 11.5px; font-weight: 600; color: var(--text2); margin-bottom: 6px;">Passcode</label>
-                    <input type="password" id="gate-passcode-input" placeholder="Enter passcode..."
-                        style="width: 100%; box-sizing: border-box; height: 42px; padding: 0 14px; background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--r); color: var(--text); font-size: 14px; outline: none;"
-                        onkeydown="if(event.key==='Enter') submitGatePasscode()">
-                </div>
-                <div id="gate-passcode-error" style="display: none; font-size: 12px; color: var(--red); background: rgba(239,68,68,0.1); padding: 8px 12px; border-radius: 6px;">
-                    Incorrect passcode. Access denied.
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
-                    <button class="exam-btn btn-outline" onclick="exitExam()">Exit</button>
-                    <button class="exam-btn btn-save-next" onclick="submitGatePasscode()">Unlock &rarr;</button>
-                </div>
-            </div>
+    <div
+      class="exam-overlay-modal"
+      id="modal-passcode-lock"
+      style="display: none; z-index: 2500"
+    >
+      <div class="modal-card" style="max-width: 440px; text-align: center">
+        <div
+          style="
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+          "
+        >
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
         </div>
+        <h3 style="margin: 0; font-size: 19px; color: var(--text)">
+          Restricted access
+        </h3>
+        <p
+          style="
+            font-size: 13px;
+            color: var(--text3);
+            margin: 8px 0 20px;
+            line-height: 1.5;
+          "
+        >
+          Enter the passcode to use reattempt mode.
+        </p>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+          "
+        >
+          <div>
+            <label
+              style="
+                display: block;
+                font-size: 11.5px;
+                font-weight: 600;
+                color: var(--text2);
+                margin-bottom: 6px;
+              "
+              for="gate-passcode-input"
+              >Passcode</label
+            >
+            <input
+              type="password"
+              id="gate-passcode-input"
+              placeholder="Enter passcode..."
+              style="
+                width: 100%;
+                box-sizing: border-box;
+                height: 42px;
+                padding: 0 14px;
+                background: var(--bg3);
+                border: 1.5px solid var(--border);
+                border-radius: var(--r);
+                color: var(--text);
+                font-size: 14px;
+                outline: none;
+              "
+              onkeydown="if (event.key === 'Enter') submitGatePasscode();"
+            />
+          </div>
+          <div
+            id="gate-passcode-error"
+            style="
+              display: none;
+              font-size: 12px;
+              color: var(--red);
+              background: rgba(239, 68, 68, 0.1);
+              padding: 8px 12px;
+              border-radius: 6px;
+            "
+          >
+            Incorrect passcode. Access denied.
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 6px;
+            "
+          >
+            <button class="exam-btn btn-outline" onclick="exitExam()">
+              Exit
+            </button>
+            <button
+              class="exam-btn btn-save-next"
+              onclick="submitGatePasscode()"
+            >
+              Unlock →
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal 1: Test ID Launcher (If no ID provided in URL) -->
-    <div class="exam-overlay-modal" id="modal-launcher" style="display: none;">
-        <div class="modal-card" style="max-width: 500px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--accent-glow); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <polygon points="10 11 10 17 15 14"></polygon>
-                    </svg>
-                </div>
-                <div>
-                    <h2 style="margin: 0; font-size: 18px; color: var(--text);">Attempt Test &bull; Reattempt Mode</h2>
-                    <div style="font-size: 12.5px; color: var(--text3); margin-top: 3px;">Enter a test paper ID to load the official questions and timer</div>
-                </div>
+    <div class="exam-overlay-modal" id="modal-launcher" style="display: none">
+      <div class="modal-card launch-layout" style="">
+        <div style="" class="launch-intro">
+          <div style="" class="launch-art">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <polygon points="10 11 10 17 15 14"></polygon>
+            </svg>
+          </div>
+          <div>
+            <span class="eyebrow">TEST SESSION</span>
+            <h2 style="">Start a test</h2>
+            <div style="">
+              Load a paper to review its instructions before the timer starts.
             </div>
-
-            <div style="display: flex; flex-direction: column; gap: 14px;">
-                <div>
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px;">Test Paper ID</label>
-                    <input type="number" id="launcher-test-id" placeholder="e.g. 3788 or 321127"
-                        style="width: 100%; box-sizing: border-box; height: 42px; padding: 0 14px; background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--r); color: var(--text); font-size: 14px;"
-                        onkeydown="if(event.key==='Enter') loadTestFromLauncher()">
-                </div>
-
-                <div id="launcher-error" style="display: none; font-size: 12px; color: var(--red); background: rgba(239,68,68,0.1); padding: 8px 12px; border-radius: 6px;"></div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                    <button class="exam-btn btn-outline" onclick="exitExam()">Cancel</button>
-                    <button class="exam-btn btn-save-next" id="btn-launcher-load" onclick="loadTestFromLauncher()">Load Test &rarr;</button>
-                </div>
-            </div>
+          </div>
         </div>
+
+        <div style="" class="launch-config">
+          <div>
+            <label
+              style="
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text2);
+                margin-bottom: 6px;
+              "
+              for="launcher-test-id"
+              >Test Paper ID</label
+            >
+            <input
+              type="number"
+              id="launcher-test-id"
+              placeholder="e.g. 3788 or 321127"
+              style="
+                width: 100%;
+                box-sizing: border-box;
+                height: 42px;
+                padding: 0 14px;
+                background: var(--bg3);
+                border: 1.5px solid var(--border);
+                border-radius: var(--r);
+                color: var(--text);
+                font-size: 14px;
+              "
+              onkeydown="if (event.key === 'Enter') loadTestFromLauncher();"
+            />
+          </div>
+
+          <div
+            id="launcher-error"
+            style="
+              display: none;
+              font-size: 12px;
+              color: var(--red);
+              background: rgba(239, 68, 68, 0.1);
+              padding: 8px 12px;
+              border-radius: 6px;
+            "
+          ></div>
+
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 10px;
+            "
+          >
+            <button class="exam-btn btn-outline" onclick="exitExam()">
+              Cancel
+            </button>
+            <button
+              class="exam-btn btn-save-next"
+              id="btn-launcher-load"
+              onclick="loadTestFromLauncher()"
+            >
+              Load Test →
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal 2: Instructions Overlay -->
-    <div class="exam-overlay-modal" id="modal-instructions" style="display: none;">
-        <div class="modal-card" style="max-width: 740px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
-                <div>
-                    <span class="exam-badge" style="margin-bottom: 8px; display: inline-block;">General Instructions</span>
-                    <h2 style="margin: 0; font-size: 20px; color: var(--text);" id="inst-test-name">Exam Name</h2>
-                </div>
-                <div style="text-align: right; font-size: 12px; color: var(--text3); line-height: 1.6;">
-                    <div>Duration: <strong style="color: var(--text);" id="inst-duration">180 Mins</strong></div>
-                    <div>Max Marks: <strong style="color: var(--text);" id="inst-marks">300</strong></div>
-                </div>
+    <div
+      class="exam-overlay-modal"
+      id="modal-instructions"
+      style="display: none"
+    >
+      <div class="modal-card" style="max-width: 740px">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+          "
+          class="instructions-intro"
+        >
+          <div>
+            <span
+              class="exam-badge"
+              style="margin-bottom: 8px; display: inline-block"
+              >Practice attempt</span
+            >
+            <h2
+              style="margin: 0; font-size: 20px; color: var(--text)"
+              id="inst-test-name"
+            >
+              Exam Name
+            </h2>
+          </div>
+          <div
+            style="
+              text-align: right;
+              font-size: 12px;
+              color: var(--text3);
+              line-height: 1.6;
+            "
+          >
+            <div>
+              Duration:
+              <strong style="color: var(--text)" id="inst-duration"
+                >180 Mins</strong
+              >
             </div>
-
-            <div style="max-height: 48vh; overflow-y: auto; padding-right: 8px; font-size: 13px; line-height: 1.6; color: var(--text2);">
-                <!-- Official Paper Specific Instructions -->
-                <div id="inst-custom-content" style="display: none; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 14px; overflow-x: auto;"></div>
-
-                <p><strong style="color: var(--text);">Please read the following instructions carefully:</strong></p>
-                <ol style="padding-left: 20px; margin: 8px 0;">
-                    <li>The clock will be set at the server. The countdown timer at the top indicates the time remaining for you to complete the exam.</li>
-                    <li>When the timer reaches zero, the examination will end automatically and submit your responses.</li>
-                    <li>The Question Palette displayed on the right of screen will show the status of each question using the following symbols:</li>
-                </ol>
-
-                <div style="background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; margin: 12px 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="legend-badge st-not-visited">1</span>
-                        <span>You have not visited the question yet.</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="legend-badge st-not-answered">2</span>
-                        <span>You have not answered the question.</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="legend-badge st-answered">3</span>
-                        <span>You have answered the question.</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="legend-badge st-review">4</span>
-                        <span>You have marked the question for review.</span>
-                    </div>
-                </div>
-
-                <p style="margin-top: 10px;">
-                    <strong style="color: var(--text);">Navigating to a Question:</strong> To select a question to answer, you can click on the question number in the Question Palette at the right of your screen.
-                </p>
+            <div>
+              Max Marks:
+              <strong style="color: var(--text)" id="inst-marks">300</strong>
             </div>
-
-            <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-top: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--text);">
-                    <input type="checkbox" id="inst-agree-check" checked style="accent-color: var(--accent); width: 16px; height: 16px;">
-                    <span>I have read and understood all the instructions.</span>
-                </label>
-                <button class="exam-btn btn-save-next" style="padding: 10px 24px; font-size: 14px;" onclick="startExamSession()">
-                    I am ready to begin &rarr;
-                </button>
-            </div>
+          </div>
         </div>
+
+        <div
+          style="
+            max-height: 48vh;
+            overflow-y: auto;
+            padding-right: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text2);
+          "
+        >
+          <!-- Official Paper Specific Instructions -->
+          <div
+            id="inst-custom-content"
+            style="
+              display: none;
+              background: var(--bg3);
+              border: 1px solid var(--border);
+              border-radius: var(--r);
+              padding: 14px;
+              margin-bottom: 14px;
+              overflow-x: auto;
+            "
+          ></div>
+
+          <p>
+            <strong style="color: var(--text)"
+              >Please read the following instructions carefully:</strong
+            >
+          </p>
+          <ol style="padding-left: 20px; margin: 8px 0">
+            <li>
+              The clock will be set at the server. The countdown timer at the
+              top indicates the time remaining for you to complete the exam.
+            </li>
+            <li>
+              When the timer reaches zero, the examination will end
+              automatically and submit your responses.
+            </li>
+            <li>
+              The Question Palette displayed on the right of screen will show
+              the status of each question using the following symbols:
+            </li>
+          </ol>
+
+          <div
+            style="
+              background: var(--bg3);
+              border: 1px solid var(--border);
+              border-radius: var(--r);
+              padding: 12px;
+              margin: 12px 0;
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+              font-size: 12px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="legend-badge st-not-visited">1</span>
+              <span>You have not visited the question yet.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="legend-badge st-not-answered">2</span>
+              <span>You have not answered the question.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="legend-badge st-answered">3</span>
+              <span>You have answered the question.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="legend-badge st-review">4</span>
+              <span>You have marked the question for review.</span>
+            </div>
+          </div>
+
+          <p style="margin-top: 10px">
+            <strong style="color: var(--text)"
+              >Navigating to a Question:</strong
+            >
+            To select a question to answer, you can click on the question number
+            in the Question Palette at the right of your screen.
+          </p>
+        </div>
+
+        <div
+          style="
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+          "
+        >
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 12.5px;
+              cursor: pointer;
+              color: var(--text);
+            "
+          >
+            <input
+              type="checkbox"
+              id="inst-agree-check"
+              checked=""
+              style="accent-color: var(--accent); width: 16px; height: 16px"
+            />
+            <span>I have read and understood all the instructions.</span>
+          </label>
+          <button
+            class="exam-btn btn-save-next"
+            style="padding: 10px 24px; font-size: 14px"
+            onclick="startExamSession()"
+          >
+            I am ready to begin →
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal 3: Submit Confirmation & Summary -->
-    <div class="exam-overlay-modal" id="modal-submit-summary" style="display: none;">
-        <div class="modal-card" style="max-width: 650px;">
-            <h3 style="margin-top: 0; font-size: 18px; color: var(--text); margin-bottom: 12px;">Exam Summary</h3>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;">
-                    <thead>
-                        <tr style="background: var(--bg3); color: var(--text2); text-align: left;">
-                            <th style="padding: 10px 12px; border: 1px solid var(--border);">Subject</th>
-                            <th style="padding: 10px 12px; border: 1px solid var(--border); text-align: center;">Total</th>
-                            <th style="padding: 10px 12px; border: 1px solid var(--border); text-align: center; color: var(--green);">Answered</th>
-                            <th style="padding: 10px 12px; border: 1px solid var(--border); text-align: center; color: var(--red);">Not Answered</th>
-                            <th style="padding: 10px 12px; border: 1px solid var(--border); text-align: center; color: var(--purple);">Review</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summary-table-body">
-                        <!-- Injected dynamically -->
-                    </tbody>
-                </table>
-            </div>
-
-            <p style="font-size: 13.5px; color: var(--text); text-align: center; font-weight: 500; margin: 16px 0;">
-                Are you sure you want to submit the exam? You will not be able to change your answers after submission.
-            </p>
-
-            <div style="display: flex; justify-content: center; gap: 12px;">
-                <button class="exam-btn btn-outline" onclick="closeSubmitConfirmModal()">
-                    Cancel &amp; Continue
-                </button>
-                <button class="exam-btn btn-save-next" id="btn-confirm-submit-exam" onclick="confirmFinalSubmit()">
-                    Yes, Submit Exam
-                </button>
-            </div>
+    <div
+      class="exam-overlay-modal"
+      id="modal-submit-summary"
+      style="display: none"
+    >
+      <div class="modal-card" style="max-width: 650px">
+        <h3
+          style="
+            margin-top: 0;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 12px;
+          "
+        >
+          Exam Summary
+        </h3>
+        <div style="overflow-x: auto">
+          <table
+            style="
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12.5px;
+              margin-bottom: 16px;
+              border: 1px solid var(--border);
+              border-radius: var(--r);
+              overflow: hidden;
+            "
+          >
+            <thead>
+              <tr
+                style="
+                  background: var(--bg3);
+                  color: var(--text2);
+                  text-align: left;
+                "
+              >
+                <th style="padding: 10px 12px; border: 1px solid var(--border)">
+                  Subject
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    border: 1px solid var(--border);
+                    text-align: center;
+                  "
+                >
+                  Total
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    border: 1px solid var(--border);
+                    text-align: center;
+                    color: var(--green);
+                  "
+                >
+                  Answered
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    border: 1px solid var(--border);
+                    text-align: center;
+                    color: var(--red);
+                  "
+                >
+                  Not Answered
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    border: 1px solid var(--border);
+                    text-align: center;
+                    color: var(--purple);
+                  "
+                >
+                  Review
+                </th>
+              </tr>
+            </thead>
+            <tbody id="summary-table-body">
+              <!-- Injected dynamically -->
+            </tbody>
+          </table>
         </div>
+
+        <p
+          style="
+            font-size: 13.5px;
+            color: var(--text);
+            text-align: center;
+            font-weight: 500;
+            margin: 16px 0;
+          "
+        >
+          Are you sure you want to submit the exam? You will not be able to
+          change your answers after submission.
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 12px">
+          <button
+            class="exam-btn btn-outline"
+            onclick="closeSubmitConfirmModal()"
+          >
+            Cancel &amp; Continue
+          </button>
+          <button
+            class="exam-btn btn-save-next"
+            id="btn-confirm-submit-exam"
+            onclick="confirmFinalSubmit()"
+          >
+            Yes, Submit Exam
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal 4: Submission Completed Success Screen -->
-    <div class="exam-overlay-modal" id="modal-submit-success" style="display: none;">
-        <div class="modal-card" style="text-align: center; max-width: 480px;">
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34, 197, 94, 0.12); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            </div>
-            <h2 style="margin: 0; font-size: 20px; color: var(--text);">Exam Submitted Successfully!</h2>
-            <p style="font-size: 13px; color: var(--text3); margin: 10px 0 24px; line-height: 1.5;">
-                Your responses have been recorded on NTSC servers. You can view your scorecard or return to the student portal.
-            </p>
-            <div style="display: flex; justify-content: center; gap: 10px;">
-                <button class="exam-btn btn-outline" onclick="exitExam()">Back to Portal</button>
-                <button class="exam-btn btn-save-next" onclick="viewTestResult()">View Result &rarr;</button>
-            </div>
+    <div
+      class="exam-overlay-modal"
+      id="modal-submit-success"
+      style="display: none"
+    >
+      <div class="modal-card" style="text-align: center; max-width: 480px">
+        <div
+          style="
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+          "
+        >
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
         </div>
+        <h2 style="margin: 0; font-size: 20px; color: var(--text)">
+          Exam Submitted Successfully!
+        </h2>
+        <p
+          style="
+            font-size: 13px;
+            color: var(--text3);
+            margin: 10px 0 24px;
+            line-height: 1.5;
+          "
+        >
+          Your responses have been recorded on NTSC servers. You can view your
+          scorecard or return to the student portal.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 10px">
+          <button class="exam-btn btn-outline" onclick="exitExam()">
+            Back to Portal
+          </button>
+          <button class="exam-btn btn-save-next" onclick="viewTestResult()">
+            View Result →
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Fullscreen Exam Focus Mode Modal -->
-    <div class="image-fullscreen-modal" id="image-fullscreen-modal" style="display: none;">
-        <!-- Top Bar: Small Timer on Top + Question Info + Normal Mode Exit -->
-        <div class="fs-header">
-            <div class="fs-info">
-                <span class="fs-q-badge" id="fs-q-badge">Q1</span>
-                <span class="fs-q-type" id="fs-q-type">Single Choice</span>
-            </div>
-
-            <!-- Small Timer on Top -->
-            <div class="fs-timer-pill" id="fs-timer-pill" title="Exam Timer">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span id="fs-timer-text">00:00:00</span>
-            </div>
-
-            <!-- Focus Controls & Normal Mode Button -->
-            <div class="fs-controls">
-                <button class="fs-btn" id="fs-btn-invert" onclick="toggleImageInvert()" title="Invert Colors / Night Reading (I)">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor"></path></svg>
-                </button>
-                <button class="fs-btn" onclick="resetFullscreenZoom()" title="Reset Zoom (0)">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                </button>
-                <button class="fs-btn-exit" onclick="closeImageFullscreen()" title="Return to Normal Mode (Esc)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    <span>Normal Mode</span>
-                </button>
-            </div>
+    <div
+      class="image-fullscreen-modal"
+      id="image-fullscreen-modal"
+      style="display: none"
+    >
+      <!-- Top Bar: Small Timer on Top + Question Info + Normal Mode Exit -->
+      <div class="fs-header">
+        <div class="fs-info">
+          <span class="fs-q-badge" id="fs-q-badge">Q1</span>
+          <span class="fs-q-type" id="fs-q-type">Single Choice</span>
         </div>
 
-        <!-- Fullscreen Question Image Center -->
-        <div class="fs-body" id="fs-body">
-            <div class="fs-img-wrapper" id="fs-img-wrapper">
-                <img id="fs-image-element" src="" alt="Fullscreen Question Image" />
-            </div>
+        <!-- Small Timer on Top -->
+        <div class="fs-timer-pill" id="fs-timer-pill" title="Exam Timer">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="fs-timer-text">00:00:00</span>
         </div>
 
-        <!-- Bottom Bar: Small ABCD Buttons + Small Next Button (Submit/Back only in normal mode) -->
-        <div class="fs-footer" id="fs-footer">
-            <button class="fs-btn-prev" id="fs-btn-prev" onclick="goToPreviousQuestion(); syncFullscreenQuestion();" title="Previous Question (Left Arrow)">
-                &larr; Prev
-            </button>
-
-            <!-- Small ABCD buttons or numerical field dynamically rendered -->
-            <div class="fs-options-container" id="fs-options-container"></div>
-
-            <!-- Small Next Button -->
-            <button class="fs-btn-next" id="fs-btn-next" onclick="saveAndNext(); syncFullscreenQuestion();" title="Save &amp; Next (Enter / Space / Right Arrow)">
-                <span>Next</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
+        <!-- Focus Controls & Normal Mode Button -->
+        <div class="fs-controls">
+          <button
+            class="fs-btn"
+            id="fs-btn-invert"
+            onclick="toggleImageInvert()"
+            title="Invert Colors / Night Reading (I)"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor"></path>
+            </svg>
+          </button>
+          <button
+            class="fs-btn"
+            onclick="resetFullscreenZoom()"
+            title="Reset Zoom (0)"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+          </button>
+          <button
+            class="fs-btn-exit"
+            onclick="closeImageFullscreen()"
+            title="Return to Normal Mode (Esc)"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Normal Mode</span>
+          </button>
         </div>
+      </div>
+
+      <!-- Fullscreen Question Image Center -->
+      <div class="fs-body" id="fs-body">
+        <div class="fs-img-wrapper" id="fs-img-wrapper">
+          <img id="fs-image-element" src="" alt="Fullscreen Question Image" />
+        </div>
+      </div>
+
+      <!-- Bottom Bar: Small ABCD Buttons + Small Next Button (Submit/Back only in normal mode) -->
+      <div class="fs-footer" id="fs-footer">
+        <button
+          class="fs-btn-prev"
+          id="fs-btn-prev"
+          onclick="
+            goToPreviousQuestion();
+            syncFullscreenQuestion();
+          "
+          title="Previous Question (Left Arrow)"
+        >
+          ← Prev
+        </button>
+
+        <!-- Small ABCD buttons or numerical field dynamically rendered -->
+        <div class="fs-options-container" id="fs-options-container"></div>
+
+        <!-- Small Next Button -->
+        <button
+          class="fs-btn-next"
+          id="fs-btn-next"
+          onclick="
+            saveAndNext();
+            syncFullscreenQuestion();
+          "
+          title="Save &amp; Next (Enter / Space / Right Arrow)"
+        >
+          <span>Next</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Loading Spinner Overlay -->
-    <div id="exam-loading-screen" style="position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
-        <div style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-        <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="loading-screen-msg">Loading Test Paper...</div>
+    <div
+      id="exam-loading-screen"
+      style="
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      "
+    >
+      <div
+        style="
+          width: 40px;
+          height: 40px;
+          border: 3px solid var(--border);
+          border-top-color: var(--accent);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        "
+      ></div>
+      <div
+        style="font-size: 14px; font-weight: 600; color: var(--text)"
+        id="loading-screen-msg"
+      >
+        Loading Test Paper...
+      </div>
     </div>
 
     <!-- Toast Notification -->
     <div class="toast-popup" id="toast">Notification</div>
 
     <!-- Scripts -->
-    <script src="attempt-test.js"></script>
-</body>
-
+    <script src="attempt-test.js?v=8e35a4c034e3"></script>
+    <script src="../src/app/workbench.js?v=8719fd378ff3"></script>
+  </body>
 </html>

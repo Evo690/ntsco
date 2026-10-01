@@ -46,7 +46,7 @@ function applyUserTheme() {
   const presetKey = cleanId ? `fy_theme_preset_${cleanId}` : 'fy_theme_preset';
   const mode = localStorage.getItem(modeKey);
   const preset = localStorage.getItem(presetKey);
-  if (mode === 'light') {
+  if (mode !== 'dark') {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');
@@ -189,7 +189,7 @@ function renderBatchesList(batches) {
   listEl.innerHTML = batches.map(b => {
     const yearLabel = b.year ? `Year: ${b.year}` : 'No Year';
     return `
-      <button class="batch-item-btn" id="batch-btn-${b.id}" onclick="selectBatch('${b.id}', '${escapeHtml(b.name)}')">
+      <button class="batch-item-btn" id="batch-btn-${b.id}" onclick="selectBatch(${escapeHtml(JSON.stringify(String(b.id)))}, ${escapeHtml(JSON.stringify(String(b.name)))})">
         <div style="font-weight:600; color:var(--text);">${escapeHtml(b.name)}</div>
         <div style="font-size:11px; color:var(--text3); margin-top:4px; display:flex; justify-content:space-between;">
           <span>ID: ${b.id}</span>
@@ -264,26 +264,11 @@ async function selectBatch(batchId, batchName) {
     grid.style.gap = '12px';
     grid.style.background = 'transparent';
     grid.style.minWidth = 'unset';
+    grid.classList.add('batch-week-grid');
     grid.innerHTML = dates.map(dateKey => {
-      const dayItems = clean.filter(c => c.classDateKey === dateKey).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-      const dayLabel = new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-IN', {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short'
-      });
-      const rows = dayItems.length ? dayItems.map(c => `
-            <div style="padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-top:8px">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${escapeHtml(formatTimeLabel(c.startTime))}</div>
-              <div class="tt-class ${getSubjectClass(c.subjects)}">${escapeHtml(c.subjects || 'Class')}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:5px">${escapeHtml(c.classType || 'Live Class')}</div>
-            </div>
-          `).join('') : '<div style="font-size:11px;color:var(--text3);margin-top:8px">No classes scheduled</div>';
-      return `
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px">
-          <div style="font-size:12px;font-weight:600;color:var(--text2)">${escapeHtml(dayLabel)}</div>
-          ${rows}
-        </div>
-      `;
+      const dayItems = clean.filter(c => c.classDateKey === dateKey).sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      const date = new Date(`${dateKey}T00:00:00`);
+      return `<section class="batch-day-card"><header><h3>${date.toLocaleDateString('en-IN',{weekday:'long'})}</h3><span>${date.toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${dayItems.length} classes</span></header><ol>${dayItems.map(c=>`<li><time>${escapeHtml(formatTimeLabel(c.startTime))}</time><div><strong>${escapeHtml(c.subjects || 'Class')}</strong><small>${escapeHtml(c.classType || 'Scheduled class')}</small></div></li>`).join('')}</ol></section>`;
     }).join('');
   } catch (err) {
     placeholder.style.display = 'block';

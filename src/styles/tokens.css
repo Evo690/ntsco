@@ -1,0 +1,123 @@
+/* A shared, quiet palette for the whole product. */
+:root,
+body {
+  --bg: #111719;
+  --bg2: #1a2326;
+  --bg3: #242f33;
+  --bg4: #303e43;
+  --border: #344247;
+  --border2: #52656c;
+  --text: #edf3f3;
+  --text2: #c2ced0;
+  --text3: #9bafb4;
+  --accent: #8bd5be;
+  --accent2: #72c4ab;
+  --accent-text: #102c24;
+  --accent-glow: #8bd5be18;
+  --green: #8bccad;
+  --red: #f59a99;
+  --amber: #e6c781;
+  --purple: #8bd5be;
+  --lavender: #223331;
+  --peach: #2d2b36;
+  --sage: #24332e;
+  --butter: #2c3032;
+  --r: 12px;
+  --r2: 22px;
+  --font-body: "DM Sans", sans-serif;
+  --font-heading: "Space Grotesk", "DM Sans", sans-serif;
+  --font-mono: "DM Sans", sans-serif;
+  --font: var(--font-body);
+  color-scheme: dark;
+}
+body.light-mode {
+  --bg: #f6f3ef;
+  --bg2: #fffefa;
+  --bg3: #eeebe8;
+  --bg4: #e5e0dc;
+  --border: #e7e1dd;
+  --border2: #c9c0ba;
+  --text: #302a39;
+  --text2: #665d6e;
+  --text3: #82778a;
+  --accent: #7956b2;
+  --accent2: #664599;
+  --accent-text: #fff;
+  --accent-glow: #7956b212;
+  --green: #397b61;
+  --red: #b95059;
+  --amber: #927127;
+  --purple: #7956b2;
+  --lavender: #ebe3f6;
+  --peach: #f7e0d6;
+  --sage: #e2ece2;
+  --butter: #f5edce;
+  color-scheme: light;
+}
+body.theme-ocean {
+  --accent2: #a4d5ef;
+  --accent-glow: #8dbbda18;
+  --lavender: #243642;
+  --accent: #8dbbda;
+  --accent-text: #172636;
+}
+body.light-mode.theme-ocean {
+  --accent2: #346781;
+  --accent: #427c9c;
+  --accent-text: #fff;
+  --lavender: #e3eef6;
+}
+body.theme-purple {
+  --accent2: #e5bbef;
+  --accent-glow: #d3a4de18;
+  --accent: #d3a4de;
+  --accent-text: #331b3a;
+  --lavender: #302a39;
+}
+body.light-mode.theme-purple {
+  --accent2: #7f458b;
+  --accent: #92589d;
+  --accent-text: #fff;
+  --lavender: #eedbf0;
+}
+body.theme-emerald {
+  --accent2: #afe2c7;
+  --accent-glow: #8ac5a618;
+  --lavender: #243b30;
+  --accent: #8ac5a6;
+  --accent-text: #163023;
+}
+body.light-mode.theme-emerald {
+  --accent2: #32664b;
+  --accent: #417c5e;
+  --accent-text: #fff;
+  --lavender: #e2ece2;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+[hidden],
+body button[hidden] {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

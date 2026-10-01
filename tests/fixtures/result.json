@@ -1,0 +1,31 @@
+{
+  "testName": "Physics & chemistry — weekly review",
+  "testPaperId": 101,
+  "attemptDate": "28 Sep 2026",
+  "rank": 14,
+  "batchRank": 3,
+  "cityRank": 9,
+  "percentile": 94.2,
+  "totalStudent": 242,
+  "result": {
+    "totalMarks": 186,
+    "totalSubjectMarks": 300,
+    "totalAvg": 132,
+    "totalHighest": 276,
+    "totalAttempted": 60,
+    "totalCorrect": 48,
+    "totalInCorrect": 12,
+    "totalUnAttempted": 15,
+    "topScoreTotal": [276,268,252],
+    "subjectData": [
+      {"subjectId":1,"subjectName":"Physics","totalMarks":72,"totalSubjectMarks":100,"totalCorrect":20,"totalInCorrect":4,"totalUnAttempted":1,"totalAttempted":24,"totalAvg":48,"totalHighest":96},
+      {"subjectId":2,"subjectName":"Chemistry","totalMarks":64,"totalSubjectMarks":100,"totalCorrect":18,"totalInCorrect":4,"totalUnAttempted":3,"totalAttempted":22,"totalAvg":45,"totalHighest":96},
+      {"subjectId":3,"subjectName":"Mathematics","totalMarks":50,"totalSubjectMarks":100,"totalCorrect":10,"totalInCorrect":4,"totalUnAttempted":11,"totalAttempted":14,"totalAvg":39,"totalHighest":84}
+    ],
+    "questionData": [
+      {"questionNo":1,"subjectName":"Physics","isRightAns":true,"isUnAttempted":false,"rightAns":"B","studentAns":"B","marks":4,"timeTaken":42,"qaTime":60,"level":"Easy"},
+      {"questionNo":2,"subjectName":"Chemistry","isRightAns":false,"isUnAttempted":false,"rightAns":"C","studentAns":"A","marks":-1,"timeTaken":84,"qaTime":60,"level":"Medium"},
+      {"questionNo":3,"subjectName":"Mathematics","isRightAns":false,"isUnAttempted":true,"rightAns":"12","studentAns":"","marks":0,"level":"Hard"}
+    ]
+  }
+}

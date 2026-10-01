@@ -1,0 +1,982 @@
+/* Everyday routes and their distinct reading layouts. */
+.desk-links {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.desk-links button {
+  padding: 18px;
+  gap: 11px;
+}
+.desk-links small {
+  line-height: 1.6;
+}
+.desk-secondary {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  flex-wrap: wrap;
+  padding: 0 5px;
+}
+.desk-secondary button {
+  border: 0;
+  background: none;
+  color: var(--text3);
+  font: 11px var(--font-body);
+  padding: 8px 0;
+}
+.desk-secondary button:hover {
+  color: var(--accent);
+}
+.classes-frame {
+  width: 100%;
+  min-height: 300px;
+  height: 600px;
+  border: 0;
+  display: block;
+  color-scheme: normal;
+}
+.module-heading > div {
+  min-width: 0;
+}
+.dock-symbol {
+  font: 22px/1 var(--font-body);
+}
+/* Results is a direct lookup plus a chronological ledger, not another test grid. */
+.studio-ui .results-launch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 25px;
+  padding: 25px;
+  background: var(--lavender);
+  border: 0;
+  border-radius: 20px;
+  align-items: end;
+}
+.results-launch .manual-tool-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  max-width: 600px;
+}
+.results-launch label {
+  grid-column: 1/-1;
+  font: 500 22px var(--font-heading);
+  letter-spacing: -0.6px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.results-launch select {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  margin: 0;
+  min-width: 0 !important;
+}
+.results-launch input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+.results-launch button {
+  margin: 0 !important;
+  min-height: 44px;
+}
+#era-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.result-ledger-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 23px;
+  padding: 23px 0;
+  border-bottom: 1px solid var(--border);
+}
+.result-ledger-main h2 {
+  font: 600 16px/1.6 var(--font-body);
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.result-ledger-main p {
+  font: 10px/1.8 var(--font-body);
+  color: var(--text3);
+  margin: 0;
+}
+.result-ledger-main small {
+  display: block;
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+.result-ledger-actions {
+  grid-column: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+}
+.result-ledger-score {
+  grid-column: 3;
+  white-space: nowrap;
+}
+.result-ledger-score strong {
+  font: 500 29px var(--font-heading);
+  letter-spacing: -1px;
+}
+.result-ledger-score span {
+  display: block;
+  font-size: 11px;
+  color: var(--text3);
+  text-align: right;
+  margin-top: 3px;
+}
+.result-ledger-actions button {
+  margin: 0 !important;
+}
+.paper-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--bg2);
+  padding: 12px 9px;
+  min-width: 60px;
+}
+.paper-date span {
+  font-size: 10px;
+  color: var(--accent);
+}
+.paper-date strong {
+  font: 500 28px/1.1 var(--font-heading);
+  letter-spacing: -1px;
+}
+.paper-date small {
+  font-size: 9px;
+  color: var(--text3);
+}
+/* Exam Hall is a paper collection with a clear date, status and next action. */
+.exam-overview {
+  display: flex;
+  gap: 35px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0 23px;
+}
+.exam-overview > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.exam-overview span {
+  font: 11px var(--font-body);
+  color: var(--text3);
+}
+.exam-overview strong {
+  font: 500 28px var(--font-heading);
+}
+#examhall-list {
+  gap: 23px;
+}
+.paper-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 21px;
+  overflow: hidden;
+  padding: 24px;
+  min-width: 0;
+}
+.paper-card > header {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.paper-card .paper-date {
+  background: var(--lavender);
+  border: 0;
+}
+.paper-card:nth-child(3n + 2) .paper-date {
+  background: var(--peach);
+}
+.paper-card:nth-child(3n + 3) .paper-date {
+  background: var(--sage);
+}
+.paper-card h2 {
+  font: 500 21px/1.4 var(--font-heading);
+  letter-spacing: -0.5px;
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+.paper-status {
+  font: 10px var(--font-body);
+  color: var(--text3);
+}
+.paper-meta {
+  font: 10px/1.8 var(--font-body);
+  color: var(--text3);
+  margin: 22px 0;
+}
+.paper-card .exam-hall-right {
+  margin: 0 0 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  justify-content: flex-start;
+  text-align: left;
+}
+.paper-card .exam-hall-score {
+  font: 500 27px var(--font-heading);
+}
+.paper-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  border-top: 1px solid var(--border);
+  padding-top: 17px;
+  margin-top: auto;
+}
+.paper-card .exam-hall-actions {
+  margin: 0;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.paper-card .card-action {
+  font-size: 10px;
+}
+.paper-card .exam-hall-rank {
+  font-size: 10px;
+}
+/* Timetable: select a day, then read a spacious agenda. */
+.studio-ui #page-timetable > .full-card {
+  background: none;
+  border: 0;
+  overflow: visible;
+}
+.studio-ui #page-timetable .full-card > .card-header {
+  padding: 0 0 20px;
+}
+.studio-ui #timetable-grid {
+  padding: 0;
+}
+.batch-id-entry {
+  margin-left: auto;
+  color: var(--text3);
+  font-size: 11px;
+}
+.batch-id-entry summary {
+  cursor: pointer;
+  padding: 10px;
+}
+.batch-id-entry form {
+  margin-top: 10px;
+  gap: 9px;
+}
+.schedule-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 0 15px;
+  scrollbar-width: thin;
+  margin-bottom: 15px;
+  max-width: 100%;
+}
+.schedule-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 78px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 12px;
+  background: var(--bg2);
+  color: var(--text);
+}
+.schedule-day.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.schedule-day > span {
+  font-size: 11px;
+}
+.schedule-day strong {
+  font: 500 27px var(--font-heading);
+}
+.schedule-day small {
+  font-size: 9px;
+  opacity: 0.8;
+}
+.schedule-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+.day-agenda {
+  border: 1px solid var(--border);
+  border-radius: 21px;
+  background: var(--bg2);
+  padding: 27px;
+}
+.day-agenda > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.day-agenda h2 {
+  font: 500 26px var(--font-heading);
+  letter-spacing: -1px;
+  margin: 9px 0 0;
+}
+.day-agenda > header > span {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.agenda-events {
+  list-style: none;
+  margin: 25px 0 0;
+  padding: 0;
+}
+.agenda-events li {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 22px;
+  padding-bottom: 20px;
+  position: relative;
+}
+.agenda-events li:last-child {
+  padding: 0;
+}
+.agenda-events time {
+  font: 12px var(--font-body);
+  padding-top: 19px;
+  color: var(--text2);
+}
+.agenda-event {
+  background: var(--lavender);
+  padding: 18px 20px;
+  border-radius: 14px;
+}
+.agenda-events li:nth-child(3n + 2) .agenda-event {
+  background: var(--peach);
+}
+.agenda-events li:nth-child(3n + 3) .agenda-event {
+  background: var(--sage);
+}
+.agenda-event h3 {
+  font: 600 15px var(--font-body);
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.agenda-event p {
+  font: 11px/1.7 var(--font-body);
+  color: var(--text2);
+  margin: 0;
+}
+.schedule-overview {
+  padding: 27px;
+  background: var(--butter);
+  border-radius: 21px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.schedule-mark {
+  font-size: 45px;
+  color: var(--amber);
+  line-height: 1;
+  margin-bottom: 23px;
+}
+.schedule-overview h2 {
+  font: 500 23px var(--font-heading);
+  letter-spacing: -0.8px;
+}
+.schedule-overview dl {
+  width: 100%;
+  margin: 22px 0;
+}
+.schedule-overview dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border2);
+}
+.schedule-overview dt {
+  font-size: 11px;
+  color: var(--text2);
+}
+.schedule-overview dd {
+  font: 500 22px var(--font-heading);
+}
+.schedule-overview .card-action {
+  margin-top: 12px;
+}
+/* Result detail prioritizes subject metrics; tags and technical banners are gone. */
+.result-recap-focused .result-heading-block {
+  margin-bottom: 0;
+}
+.result-recap-focused .result-links {
+  margin: 0 0 4px;
+  gap: 9px;
+}
+.result-recap-focused .score-story {
+  padding: 25px;
+}
+.result-recap-focused .score-story-value {
+  font-size: 52px;
+  margin: 10px 0;
+}
+.result-recap-focused .rank-summary {
+  padding: 25px;
+}
+.subject-overview {
+  grid-column: 1/-1;
+  margin: 8px 0;
+}
+.subject-overview > header {
+  margin: 0 0 18px;
+}
+.subject-overview > header h2 {
+  font: 500 24px var(--font-heading);
+  letter-spacing: -0.8px;
+}
+.subject-overview > header p {
+  font: 11px/1.8 var(--font-body);
+  color: var(--text3);
+  margin-top: 7px;
+}
+.subject-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.subject-cards .subject-result-card {
+  margin: 0;
+  border-radius: 20px;
+  background: var(--bg2);
+  padding: 23px;
+  min-width: 0;
+}
+.subject-cards .subject-result-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  margin: 0;
+}
+.subject-cards .subject-result-name {
+  font: 600 16px var(--font-body);
+  margin: 0;
+}
+.subject-cards .subject-result-score {
+  font: 500 34px var(--font-heading);
+  color: var(--text);
+  letter-spacing: -1.5px;
+}
+.subject-result-score small {
+  font: 400 14px var(--font-body);
+  letter-spacing: 0;
+  color: var(--text3);
+}
+.subject-score-track {
+  height: 5px;
+  border-radius: 5px;
+  background: var(--bg3);
+  margin: 18px 0 23px;
+  overflow: hidden;
+}
+.subject-score-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+.subject-cards .subject-result-card:nth-child(3n + 2) .subject-score-track i {
+  background: var(--red);
+}
+.subject-cards .subject-result-card:nth-child(3n + 3) .subject-score-track i {
+  background: var(--green);
+}
+.subject-key-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 15px;
+  margin: 0;
+}
+.subject-key-metrics dt {
+  font: 10px var(--font-body);
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.subject-key-metrics dd {
+  font: 500 23px var(--font-heading);
+  margin: 0;
+  color: var(--text);
+}
+.subject-answer-counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 21px;
+  padding-top: 18px;
+  font-size: 9px;
+  color: var(--text3);
+}
+.subject-answer-counts b {
+  display: block;
+  color: var(--text2);
+  font: 600 13px var(--font-body);
+  margin-bottom: 4px;
+}
+.subject-more {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 15px;
+  color: var(--text3);
+  font-size: 10px;
+}
+.subject-more summary {
+  cursor: pointer;
+}
+.subject-more dl {
+  margin-top: 13px;
+  display: grid;
+  gap: 12px;
+}
+.subject-more dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.subject-more dd {
+  text-align: right;
+  color: var(--text2);
+}
+/* Noticeboard and inbox get their own collection/reading rhythm. */
+#notice-list:not(.virtual-list) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+#notice-list:not(.virtual-list) .notice-item {
+  min-height: 155px;
+  flex-direction: column;
+  align-items: stretch !important;
+  padding: 23px !important;
+  gap: 22px;
+  justify-content: space-between !important;
+}
+#notice-list:not(.virtual-list) .notice-title {
+  white-space: normal !important;
+  font: 500 18px/1.5 var(--font-heading);
+  letter-spacing: -0.3px;
+}
+#notice-list:not(.virtual-list) .notice-item > button {
+  align-self: flex-start;
+}
+#page-notices > .full-card {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.msg-day-divider {
+  font-size: 10px;
+  color: var(--text3);
+  text-align: center;
+  padding: 20px 0 10px;
+}
+.msg-content > .card-header {
+  background: var(--bg2) !important;
+}
+.msg-bubble {
+  padding: 19px;
+  border-radius: 17px 17px 17px 4px;
+  max-width: 85%;
+  line-height: 1.8;
+}
+.msg-bubble-text {
+  font-size: 13px;
+}
+.msg-back {
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: var(--lavender);
+  color: var(--accent);
+}
+@media (max-width: 1080px) {
+  .desk-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .subject-cards {
+    gap: 12px;
+  }
+  .subject-cards .subject-result-card {
+    padding: 18px;
+  }
+  .result-ledger-row {
+    gap: 16px;
+  }
+  .schedule-layout {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
+  .exam-overview {
+    gap: 24px;
+  }
+  .exam-overview > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+  }
+}
+@media (max-width: 768px) {
+  .studio-ui .section-nav {
+    display: none;
+  }
+  .studio-ui .topbar .hamburger {
+    display: none !important;
+  }
+  .studio-ui .topbar {
+    min-height: 62px;
+    height: 62px;
+  }
+  .studio-ui .mobile-dock {
+    display: flex;
+  }
+  .studio-ui .dock-btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 9px;
+  }
+  .studio-ui .mobile-dock .dock-symbol {
+    font-size: 21px;
+  }
+  .studio-ui .content {
+    padding-top: 23px;
+  }
+  .studio-ui .desk-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .studio-ui .desk-links button {
+    padding: 17px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .desk-links button > span:last-child {
+    display: none;
+  }
+  .desk-links small {
+    font-size: 10px;
+  }
+  .desk-secondary {
+    justify-content: flex-start;
+    gap: 19px;
+  }
+  .desk-secondary button {
+    font-size: 10px;
+  }
+  .module-heading {
+    flex-wrap: wrap;
+  }
+  .module-heading > button {
+    margin: 0 !important;
+  }
+  .studio-ui .results-launch {
+    grid-template-columns: 1fr;
+    gap: 17px;
+    padding: 20px;
+  }
+  .results-launch .manual-tool-form {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .results-launch label {
+    font-size: 21px;
+  }
+  .results-launch button {
+    font-size: 10px !important;
+    padding: 10px 12px !important;
+  }
+  .results-launch select {
+    grid-column: 1;
+    grid-row: 2;
+    max-width: none;
+  }
+  .result-ledger-row {
+    grid-template-columns: 51px minmax(0, 1fr);
+    gap: 12px;
+    padding: 22px 0;
+  }
+  .result-ledger-main h2 {
+    font-size: 14px;
+  }
+  .result-ledger-main p,
+  .result-ledger-main small {
+    font-size: 9px;
+  }
+  .result-ledger-row .paper-date {
+    min-width: 0;
+    padding: 10px 6px;
+    align-self: start;
+    border-radius: 12px;
+  }
+  .paper-date strong {
+    font-size: 25px;
+  }
+  .result-ledger-actions {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .result-ledger-actions button {
+    font-size: 10px !important;
+  }
+  .result-ledger-score {
+    grid-column: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .result-ledger-score strong {
+    font-size: 22px;
+  }
+  .paper-card {
+    padding: 21px;
+  }
+  .paper-card h2 {
+    font-size: 20px;
+  }
+  .paper-card > header {
+    gap: 17px;
+  }
+  .exam-overview {
+    gap: 20px;
+    justify-content: space-between;
+  }
+  .exam-overview span {
+    font-size: 9px;
+    line-height: 1.7;
+  }
+  .exam-overview strong {
+    font-size: 24px;
+  }
+  .batch-id-entry {
+    width: 100%;
+    margin: 0;
+  }
+  .batch-id-entry form {
+    flex-wrap: wrap;
+  }
+  .schedule-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .schedule-day {
+    min-width: 74px;
+    padding: 14px 9px;
+  }
+  .schedule-day strong {
+    font-size: 25px;
+  }
+  .day-agenda {
+    padding: 21px;
+  }
+  .day-agenda h2 {
+    font-size: 22px;
+  }
+  .day-agenda > header > span {
+    font-size: 9px;
+  }
+  .agenda-events li {
+    grid-template-columns: 60px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .agenda-events time {
+    font-size: 10px;
+  }
+  .agenda-event {
+    padding: 16px;
+  }
+  .agenda-event h3 {
+    font-size: 13px;
+  }
+  .agenda-event p {
+    font-size: 10px;
+  }
+  .schedule-overview {
+    padding: 23px;
+  }
+  .schedule-mark {
+    display: none;
+  }
+  .schedule-overview dl {
+    margin: 12px 0 20px;
+  }
+  .subject-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .subject-cards .subject-result-card {
+    padding: 23px;
+  }
+  .subject-cards .subject-result-head {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+  }
+  .subject-cards .subject-result-score {
+    font-size: 31px;
+  }
+  .subject-key-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .subject-key-metrics dd {
+    font-size: 24px;
+  }
+  .subject-answer-counts {
+    font-size: 10px;
+  }
+  .result-recap-focused .score-story-value {
+    font-size: 46px;
+  }
+  .result-recap-focused .rank-summary {
+    padding: 21px;
+  }
+  .result-links button {
+    font-size: 10px !important;
+  }
+  .subject-overview > header h2 {
+    font-size: 23px;
+  }
+  #notice-list:not(.virtual-list) {
+    grid-template-columns: 1fr;
+  }
+  #page-messages.active {
+    height: calc(100dvh - 245px);
+    min-height: 400px;
+  }
+  .msg-bubble {
+    max-width: 100%;
+    padding: 17px;
+  }
+  .msg-bubble-text {
+    font-size: 12px;
+  }
+}
+/* Weekday first: the date supports the day, not the other way around. */
+.schedule-day {
+  min-width: 94px;
+  gap: 8px;
+  padding: 20px 12px;
+}
+.schedule-day > .schedule-weekday {
+  font: 600 28px/1.15 var(--font-heading);
+  letter-spacing: -0.6px;
+}
+.schedule-day > .schedule-date {
+  font: 500 13px/1.5 var(--font-body);
+  opacity: 0.85;
+}
+.schedule-day small {
+  font-size: 10px;
+}
+.schedule-day.active {
+  box-shadow: inset 0 -4px 0 #00000018;
+}
+.studio-ui:not(.light-mode) .section-nav button.active,
+.studio-ui:not(.light-mode) .dock-btn.active {
+  background: var(--lavender);
+  color: var(--accent);
+}
+.studio-ui:not(.light-mode) .topbar {
+  background: var(--bg);
+}
+.studio-ui:not(.light-mode) .day-agenda,
+.studio-ui:not(.light-mode) .paper-card,
+.studio-ui:not(.light-mode) .subject-result-card {
+  box-shadow: 0 6px 24px #00000012;
+}
+/* Small, deliberate launcher rows inside the closed-by-default Settings panel. */
+.studio-ui #settings-functions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0 24px;
+  padding: 0 20px 20px;
+}
+.studio-ui #settings-functions-grid .function-nav-card {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: none !important;
+  text-align: left;
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+}
+.function-number {
+  color: var(--accent);
+  font: 500 12px var(--font-heading);
+}
+.function-copy {
+  flex: 1;
+  min-width: 0;
+}
+.function-copy strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.function-copy small {
+  display: block;
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.studio-ui #settings-functions-grid .function-nav-card:hover {
+  color: var(--accent);
+}
+@media (max-width: 768px) {
+  .schedule-day {
+    min-width: 86px;
+    padding: 18px 12px;
+  }
+  .schedule-day > .schedule-weekday {
+    font-size: 25px;
+  }
+  .studio-ui #settings-functions-grid {
+    grid-template-columns: 1fr !important;
+    padding: 0 16px 16px;
+  }
+}

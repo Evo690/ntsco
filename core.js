@@ -1,8 +1,8 @@
 const pages = {
-  dashboard: 'Dashboard', courses: 'My Courses', messages: 'Messages',
-  timetable: 'Time Table', examhall: 'Examination Hall', era: 'ERA Forced Results', examcal: 'Exam Calendar',
-  neural: 'Neural Network',
-  notices: 'Notice Board', study: 'Study Content', practice: 'Practice', settings: 'Settings', 'result-detail': 'Result Detail', leaderboard: 'Leaderboard',
+  dashboard: 'Overview', classes: 'Classes', recordings: 'Recorded classes', courses: 'Courses', messages: 'Messages',
+  timetable: 'Classes', examhall: 'Exam Hall', era: 'Results', examcal: 'Exam timeline',
+  neural: 'Model lab',
+  notices: 'Notices', study: 'File browser', practice: 'Chemistry lab', settings: 'Settings', 'result-detail': 'Result Detail', leaderboard: 'Leaderboard',
   solutions: 'Solutions'
 };
 

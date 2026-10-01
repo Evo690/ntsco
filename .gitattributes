@@ -1,0 +1,4 @@
+# The static-hosting bundle is generated from src/manifest.json.
+main.js linguist-generated=true
+# Shared CSS is bundled from src/styles/manifest.json.
+styles.css linguist-generated=true

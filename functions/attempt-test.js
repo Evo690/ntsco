@@ -101,7 +101,7 @@
             const mode = localStorage.getItem(modeKey);
             const preset = localStorage.getItem(presetKey);
 
-            if (mode === 'light') {
+            if (mode !== 'dark') {
                 document.body.classList.add('light-mode');
             } else {
                 document.body.classList.remove('light-mode');
@@ -1444,7 +1444,7 @@
         if (window.opener && !window.opener.closed) {
             window.close();
         } else {
-            window.location.href = '../index.html';
+            window.location.href = '../index.html?module=settings&panel=functions';
         }
     }
 

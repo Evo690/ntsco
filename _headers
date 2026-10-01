@@ -1,0 +1,4 @@
+# Cloudflare Pages: revalidate page/asset URLs across deployments.
+# Content-versioned CSS/JS links also prevent old browser entries being reused.
+/*
+  Cache-Control: no-cache
