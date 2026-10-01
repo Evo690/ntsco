@@ -1,0 +1,163 @@
+{
+  "name": "RankNet Model Benchmark & Deployment Engine",
+  "selected_model": "Model B (Combined)",
+  "stat_constants": {
+    "slope_tgn": -0.6776,
+    "intercept_tgn": 0.813,
+    "slope_k": -4.6774,
+    "intercept_k": 4.574
+  },
+  "benchmark": {
+    "model_a_institute": {
+      "training_samples": 859,
+      "mae": 0.46,
+      "median": 0.31,
+      "rmse": 0.7,
+      "max_error": 4.73,
+      "within_3pts": 99.4,
+      "within_5pts": 100.0
+    },
+    "model_b_combined": {
+      "training_samples": 1009,
+      "checkthis_samples_added": 150,
+      "mae": 0.41,
+      "median": 0.27,
+      "rmse": 0.62,
+      "max_error": 4.26,
+      "within_3pts": 99.4,
+      "within_5pts": 100.0
+    },
+    "tests_won": {
+      "model_a": 5,
+      "model_b": 13
+    },
+    "all_tests": [
+      {
+        "testName": "INTERNAL TEST-00_29-Mar-2026",
+        "sampleCount": 49,
+        "mae_a": 0.64,
+        "mae_b": 0.54,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-10 (XI JEE PHASE-1& 2)_12-Oct-2025",
+        "sampleCount": 24,
+        "mae_a": 0.27,
+        "mae_b": 0.16,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-11 (XI JEE PHASE-1& 2)_16-Nov-2025",
+        "sampleCount": 28,
+        "mae_a": 0.96,
+        "mae_b": 0.74,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-12 (XI JEE PHASE-1& 2)_07-Dec-2025",
+        "sampleCount": 24,
+        "mae_a": 0.46,
+        "mae_b": 0.27,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-13 (XI JEE PHASE-1& 2)_28-Dec-2025",
+        "sampleCount": 23,
+        "mae_a": 0.38,
+        "mae_b": 0.61,
+        "winner": "A"
+      },
+      {
+        "testName": "INTERNAL TEST-14 (XI JEE PHASE-1& 2)_18-Jan-2026",
+        "sampleCount": 26,
+        "mae_a": 1.09,
+        "mae_b": 1.08,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-1_05-Apr-2026",
+        "sampleCount": 44,
+        "mae_a": 0.43,
+        "mae_b": 0.43,
+        "winner": "A"
+      },
+      {
+        "testName": "INTERNAL TEST-4_12th JEE",
+        "sampleCount": 113,
+        "mae_a": 0.26,
+        "mae_b": 0.23,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-6_12th JEE",
+        "sampleCount": 105,
+        "mae_a": 0.48,
+        "mae_b": 0.49,
+        "winner": "A"
+      },
+      {
+        "testName": "INTERNAL TEST-8 (XI JEE PHASE-1& 2)_31-Aug-2025",
+        "sampleCount": 26,
+        "mae_a": 0.6,
+        "mae_b": 0.52,
+        "winner": "B"
+      },
+      {
+        "testName": "INTERNAL TEST-8_12 JEE",
+        "sampleCount": 80,
+        "mae_a": 0.34,
+        "mae_b": 0.25,
+        "winner": "B"
+      },
+      {
+        "testName": "Internal Test-06 XI JEE_20-July",
+        "sampleCount": 24,
+        "mae_a": 0.77,
+        "mae_b": 0.77,
+        "winner": "A"
+      },
+      {
+        "testName": "Internal Test-4 SPN_15JUNE",
+        "sampleCount": 17,
+        "mae_a": 0.26,
+        "mae_b": 0.22,
+        "winner": "B"
+      },
+      {
+        "testName": "JEE INTERNAL TEST-7 (NT-3)",
+        "sampleCount": 97,
+        "mae_a": 0.27,
+        "mae_b": 0.24,
+        "winner": "B"
+      },
+      {
+        "testName": "NATIONAL TEST-1 (IT-3)",
+        "sampleCount": 105,
+        "mae_a": 0.54,
+        "mae_b": 0.37,
+        "winner": "B"
+      },
+      {
+        "testName": "National Test-02 (IT-07)_11 JEE",
+        "sampleCount": 27,
+        "mae_a": 0.3,
+        "mae_b": 0.35,
+        "winner": "A"
+      },
+      {
+        "testName": "National Test-03 (IT-09)_11 JEE_22-Sep-25",
+        "sampleCount": 22,
+        "mae_a": 1.01,
+        "mae_b": 0.75,
+        "winner": "B"
+      },
+      {
+        "testName": "National Test-1 (IT-5)_XI JEE_30-June-2025",
+        "sampleCount": 25,
+        "mae_a": 0.34,
+        "mae_b": 0.33,
+        "winner": "B"
+      }
+    ]
+  }
+}

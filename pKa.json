@@ -1,0 +1,237 @@
+[
+  {
+    "name": "HSbF6 (Fluoroantimonic acid)",
+    "pka": -25.0,
+    "important": false
+  },
+  {
+    "name": "PH4+",
+    "pka": -14.0,
+    "important": false
+  },
+  {
+    "name": "HClO4",
+    "pka": -10.0,
+    "important": false
+  },
+  {
+    "name": "HI",
+    "pka": -10.0,
+    "important": false
+  },
+  {
+    "name": "HBr",
+    "pka": -8.7,
+    "important": false
+  },
+  {
+    "name": "HCl",
+    "pka": -6.3,
+    "important": false
+  },
+  {
+    "name": "CH(CN)3",
+    "pka": -5.1,
+    "important": true
+  },
+  {
+    "name": "H2SO4",
+    "pka": -3.0,
+    "important": true
+  },
+  {
+    "name": "H3O+",
+    "pka": -1.74,
+    "important": true
+  },
+  {
+    "name": "HNO3",
+    "pka": -1.4,
+    "important": false
+  },
+  {
+    "name": "CH(NO2)3",
+    "pka": 0.17,
+    "important": false
+  },
+  {
+    "name": "Picric Acid",
+    "pka": 0.3,
+    "important": true
+  },
+  {
+    "name": "PhSO3H",
+    "pka": 0.7,
+    "important": true
+  },
+  {
+    "name": "Pentagonic acid",
+    "pka": 0.8,
+    "important": false
+  },
+  {
+    "name": "Oxalic acid",
+    "pka": 1.27,
+    "important": true
+  },
+  {
+    "name": "Squaric acid",
+    "pka": 1.5,
+    "important": true
+  },
+  {
+    "name": "H3PO4",
+    "pka": 2.12,
+    "important": true
+  },
+  {
+    "name": "Deltic acid",
+    "pka": 2.57,
+    "important": false
+  },
+  {
+    "name": "Malonic acid",
+    "pka": 2.83,
+    "important": false
+  },
+  {
+    "name": "HF",
+    "pka": 3.17,
+    "important": false
+  },
+  {
+    "name": "HCOOH",
+    "pka": 3.75,
+    "important": true
+  },
+  {
+    "name": "Succinic acid",
+    "pka": 4.19,
+    "important": false
+  },
+  {
+    "name": "Benzoic Acid",
+    "pka": 4.2,
+    "important": true
+  },
+  {
+    "name": "Hexagonic Acid",
+    "pka": 4.38,
+    "important": false
+  },
+  {
+    "name": "Anilinium ion (Ph-NH3+)",
+    "pka": 4.6,
+    "important": false
+  },
+  {
+    "name": "HN3",
+    "pka": 4.7,
+    "important": false
+  },
+  {
+    "name": "CH3COOH",
+    "pka": 4.75,
+    "important": true
+  },
+  {
+    "name": "H2CO3",
+    "pka": 6.35,
+    "important": true
+  },
+  {
+    "name": "H2S",
+    "pka": 7.04,
+    "important": false
+  },
+  {
+    "name": "Acetylacetone (pentane-2,4-dione)",
+    "pka": 8.93,
+    "important": true
+  },
+  {
+    "name": "NH4+",
+    "pka": 9.25,
+    "important": true
+  },
+  {
+    "name": "HCN",
+    "pka": 9.31,
+    "important": true
+  },
+  {
+    "name": "Phenol (Ph-OH)",
+    "pka": 9.89,
+    "important": true
+  },
+  {
+    "name": "Thiol",
+    "pka": 10.0,
+    "important": true
+  },
+  {
+    "name": "Dimethyl malonate",
+    "pka": 13.0,
+    "important": false
+  },
+  {
+    "name": "CH3OH",
+    "pka": 15.5,
+    "important": true
+  },
+  {
+    "name": "H2O",
+    "pka": 15.74,
+    "important": true
+  },
+  {
+    "name": "Cyclopentadiene",
+    "pka": 15.9,
+    "important": true
+  },
+  {
+    "name": "C2H5OH",
+    "pka": 16.0,
+    "important": true
+  },
+  {
+    "name": "CH3-CO-CH3 (Acetone)",
+    "pka": 19.3,
+    "important": true
+  },
+  {
+    "name": "HC≡CH (Acetylene)",
+    "pka": 25.0,
+    "important": true
+  },
+  {
+    "name": "NH3",
+    "pka": 35.0,
+    "important": true
+  },
+  {
+    "name": "H2",
+    "pka": 36.0,
+    "important": true
+  },
+  {
+    "name": "Toluene",
+    "pka": 40.0,
+    "important": false
+  },
+  {
+    "name": "Benzene",
+    "pka": 43.0,
+    "important": false
+  },
+  {
+    "name": "CH2=CH2 (Ethylene)",
+    "pka": 44.0,
+    "important": false
+  },
+  {
+    "name": "Ethane",
+    "pka": 52.0,
+    "important": true
+  }
+]

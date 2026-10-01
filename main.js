@@ -1,0 +1,9345 @@
+/* Renderers */
+function activeSubTab(pageId, fallback = 'all') {
+  var _APP_STATE$activeSubT;
+  return ((_APP_STATE$activeSubT = APP_STATE.activeSubTabs) === null || _APP_STATE$activeSubT === void 0 ? void 0 : _APP_STATE$activeSubT[pageId]) || fallback;
+}
+function searchMatch(...values) {
+  const q = String(APP_STATE.globalSearch || '').trim().toLowerCase();
+  if (!q) return true;
+  return values.some(v => String(v || '').toLowerCase().includes(q));
+}
+function renderVirtualList(root, items, rowHeight, renderItem) {
+  if (!root) return;
+  if (items.length <= 20) {
+    root.classList.remove('virtual-list');
+    root.innerHTML = items.map(renderItem).join('');
+    root.onscroll = null;
+    return;
+  }
+  root.classList.add('virtual-list');
+  const viewportHeight = Math.max(root.clientHeight || 360, 280);
+  const overscan = 6;
+  const totalHeight = items.length * rowHeight;
+  root.innerHTML = `<div class="virtual-spacer" style="height:${totalHeight}px"></div><div class="virtual-content"></div>`;
+  const content = root.querySelector('.virtual-content');
+  if (!content) return;
+  const renderWindow = () => {
+    const scrollTop = root.scrollTop || 0;
+    const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+    const visibleCount = Math.ceil(viewportHeight / rowHeight) + overscan * 2;
+    const end = Math.min(items.length, start + visibleCount);
+    const offsetY = start * rowHeight;
+    content.style.transform = `translateY(${offsetY}px)`;
+    content.innerHTML = items.slice(start, end).map(renderItem).join('');
+  };
+  root.onscroll = renderWindow;
+  renderWindow();
+}
+function renderTodayClasses(items) {
+  const root = document.getElementById('today-classes-list');
+  if (!root) return;
+  const today = getIstDateKey();
+  const nowMin = getIstHourMinute();
+  const todayItems = items.filter(c => normalizeDateKey(c === null || c === void 0 ? void 0 : c.classDate) === today && !String((c === null || c === void 0 ? void 0 : c.classType) || '').includes('Doubt')).filter(c => searchMatch(c.subjects, c.classType, c.startTime, formatTimeLabel(c.startTime))).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+  if (!todayItems.length) {
+    root.innerHTML = '<div class="empty">No classes today</div>';
+    return;
+  }
+  root.innerHTML = todayItems.map(c => {
+    const done = timeToMinutes(c.startTime) < nowMin;
+    return `<div class="class-item"><div class="class-time">${escapeHtml(formatTimeLabel(c.startTime))}</div><div class="class-info"><div class="class-name">${escapeHtml(c.subjects || 'Class')}</div><div class="class-teacher">${escapeHtml(c.classType || 'Live Class')}</div></div><button class="${done ? 'class-btn gray' : 'class-btn'}">${done ? 'Done' : 'Join'}</button></div>`;
+  }).join('');
+}
+function renderTimetable(items) {
+  const grid = document.getElementById('timetable-grid');
+  const range = document.getElementById('timetable-range');
+  if (!grid) return;
+  const clean = items.filter(c => !String((c === null || c === void 0 ? void 0 : c.classType) || '').includes('Doubt')).filter(c => searchMatch(c.subjects, c.classType, c.classDate, c.startTime)).map(c => ({
+    ...c,
+    classDateKey: normalizeDateKey(c.classDate)
+  })).filter(c => c.classDateKey);
+  if (!clean.length) {
+    grid.classList.remove('tt-grid');
+    grid.innerHTML = '<div class="empty">No timetable classes found</div>';
+    if (range) range.textContent = 'No week data';
+    return;
+  }
+  const dates = [...new Set(clean.map(c => c.classDateKey))].sort().slice(0, 7);
+  if (range) range.textContent = `${formatDateLabel(dates[0])} - ${formatDateLabel(dates[dates.length - 1])}`;
+  grid.classList.remove('tt-grid');
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+  grid.style.gap = '10px';
+  grid.style.background = 'transparent';
+  grid.style.minWidth = 'unset';
+  grid.innerHTML = dates.map(dateKey => {
+    const dayItems = clean.filter(c => c.classDateKey === dateKey).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+    const dayLabel = new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short'
+    });
+    const rows = dayItems.length ? dayItems.map(c => `<div style="padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-top:8px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">${escapeHtml(formatTimeLabel(c.startTime))}</div><div class="tt-class ${getSubjectClass(c.subjects)}">${escapeHtml(c.subjects || 'Class')}</div><div style="font-size:11px;color:var(--text3);margin-top:5px">${escapeHtml(c.classType || 'Live Class')}</div></div>`).join('') : '<div style="font-size:11px;color:var(--text3);margin-top:8px">No classes</div>';
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px"><div style="font-size:12px;font-weight:600;color:var(--text2)">${escapeHtml(dayLabel)}</div>${rows}</div>`;
+  }).join('');
+}
+function renderMessageGroups(groups) {
+  const list = document.getElementById('msg-group-list');
+  const countEl = document.getElementById('msg-unread-count');
+  if (!list) return;
+  const tab = activeSubTab('messages', 'all');
+  const filtered = groups.filter(g => {
+    if (tab === 'unread' && !(g.unreadCount > 0)) return false;
+    return searchMatch(g.title, g.lastMessageTime, g.lastMessageText);
+  });
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">No messages found</div>';
+    if (countEl) countEl.textContent = '0 unread';
+    return;
+  }
+  const totalUnread = filtered.reduce((acc, g) => acc + (g.unreadCount || 0), 0);
+  if (countEl) countEl.textContent = `${totalUnread} unread`;
+  list.innerHTML = filtered.map(g => {
+    const isUnread = g.unreadCount > 0;
+    const fallback = escapeHtml((g.title || 'M')[0].toUpperCase());
+    const iconHtml = g.iconUrl ? `<img src="${escapeHtml(g.iconUrl)}" class="msg-group-icon" onerror="this.outerHTML='<div class=\\'msg-group-icon-fallback\\'>${fallback}</div>'"/>` : `<div class="msg-group-icon-fallback">${fallback}</div>`;
+    return `
+        <div class="msg-group-item ${isUnread ? 'unread' : ''} ${currentGroupId === g.groupId ? 'active' : ''}" onclick="selectMessageGroup('${g.groupId}', '${escapeHtml(g.title)}')">
+          ${iconHtml}
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px;">
+              <div style="font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(g.title || 'Group')}</div>
+              <div style="font-size:11px; color:var(--text3); flex-shrink:0; margin-left:8px;">${escapeHtml(g.lastMessageTime || '')}</div>
+            </div>
+            <div style="font-size:12px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${isUnread ? `<span style="color:var(--accent);font-weight:600">${g.unreadCount} new messages</span>` : 'Click to view thread'}
+            </div>
+          </div>
+        </div>
+      `;
+  }).join('');
+}
+function hasTestSyllabus(syllabus) {
+  if (!syllabus || typeof syllabus !== 'string') return false;
+  const lines = syllabusToLines(syllabus);
+  const meaningful = lines.filter(l => l.trim().toUpperCase() !== 'SYLLABUS');
+  return meaningful.length > 0;
+}
+
+function parseSyllabusSubjects(syllabus) {
+  const lines = syllabusToLines(syllabus);
+  const filtered = lines.filter(l => l.trim().toUpperCase() !== 'SYLLABUS');
+  if (!filtered.length) return [];
+
+  const subjectRegex = /^(MATHS|MATHEMATICS|PHYSICS|CHEMISTRY|BIOLOGY|BOTANY|ZOOLOGY)\s*:/i;
+  const hasSubjectMarkers = filtered.some(l => subjectRegex.test(l.trim()));
+
+  if (!hasSubjectMarkers) {
+    return [{
+      subject: 'Syllabus Topics',
+      color: 'var(--accent)',
+      icon: '📚',
+      lines: filtered
+    }];
+  }
+
+  const subjects = [];
+  let current = null;
+  let batchHeader = '';
+
+  for (const rawLine of filtered) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (/SYLLABUS/i.test(line) && !subjectRegex.test(line)) {
+      batchHeader = line.replace(/[:\s]*SYLLABUS[:\s]*/i, '').trim();
+      continue;
+    }
+
+    const match = line.match(subjectRegex);
+    if (match) {
+      const subjName = match[1].toUpperCase();
+      let color = 'var(--accent)';
+      let icon = '⚡';
+      let title = 'Physics';
+      if (subjName.startsWith('MATH')) {
+        color = 'var(--green)';
+        icon = '📐';
+        title = 'Mathematics';
+      } else if (subjName.startsWith('CHEM')) {
+        color = 'var(--purple)';
+        icon = '🧪';
+        title = 'Chemistry';
+      } else if (subjName.startsWith('BIO') || subjName.startsWith('BOT') || subjName.startsWith('ZOO')) {
+        color = 'var(--amber)';
+        icon = '🧬';
+        title = subjName.charAt(0) + subjName.slice(1).toLowerCase();
+      } else if (subjName.startsWith('PHY')) {
+        color = 'var(--accent)';
+        icon = '⚡';
+        title = 'Physics';
+      }
+
+      const fullTitle = batchHeader ? `${title} (${batchHeader})` : title;
+      current = {
+        subject: fullTitle,
+        color,
+        icon,
+        lines: []
+      };
+      subjects.push(current);
+      const rest = line.replace(subjectRegex, '').trim();
+      if (rest) current.lines.push(rest);
+    } else {
+      if (current) {
+        current.lines.push(line);
+      } else {
+        current = {
+          subject: batchHeader ? `General (${batchHeader})` : 'General Topics',
+          color: 'var(--accent)',
+          icon: '📚',
+          lines: [line]
+        };
+        subjects.push(current);
+      }
+    }
+  }
+
+  return subjects;
+}
+
+function ensureSyllabusModal() {
+  if (document.getElementById('exam-syllabus-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'exam-syllabus-modal-backdrop';
+  wrapper.className = 'syllabus-modal-backdrop';
+  wrapper.innerHTML = `
+    <div class="syllabus-modal-card">
+      <div class="syllabus-modal-header">
+        <div class="syllabus-modal-header-info">
+          <div class="syllabus-modal-title-wrap">
+            <span style="font-size:16px;flex-shrink:0">📚</span>
+            <div id="exam-syllabus-title" class="syllabus-modal-title">Exam Syllabus</div>
+          </div>
+          <div id="exam-syllabus-meta" class="syllabus-modal-meta"></div>
+        </div>
+        <div class="syllabus-modal-header-actions">
+          <button id="exam-syllabus-copy-btn" class="start-btn gray syllabus-modal-copy-btn" onclick="copyTestSyllabusText()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="exam-syllabus-copy-text">Copy</span>
+          </button>
+          <button class="syllabus-modal-close-btn" onclick="closeTestSyllabusModal()">Close</button>
+        </div>
+      </div>
+      <div id="exam-syllabus-body" class="syllabus-modal-body"></div>
+    </div>`;
+  wrapper.addEventListener('click', e => {
+    if (e.target === wrapper) closeTestSyllabusModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeTestSyllabusModal();
+  });
+  document.body.appendChild(wrapper);
+}
+
+window.closeTestSyllabusModal = function closeTestSyllabusModal() {
+  const el = document.getElementById('exam-syllabus-modal-backdrop');
+  if (el) el.style.display = 'none';
+};
+
+window.openTestSyllabusModal = function openTestSyllabusModal(testId, event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  const cleanId = String(testId || '').trim();
+  const allTests = [...(APP_STATE.tests || []), ...(APP_STATE.eraTests || [])];
+  const test = allTests.find(t => String(t.id || '') === cleanId || String(t.testPaperId || '') === cleanId);
+  if (!test || !test.syllabus) {
+    alert('Syllabus not available for this exam.');
+    return;
+  }
+
+  ensureSyllabusModal();
+  const titleEl = document.getElementById('exam-syllabus-title');
+  const metaEl = document.getElementById('exam-syllabus-meta');
+  const bodyEl = document.getElementById('exam-syllabus-body');
+  const backdrop = document.getElementById('exam-syllabus-modal-backdrop');
+
+  if (titleEl) titleEl.textContent = test.testName || test.name || 'Exam Syllabus';
+
+  const metaParts = [];
+  if (test.examDate || test.testDate || test.startDate) {
+    metaParts.push(formatDateLabel(test.examDate || test.testDate || test.startDate));
+  }
+  if (test.duration) metaParts.push(`${test.duration} mins`);
+  if (test.isOffline != null) metaParts.push(test.isOffline ? 'Offline Exam' : 'Online Exam');
+  if (test.id || test.testPaperId) metaParts.push(`Paper ID: ${test.testPaperId || test.id}`);
+
+  if (metaEl) metaEl.textContent = metaParts.join(' · ');
+
+  window._activeSyllabusTest = test;
+
+  const subjects = parseSyllabusSubjects(test.syllabus);
+  if (!subjects.length) {
+    if (bodyEl) bodyEl.innerHTML = '<div class="empty">No syllabus details found.</div>';
+  } else {
+    if (bodyEl) {
+      bodyEl.innerHTML = subjects.map(s => `
+        <div class="syllabus-modal-subject-card">
+          <div class="syllabus-modal-subject-header" style="color:${s.color}">
+            <span>${s.icon}</span>
+            <span>${escapeHtml(s.subject)}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${s.lines.map(line => `
+              <div class="syllabus-modal-topic" style="border-left-color:${s.color}">
+                ${escapeHtml(line)}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  const copyText = document.getElementById('exam-syllabus-copy-text');
+  if (copyText) copyText.textContent = 'Copy';
+
+  if (backdrop) backdrop.style.display = 'flex';
+};
+
+window.copyTestSyllabusText = function copyTestSyllabusText() {
+  const test = window._activeSyllabusTest;
+  if (!test || !test.syllabus) return;
+  const lines = syllabusToLines(test.syllabus).filter(l => l.trim().toUpperCase() !== 'SYLLABUS');
+  const text = `${test.testName || 'Exam Syllabus'}\n${lines.join('\n')}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      const copyText = document.getElementById('exam-syllabus-copy-text');
+      if (copyText) {
+        copyText.textContent = 'Copied!';
+        setTimeout(() => { copyText.textContent = 'Copy'; }, 2000);
+      }
+    });
+  }
+};
+
+function renderExamHall(tests) {
+  if (Array.isArray(tests) && tests.length) {
+    scanAndUploadOnlineTests(tests);
+  }
+  const root = document.getElementById('examhall-list');
+  const count = document.getElementById('examhall-count');
+  if (!root) return;
+  const tab = activeSubTab('examhall', 'all');
+  const filtered = tests.filter(t => {
+    const published = Boolean(t.isPublish);
+    const dt = new Date(t.examDate);
+    const now = new Date();
+    const status = Number.isNaN(dt.getTime()) ? published ? 'done' : 'upcoming' : published ? 'done' : dt.toDateString() === now.toDateString() ? 'live' : dt > now ? 'upcoming' : 'live';
+    if (tab === 'published' && !published) return false;
+    if (tab === 'pending' && published) return false;
+    if (tab === 'live' && status !== 'live') return false;
+    return searchMatch(t.testName, t.examType, t.testType, t.id, t.testPaperId);
+  });
+  if (!filtered.length) {
+    root.innerHTML = '<div class="empty">No exam hall tests found</div>';
+    if (count) count.textContent = '0 active tests';
+    return;
+  }
+  const getExamStatus = test => {
+    const dt = new Date(test.examDate);
+    if (Number.isNaN(dt.getTime())) return test.isPublish ? 'done' : 'upcoming';
+    if (test.isPublish) return 'done';
+    const now = new Date();
+    if (dt.toDateString() === now.toDateString()) return 'live';
+    return dt > now ? 'upcoming' : 'live';
+  };
+  const active = filtered.filter(t => getExamStatus(t) !== 'done').length;
+  if (count) count.textContent = `${active} active test${active === 1 ? '' : 's'}`;
+  root.innerHTML = filtered.map(test => {
+    const status = getExamStatus(test);
+    const isDone = status === 'done';
+    const appeared = test.appeared || {};
+    const testId = String(test.id || test.testPaperId || '');
+    const published = Boolean(test.isPublish);
+    const date = formatDateLabel(test.examDate || test.testDate || test.startDate);
+    const hasMarks = appeared.totalMarks != null && appeared.totalSubjectMarks != null;
+    const rank = appeared.rank != null ? `Rank #${appeared.rank}` : '';
+    const badgeText = published ? 'Published' : status === 'live' ? 'Live' : 'Scheduled';
+    const badgeClass = published ? 'badge-done' : status === 'live' ? 'badge-live' : 'badge-upcoming';
+    const statusColor = published ? 'var(--green)' : status === 'live' ? 'var(--red)' : 'var(--amber)';
+
+    const metaParts = [escapeHtml(date)];
+    if (test.duration) metaParts.push(`${test.duration} min`);
+    if (test.isOffline != null) metaParts.push(test.isOffline ? 'Offline' : 'Online');
+    if (testId) metaParts.push(`ID: ${escapeHtml(testId)}`);
+
+    const hasSyllabus = hasTestSyllabus(test.syllabus);
+    const resultButton = isDone && testId ? `<button class="start-btn gray" style="margin-top:0" onclick="openExamResult('${escapeHtml(testId)}')">View Result</button>` : '';
+    const syllabusButton = hasSyllabus ? `<button class="start-btn gray exam-syllabus-btn" style="margin-top:0" onclick="openTestSyllabusModal('${escapeHtml(testId)}', event)" title="View Syllabus">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Syllabus</span>
+    </button>` : '';
+
+    const actionsHtml = (resultButton || syllabusButton) ? `<div class="exam-hall-actions">${resultButton}${syllabusButton}</div>` : '';
+
+    const scoreHtml = hasMarks ? `
+      <div class="exam-hall-right">
+        <div class="exam-hall-score" style="color:var(--text)">${escapeHtml(appeared.totalMarks)}/${escapeHtml(appeared.totalSubjectMarks)}</div>
+        ${rank ? `<div class="exam-hall-rank">${escapeHtml(rank)}</div>` : ''}
+      </div>` : '';
+
+    return `<div class="exam-hall-item" style="${status === 'live' ? 'border-color:var(--red);background:rgba(239,68,68,0.05)' : ''}">
+        <div class="exam-hall-icon" style="background:${published ? 'rgba(34,197,94,0.12)' : status === 'live' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'};color:${statusColor}">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15V5h12v10H4z"/><path d="M7 8h6M7 11h4"/></svg>
+        </div>
+        <div class="exam-hall-info">
+          <div class="exam-hall-header-row">
+            <span class="exam-hall-name" style="margin-bottom:0">${escapeHtml(test.testName || 'Exam')}</span>
+            <span class="exam-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="exam-hall-meta">${metaParts.join(' · ')}</div>
+          ${actionsHtml}
+        </div>
+        ${scoreHtml}
+      </div>`;
+  }).join('');
+  updateExamLoadMoreButton();
+}
+function renderEraTests(tests) {
+  if (Array.isArray(tests) && tests.length) {
+    scanAndUploadOnlineTests(tests);
+  }
+  const root = document.getElementById('era-list');
+  const count = document.getElementById('era-count');
+  if (!root) return;
+  const tab = activeSubTab('era', 'all');
+  const filtered = tests.filter(t => {
+    const published = Boolean(t.isPublish);
+    if (tab === 'published' && !published) return false;
+    if (tab === 'pending' && published) return false;
+    return searchMatch(t.testName, t.name, t.id, t.testPaperId, t.examType, t.testType);
+  });
+  if (!filtered.length) {
+    root.innerHTML = '<div class="empty">No tests found</div>';
+    if (count) count.textContent = '0 tests';
+    return;
+  }
+  if (count) count.textContent = `${filtered.length} test${filtered.length === 1 ? '' : 's'}`;
+  root.innerHTML = filtered.map(test => {
+    const testId = String(test.id || test.testPaperId || '');
+    const published = Boolean(test.isPublish);
+    const date = formatDateLabel(test.examDate || test.testDate || test.startDate);
+    const badgeText = published ? 'Published' : 'Not Published';
+    const badgeClass = published ? 'badge-done' : 'badge-upcoming';
+    const statusColor = published ? 'var(--green)' : 'var(--amber)';
+
+    const metaParts = [escapeHtml(date)];
+    if (test.duration) metaParts.push(`${test.duration} min`);
+    if (test.isOffline != null) metaParts.push(test.isOffline ? 'Offline' : 'Online');
+    if (testId) metaParts.push(`ID: ${escapeHtml(testId)}`);
+
+    const hasSyllabus = hasTestSyllabus(test.syllabus);
+    const forceButton = testId ? `<button class="start-btn gray" style="margin-top:0" onclick="openEraForcedResult('${escapeHtml(testId)}')">Force Result</button>` : '';
+    const syllabusButton = hasSyllabus ? `<button class="start-btn gray exam-syllabus-btn" style="margin-top:0" onclick="openTestSyllabusModal('${escapeHtml(testId)}', event)" title="View Syllabus">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Syllabus</span>
+    </button>` : '';
+
+    const actionsHtml = (forceButton || syllabusButton) ? `<div class="exam-hall-actions">${forceButton}${syllabusButton}</div>` : '';
+
+    return `<div class="exam-hall-item">
+        <div class="exam-hall-icon" style="background:${published ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.15)'};color:${statusColor}">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15V5h12v10H4z"/><path d="M7 8h6M7 11h4"/></svg>
+        </div>
+        <div class="exam-hall-info">
+          <div class="exam-hall-header-row">
+            <span class="exam-hall-name" style="margin-bottom:0">${escapeHtml(test.testName || test.name || 'Exam')}</span>
+            <span class="exam-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="exam-hall-meta">${metaParts.join(' · ')}</div>
+          ${actionsHtml}
+        </div>
+      </div>`;
+  }).join('');
+  updateEraLoadMoreButton();
+}
+function updateExamLoadMoreButton() {
+  const btn = document.getElementById('examhall-load-more');
+  if (!btn) return;
+  const total = APP_STATE.examTotal || APP_STATE.tests.length;
+  const hasMore = APP_STATE.tests.length < total;
+  btn.style.display = hasMore ? 'block' : 'none';
+  btn.textContent = hasMore ? `Show More (${APP_STATE.tests.length}/${total})` : 'All tests loaded';
+}
+function updateEraLoadMoreButton() {
+  const btn = document.getElementById('era-load-more');
+  if (!btn) return;
+  const total = APP_STATE.eraTotal || APP_STATE.eraTests.length;
+  const hasMore = APP_STATE.eraTests.length < total;
+  btn.style.display = hasMore ? 'block' : 'none';
+  btn.textContent = hasMore ? `Show More (${APP_STATE.eraTests.length}/${total})` : 'All tests loaded';
+}
+function renderExamCalendar(entries) {
+  const root = document.getElementById('examcal-list');
+  const title = document.getElementById('examcal-title');
+  if (!root) return;
+  if (!entries.length) {
+    root.innerHTML = '<div class="empty">No exams found</div>';
+    if (title) title.textContent = 'Exam Calendar';
+    return;
+  }
+  const normalized = entries.map(item => {
+    const lines = syllabusToLines(item.syllabus || '');
+    return {
+      id: item.id,
+      name: item.name || item.testName || item.examName || 'Exam',
+      dateTime: item.dateTime || item.testDateTime || item.examDate || item.date,
+      mode: item.mode || item.testMode || item.examMode || '',
+      venue: formatVenueText(item.venue || ''),
+      syllabusLines: Array.isArray(item.syllabusLines) && item.syllabusLines.length ? item.syllabusLines : lines,
+      syllabusPreview: item.syllabusPreview || lines.slice(0, 2).join(' | ')
+    };
+  }).filter(item => item.dateTime).filter(item => searchMatch(item.name, item.dateTime, item.mode, item.venue, item.syllabusPreview));
+  const sorted = normalized.sort((a, b) => parseExamDateTime(b.dateTime) - parseExamDateTime(a.dateTime));
+  APP_STATE.calendarEntries = sorted;
+  const first = sorted.find(t => !Number.isNaN(parseExamDateTime(t.dateTime).getTime()));
+  if (title && first) title.textContent = `Exam Calendar - ${parseExamDateTime(first.dateTime).toLocaleDateString('en-IN', {
+    month: 'long',
+    year: 'numeric'
+  })}`;
+  const now = new Date();
+  root.innerHTML = sorted.slice(0, 30).map((item, i) => {
+    const dt = parseExamDateTime(item.dateTime);
+    const status = Number.isNaN(dt.getTime()) ? 'upcoming' : dt < now ? 'done' : dt.toDateString() === now.toDateString() ? 'live' : 'upcoming';
+    const syllabus = item.syllabusPreview ? `${escapeHtml(item.syllabusPreview.slice(0, 160))}${item.syllabusPreview.length > 160 ? '...' : ''}` : '';
+    const modeLabel = item.mode ? `${escapeHtml(item.mode)}` : '';
+    return `<div class="exam-item exam-calendar-item">
+        <div class="exam-dot" style="background:${status === 'done' ? 'var(--green)' : status === 'live' ? 'var(--red)' : 'var(--accent)'};margin-top:6px"></div>
+        <div class="exam-info">
+          <div class="exam-name">${i + 1}. ${escapeHtml(item.name)}</div>
+          <div class="exam-date">${escapeHtml(formatDateTimeLabel(item.dateTime))}</div>
+          <div class="exam-calendar-meta">
+            ${modeLabel ? `<span class="exam-calendar-chip">${modeLabel}</span>` : ''}
+            ${syllabus ? `<span class="exam-calendar-chip subtle">${syllabus}</span>` : ''}
+          </div>
+        </div>
+        <div class="exam-calendar-right">
+          <span class="exam-badge ${status === 'done' ? 'badge-done' : status === 'live' ? 'badge-live' : 'badge-upcoming'}">${status === 'done' ? 'Done' : status === 'live' ? 'Today' : 'Upcoming'}</span>
+          <button class="exam-view-btn" onclick="openCalendarTest(${i})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            View Details
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+function renderCourses(courses) {
+  const grid = document.getElementById('courses-grid');
+  const count = document.getElementById('courses-count');
+  if (!grid) return;
+  const tab = activeSubTab('courses', 'all');
+  const filtered = courses.filter(c => {
+    if (tab === 'live' && !c.isLive) return false;
+    if (tab === 'exam' && !c.isExamType) return false;
+    if (tab === 'classroom' && (c.isLive || c.isExamType)) return false;
+    return searchMatch(c.courseName, c.goal, c.startDate, c.expireyDate);
+  });
+  if (count) count.textContent = `${filtered.length} course${filtered.length === 1 ? '' : 's'}`;
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">No courses found</div>';
+    return;
+  }
+  const colors = ['var(--accent)', 'var(--purple)', 'var(--green)', 'var(--amber)'];
+  grid.innerHTML = filtered.map((c, i) => {
+    var _ref, _ref2, _c$courseId;
+    const tone = colors[i % colors.length];
+    const start = formatDateLabel(c.startDate);
+    const expiry = formatDateLabel(c.expireyDate);
+    const badgeBg = tone === 'var(--amber)' ? 'rgba(245,158,11,0.15)' : tone === 'var(--green)' ? 'rgba(34,197,94,0.12)' : tone === 'var(--purple)' ? 'rgba(167,139,250,0.15)' : 'rgba(61,127,255,0.15)';
+    const image = c.image || c.courseImage || '';
+    const cid = Number((_ref = (_ref2 = (_c$courseId = c.courseId) !== null && _c$courseId !== void 0 ? _c$courseId : c.id) !== null && _ref2 !== void 0 ? _ref2 : c.courseID) !== null && _ref !== void 0 ? _ref : 0);
+    const typeLabel = c.isLive ? 'Live now' : c.isExamType ? 'Exam course' : 'Classroom';
+    const imgBlock = image ? `<div class="course-image"><img src="${escapeHtml(image)}" alt="${escapeHtml(c.courseName || 'Course')}"/></div>` : '';
+    return `
+        <div class="course-card ${image ? 'has-image' : 'no-image'}" style="--course-tone:${tone}">
+          ${imgBlock}
+          <div class="course-head">
+            <span class="course-badge" style="background:${badgeBg};color:${tone}">${escapeHtml(c.goal || 'Course')}</span>
+            <span class="course-type">${escapeHtml(typeLabel)}</span>
+          </div>
+          <div class="course-name">${escapeHtml(c.courseName || 'Untitled Course')}</div>
+          <div class="course-meta">
+            <span><b>Start</b> ${escapeHtml(start)}</span>
+            <span><b>Expiry</b> ${escapeHtml(expiry)}</span>
+          </div>
+          <div class="course-prog-bar"><div class="course-prog-fill" style="width:${c.isLive ? '100%' : '72%'};background:${tone}"></div></div>
+          <div class="course-bottom">
+            <div class="course-pct">${escapeHtml(typeLabel)}</div>
+            <button class="course-btn" onclick="openCourseDetail(${cid})" ${cid ? '' : 'disabled'}>${c.isLive ? 'Join' : 'Open'}</button>
+          </div>
+        </div>
+      `;
+  }).join('');
+}
+function renderNotices(notices) {
+  const list = document.getElementById('notice-list');
+  const countEl = document.getElementById('notice-count');
+  if (!list) return;
+  const tab = activeSubTab('notices', 'all');
+  const now = Date.now();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  const filtered = notices.filter(n => {
+    const createdMs = new Date(n.createdDate || '').getTime();
+    if (tab === 'test' && !n.testDate) return false;
+    if (tab === 'recent' && (!(createdMs > 0) || now - createdMs > sevenDays)) return false;
+    return searchMatch(n.title, n.createdDate, n.testDate);
+  });
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">No notices found</div>';
+    if (countEl) countEl.textContent = '0 notices';
+    return;
+  }
+  if (countEl) countEl.textContent = `${filtered.length} notice${filtered.length === 1 ? '' : 's'}`;
+  const noticeRenderer = n => {
+    const testDateHtml = n.testDate ? ` · Test Date: ${escapeHtml(n.testDate)}` : '';
+    return `<div class="notice-item" style="display:flex; justify-content:space-between; align-items:center;"><div style="flex:1; min-width:0; padding-right:12px;"><div class="notice-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(n.title || 'Untitled Notice')}</div><div class="notice-time">Created: ${escapeHtml(n.createdDate || 'Unknown')}${testDateHtml}</div></div><button class="start-btn gray" style="margin:0; flex-shrink:0" onclick="openNoticeFile('${n.id}')">View</button></div>`;
+  };
+  renderVirtualList(list, filtered, 72, noticeRenderer);
+}
+function renderStudyContent(materials, totalCount = 0) {
+  const root = document.getElementById('study-list');
+  const count = document.getElementById('study-count');
+  const btn = document.getElementById('study-load-more');
+  if (!root) return;
+  const tab = activeSubTab('study', 'all');
+  const filtered = materials.filter(m => {
+    const subj = String(m.subjectName || '').toLowerCase();
+    if (tab === 'physics' && !subj.includes('phy')) return false;
+    if (tab === 'chemistry' && !subj.includes('chem')) return false;
+    if (tab === 'math' && !subj.includes('math')) return false;
+    return searchMatch(m.title, m.subjectName, m.createdDate);
+  });
+  if (!filtered.length) {
+    root.innerHTML = '<div class="empty">No study content found</div>';
+    if (count) count.textContent = '0 items';
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+  if (count) count.textContent = `${filtered.length} shown${totalCount ? ` / ${totalCount}` : ''}`;
+  const studyRenderer = m => {
+    let subjectColor = 'var(--accent)';
+    const subj = String(m.subjectName || '').toLowerCase();
+    if (subj.includes('chem')) subjectColor = 'var(--purple)';
+    if (subj.includes('math')) subjectColor = 'var(--green)';
+    return `
+        <div class="exam-hall-item" style="padding:10px 14px">
+          <div class="exam-hall-icon" style="background:var(--bg4); width:36px; height:36px; color:var(--text2)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="exam-hall-info">
+            <div class="exam-hall-name" style="font-size:13px">${escapeHtml(m.title || 'Document')}</div>
+            <div class="exam-hall-meta">
+              ${escapeHtml(m.createdDate || 'Unknown date')} · 
+              <span style="color:${subjectColor}; font-weight:600">${escapeHtml(m.subjectName || 'General')}</span>
+            </div>
+          </div>
+          <div class="exam-hall-right">
+            <button class="start-btn gray" style="margin-top:0" onclick="openStudyFile('${m.id}')">View</button>
+          </div>
+        </div>
+      `;
+  };
+  renderVirtualList(root, filtered, 82, studyRenderer);
+  if (btn) {
+    btn.style.display = materials.length < (totalCount || 0) ? 'block' : 'none';
+  }
+}
+function ensureAttendanceModal() {
+  if (document.getElementById('att-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'att-modal-backdrop';
+  wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:5000;padding:16px';
+  wrapper.innerHTML = `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;max-width:400px;width:100%;max-height:80vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)">
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Attendance Report</div>
+          <button onclick="document.getElementById('att-modal-backdrop').style.display='none'" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer">Close</button>
+        </div>
+        <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px">
+          <select id="att-month" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:6px;border-radius:6px;flex:1"></select>
+          <select id="att-year" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:6px;border-radius:6px;flex:1"></select>
+          <button onclick="renderAttendanceModal()" class="start-btn" style="margin:0">View</button>
+        </div>
+        <div id="att-modal-body" style="padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
+      </div>`;
+  document.body.appendChild(wrapper);
+}
+function ensureResultModal() {
+  if (document.getElementById('result-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'result-modal-backdrop';
+  wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:5000;padding:16px';
+  wrapper.innerHTML = '<div class="result-modal-card"><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)"><div style="font-size:14px;font-weight:600;color:var(--text)">Result Analysis</div><button onclick="closeResultModal()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer">Close</button></div><div id="result-modal-body" style="padding:16px"></div></div>';
+  wrapper.addEventListener('click', e => {
+    if (e.target === wrapper) closeResultModal();
+  });
+  document.body.appendChild(wrapper);
+}
+function closeResultModal() {
+  const el = document.getElementById('result-modal-backdrop');
+  if (el) el.style.display = 'none';
+}
+function showResultModal(contentHtml) {
+  ensureResultModal();
+  const backdrop = document.getElementById('result-modal-backdrop');
+  const body = document.getElementById('result-modal-body');
+  if (!backdrop || !body) return;
+  body.innerHTML = contentHtml;
+  backdrop.style.display = 'flex';
+}
+function buildResultAnalysisHtml(analysis, selected, options = {}) {
+  var _r$totalInCorrect, _r$totalUnAttempted;
+  const r = (analysis === null || analysis === void 0 ? void 0 : analysis.result) || {};
+  const testName = (analysis === null || analysis === void 0 ? void 0 : analysis.testName) || (selected === null || selected === void 0 ? void 0 : selected.testName) || (selected === null || selected === void 0 ? void 0 : selected.name) || 'Exam';
+  const fmt = v => v === null || v === undefined || v === '' ? '-' : v;
+  const topTotal = Array.isArray(r.topScoreTotal) && r.topScoreTotal.length ? r.topScoreTotal.join(', ') : '-';
+  const performanceMap = new Map(((analysis === null || analysis === void 0 ? void 0 : analysis.subjectPerformance) || []).map(p => [String(p.subjectName || '').toLowerCase(), p.performance]));
+  const topBySubject = {};
+  if (Array.isArray(r.topScoreSubjectData)) {
+    r.topScoreSubjectData.forEach(item => {
+      var _item$subjectId;
+      const key = String((_item$subjectId = item.subjectId) !== null && _item$subjectId !== void 0 ? _item$subjectId : '');
+      if (!topBySubject[key]) topBySubject[key] = [];
+      topBySubject[key].push(item.totalMarks);
+    });
+  }
+  const subjectRows = Array.isArray(r.subjectData) ? r.subjectData.map(s => {
+    var _s$totalCorrect, _ref3, _s$totalInCorrect, _ref4, _s$totalUnAttempted, _s$totalAttempted, _topBySubject$String, _s$subjectId;
+    const correct = Number((_s$totalCorrect = s.totalCorrect) !== null && _s$totalCorrect !== void 0 ? _s$totalCorrect : 0);
+    const incorrect = Number((_ref3 = (_s$totalInCorrect = s.totalInCorrect) !== null && _s$totalInCorrect !== void 0 ? _s$totalInCorrect : s.totalIncorrect) !== null && _ref3 !== void 0 ? _ref3 : 0);
+    const unattempted = Number((_ref4 = (_s$totalUnAttempted = s.totalUnAttempted) !== null && _s$totalUnAttempted !== void 0 ? _s$totalUnAttempted : s.totalUnattempted) !== null && _ref4 !== void 0 ? _ref4 : 0);
+    const attempted = Number((_s$totalAttempted = s.totalAttempted) !== null && _s$totalAttempted !== void 0 ? _s$totalAttempted : correct + incorrect);
+    const subjectTopScores = ((_topBySubject$String = topBySubject[String((_s$subjectId = s.subjectId) !== null && _s$subjectId !== void 0 ? _s$subjectId : '')]) === null || _topBySubject$String === void 0 ? void 0 : _topBySubject$String.join(', ')) || '-';
+    const performance = performanceMap.get(String(s.subjectName || '').toLowerCase()) || '-';
+    return `<div class="subject-result-card">
+        <div class="subject-result-head">
+          <div>
+            <div class="subject-result-name">${escapeHtml(s.subjectName || 'Subject')}</div>
+            <div class="result-sub">Performance ${escapeHtml(performance)} | Rank ${escapeHtml(fmt(s.rank))} | Percentile ${escapeHtml(fmt(s.percentile))}</div>
+          </div>
+          <div class="subject-result-score">${escapeHtml(fmt(s.totalMarks))}/${escapeHtml(fmt(s.totalSubjectMarks))}</div>
+        </div>
+        <div class="subject-highlight-grid">
+          <div class="mini-metric major"><div class="mini-label">Your Marks</div><div class="mini-value">${escapeHtml(fmt(s.totalMarks))}/${escapeHtml(fmt(s.totalSubjectMarks))}</div></div>
+          <div class="mini-metric major"><div class="mini-label">Average</div><div class="mini-value">${escapeHtml(fmt(s.totalAvgMarks))}</div></div>
+          <div class="mini-metric major"><div class="mini-label">Highest</div><div class="mini-value">${escapeHtml(fmt(s.highestMarks))}</div></div>
+        </div>
+        <div class="subject-result-grid">
+          <div class="mini-metric"><div class="mini-label">Attempted</div><div class="mini-value">${escapeHtml(attempted)}</div></div>
+          <div class="mini-metric"><div class="mini-label">Correct</div><div class="mini-value">${escapeHtml(correct)}</div></div>
+          <div class="mini-metric"><div class="mini-label">Wrong</div><div class="mini-value">${escapeHtml(incorrect)}</div></div>
+          <div class="mini-metric"><div class="mini-label">Unattempted</div><div class="mini-value">${escapeHtml(unattempted)}</div></div>
+          <div class="mini-metric"><div class="mini-label">Questions</div><div class="mini-value">${escapeHtml(fmt(s.totalQuestion))}</div></div>
+          <div class="mini-metric"><div class="mini-label">Not Visited</div><div class="mini-value">${escapeHtml(fmt(s.totalNotVisited))}</div></div>
+          <div class="mini-metric"><div class="mini-label">Top Scores</div><div class="mini-value">${escapeHtml(subjectTopScores)}</div></div>
+        </div>
+      </div>`;
+  }).join('') : '<div class="empty">No subject breakdown</div>';
+  const appearedRaw = options.includeRaw && options.appeared ? `<details style="margin-top:12px"><summary style="font-size:12px;color:var(--accent);cursor:pointer">Appeared result raw data</summary><pre style="margin-top:8px;background:#05070b;border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre-wrap;overflow:auto;font-size:11px;color:var(--text2)">${escapeHtml(JSON.stringify(options.appeared, null, 2))}</pre></details>` : '';
+  const analysisRaw = options.includeRaw ? `<details style="margin-top:10px"><summary style="font-size:12px;color:var(--accent);cursor:pointer">Analysis raw data</summary><pre style="margin-top:8px;background:#05070b;border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre-wrap;overflow:auto;font-size:11px;color:var(--text2)">${escapeHtml(JSON.stringify(analysis, null, 2))}</pre></details>` : '';
+  const omrRow = analysis !== null && analysis !== void 0 && analysis.omrSheetPath ? `<a class="result-link" href="${escapeHtml(analysis.omrSheetPath)}" target="_blank" rel="noopener noreferrer">OMR Sheet</a>` : '';
+  const answerKeyRow = analysis !== null && analysis !== void 0 && analysis.answerKeyFileUrl ? `<a class="result-link" href="${escapeHtml(analysis.answerKeyFileUrl)}" target="_blank" rel="noopener noreferrer">Answer Key</a>` : '';
+  const leaderboardButton = options.showLeaderboardButton || options.leaderboard ? `<button class="start-btn gray" style="margin-top:0" onclick="openCurrentLeaderboard()">Leaderboard</button>` : '';
+  const pseudoLeaderboardButton = `<button class="start-btn" style="margin-top:0" onclick="generatePseudoLeaderboardFromResult()" title="Reconstruct complete Rank 1..N leaderboard using RankNet">Pseudo Leaderboard</button>`;
+  const hasSolutions = Array.isArray(r.questionData) && r.questionData.length > 0;
+  const solutionsButton = hasSolutions ? `<button class="start-btn gray" style="margin-top:0" onclick="openCurrentSolutions()">Solutions</button>` : '';
+  const downloadPdfButton = `<button class="start-btn" style="margin-top:0" onclick="downloadResultPdf('${escapeHtml((analysis === null || analysis === void 0 ? void 0 : analysis.testPaperId) || (selected === null || selected === void 0 ? void 0 : selected.id) || (selected === null || selected === void 0 ? void 0 : selected.testPaperId) || '')}', ${Boolean(options.forced)}, this)">Download PDF</button>`;
+  const forcedNotice = options.forced ? `<div style="margin-bottom:10px;padding:8px 10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.28);border-radius:8px;color:var(--amber);font-size:12px">Forced result mode used: publish status was ignored and result analysis was fetched through examId.</div>` : '';
+  const flags = [analysis !== null && analysis !== void 0 && analysis.isLiveTest ? 'Live test' : 'Offline result', analysis !== null && analysis !== void 0 && analysis.isLeaderboard ? 'Leaderboard' : '', analysis !== null && analysis !== void 0 && analysis.isShowScoreSheet ? 'Score sheet' : '', analysis !== null && analysis !== void 0 && analysis.isShowQuestionsCount ? 'Question counts' : '', analysis !== null && analysis !== void 0 && analysis.isShowComparisonTestScore ? 'Comparison score' : '', analysis !== null && analysis !== void 0 && analysis.isShowCandidateTopScore ? 'Top scores' : ''].filter(Boolean).map(label => `<span class="result-chip">${escapeHtml(label)}</span>`).join('');
+  return `${forcedNotice}<div class="result-title">${escapeHtml(testName)}</div>
+      <div class="result-sub">${escapeHtml((analysis === null || analysis === void 0 ? void 0 : analysis.attemptDate) || '')}${analysis !== null && analysis !== void 0 && analysis.testPaperId ? ` | Paper ${escapeHtml(analysis.testPaperId)}` : ''}</div>
+      <div class="result-chip-row">${flags}</div>
+      <div class="result-hero">
+        <div class="result-hero-score">
+          <div class="result-hero-label">Your Score</div>
+          <div class="result-hero-value">${escapeHtml(fmt(r.totalMarks))}/${escapeHtml(fmt(r.totalSubjectMarks))}</div>
+          <div class="result-hero-sub">Average ${escapeHtml(fmt(r.totalAvg))} | Highest ${escapeHtml(fmt(r.totalHighest))}</div>
+        </div>
+        <div class="result-hero-stat"><div class="result-label">Rank</div><div class="result-value">${escapeHtml(fmt(analysis === null || analysis === void 0 ? void 0 : analysis.rank))}</div></div>
+        <div class="result-hero-stat"><div class="result-label">Batch Rank</div><div class="result-value">${escapeHtml(fmt(analysis === null || analysis === void 0 ? void 0 : analysis.batchRank))}</div></div>
+        <div class="result-hero-stat"><div class="result-label">Percentile</div><div class="result-value">${escapeHtml(fmt(analysis === null || analysis === void 0 ? void 0 : analysis.percentile))}</div></div>
+      </div>
+      <div class="result-grid">
+        <div class="result-metric"><div class="result-label">Attempted</div><div class="result-value">${escapeHtml(fmt(r.totalAttempted))}</div></div>
+        <div class="result-metric"><div class="result-label">Correct</div><div class="result-value" style="color:var(--green)">${escapeHtml(fmt(r.totalCorrect))}</div></div>
+        <div class="result-metric"><div class="result-label">Wrong</div><div class="result-value" style="color:var(--red)">${escapeHtml(fmt((_r$totalInCorrect = r.totalInCorrect) !== null && _r$totalInCorrect !== void 0 ? _r$totalInCorrect : r.totalIncorrect))}</div></div>
+        <div class="result-metric"><div class="result-label">Unattempted</div><div class="result-value">${escapeHtml(fmt((_r$totalUnAttempted = r.totalUnAttempted) !== null && _r$totalUnAttempted !== void 0 ? _r$totalUnAttempted : r.totalUnattempted))}</div></div>
+        <div class="result-metric"><div class="result-label">Average</div><div class="result-value">${escapeHtml(fmt(r.totalAvg))}</div></div>
+        <div class="result-metric"><div class="result-label">Highest</div><div class="result-value">${escapeHtml(fmt(r.totalHighest))}</div></div>
+        <div class="result-metric"><div class="result-label">Top Scores</div><div class="result-value">${escapeHtml(topTotal)}</div></div>
+        <div class="result-metric"><div class="result-label">Students</div><div class="result-value">${escapeHtml(fmt(analysis === null || analysis === void 0 ? void 0 : analysis.totalStudent))}</div></div>
+        <div class="result-metric"><div class="result-label">City Rank</div><div class="result-value">${escapeHtml(fmt(analysis === null || analysis === void 0 ? void 0 : analysis.cityRank))}</div></div>
+      </div>
+      <div class="result-section-title">Subject Breakdown</div>${subjectRows}
+      <div class="result-links">${downloadPdfButton}${solutionsButton}${leaderboardButton}${pseudoLeaderboardButton}${omrRow}${answerKeyRow}</div>${appearedRaw}${analysisRaw}`;
+}
+function buildLeaderboardHtml(analysis, leaderboard) {
+  var _analysis$result;
+  const rows = Array.isArray(leaderboard === null || leaderboard === void 0 ? void 0 : leaderboard.leaderboardScore) ? leaderboard.leaderboardScore.slice(0, 50) : [];
+  if (!rows.length) return '<div class="empty">No leaderboard data found for this test.</div>';
+  const subjectNameById = {};
+  const subjects = (analysis === null || analysis === void 0 || (_analysis$result = analysis.result) === null || _analysis$result === void 0 ? void 0 : _analysis$result.subjectData) || [];
+  if (Array.isArray(subjects)) {
+    subjects.forEach(s => {
+      if (s.subjectId != null) subjectNameById[String(s.subjectId)] = s.subjectName || `Subject ${s.subjectId}`;
+    });
+  }
+  const fmt = v => v === null || v === undefined || v === '' ? '-' : v;
+  const rowData = rows.map(row => {
+    const subjectMarks = Array.isArray(row.subjectPerformance) ? row.subjectPerformance.map((s, idx) => {
+      var _s$subjectId2;
+      const subjectName = s.subjectName || subjectNameById[String((_s$subjectId2 = s.subjectId) !== null && _s$subjectId2 !== void 0 ? _s$subjectId2 : '')] || `S${idx + 1}`;
+      return {
+        subjectName,
+        totalMarks: fmt(s.totalMarks)
+      };
+    }) : [];
+    return {
+      ...row,
+      subjectMarks
+    };
+  });
+  return `<div class="leaderboard-wrap"><table class="leaderboard-table">
+      <thead><tr><th>Rank</th><th>Student</th><th>Total</th><th>Subject Marks</th></tr></thead>
+      <tbody>${rowData.map(row => {
+    const subjectMarks = row.subjectMarks.map(s => `<span class="leaderboard-subject">${escapeHtml(s.subjectName)}: ${escapeHtml(s.totalMarks)}</span>`).join('');
+    return `<tr>
+          <td class="leaderboard-rank">#${escapeHtml(fmt(row.ranks))}</td>
+          <td>${escapeHtml(row.studentName || `Student ${fmt(row.examId)}`)}</td>
+          <td class="leaderboard-score">${escapeHtml(fmt(row.totalMarks))}</td>
+          <td><div class="leaderboard-subjects">${subjectMarks || '-'}</div></td>
+        </tr>`;
+  }).join('')}</tbody>
+    </table></div>
+    <div class="leaderboard-card-list">${rowData.map(row => {
+    const subjectMarks = row.subjectMarks.map(s => `<span class="leaderboard-subject">${escapeHtml(s.subjectName)}: ${escapeHtml(s.totalMarks)}</span>`).join('');
+    return `<div class="leaderboard-card">
+        <div class="leaderboard-card-top">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            <div class="leaderboard-rank-pill">#${escapeHtml(fmt(row.ranks))}</div>
+            <div style="font-size:12px;color:var(--text);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis">${escapeHtml(row.studentName || `Student ${fmt(row.examId)}`)}</div>
+          </div>
+          <div class="leaderboard-card-score"><span class="leaderboard-score">${escapeHtml(fmt(row.totalMarks))}</span><span style="font-size:10px;color:var(--text2)">marks</span></div>
+        </div>
+        <div class="leaderboard-subjects">${subjectMarks || '-'}</div>
+      </div>`;
+  }).join('')}</div>`;
+}
+function renderApiError(message) {
+  const els = ['timetable-grid', 'examhall-list', 'era-list', 'today-classes-list', 'examcal-list', 'courses-grid', 'msg-group-list', 'notice-list', 'study-list'];
+  els.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+  });
+}
+function updateDashboardWidgets() {
+  const nameEl = document.getElementById('dash-test-name');
+  const scoreEl = document.getElementById('dash-test-score');
+  const subEl = document.getElementById('dash-test-sub');
+  const batchRankEl = document.getElementById('dash-batch-rank');
+  const batchRankSubEl = document.getElementById('dash-rank-sub');
+  if (nameEl && scoreEl && subEl) {
+    const forced = APP_STATE.dashboardForcedStats || null;
+    if (!forced) {
+      scoreEl.textContent = 'N/A';
+      subEl.innerHTML = 'No forced-result data yet';
+      if (batchRankEl) batchRankEl.textContent = '--';
+      if (batchRankSubEl) batchRankSubEl.textContent = 'No ERA rank available';
+    } else {
+      var _ref5, _forced$batchRank, _forced$marks, _forced$totalMarks;
+      const rankVal = (_ref5 = (_forced$batchRank = forced.batchRank) !== null && _forced$batchRank !== void 0 ? _forced$batchRank : forced.rank) !== null && _ref5 !== void 0 ? _ref5 : null;
+      nameEl.textContent = forced.testName || 'Latest Test';
+      scoreEl.textContent = (_forced$marks = forced.marks) !== null && _forced$marks !== void 0 ? _forced$marks : 'N/A';
+      let subHtml = `out of ${(_forced$totalMarks = forced.totalMarks) !== null && _forced$totalMarks !== void 0 ? _forced$totalMarks : '-'}`;
+      if (rankVal != null) subHtml += ` · Rank #${rankVal}`;
+      subEl.innerHTML = subHtml;
+      if (batchRankEl) batchRankEl.textContent = rankVal != null ? `#${rankVal}` : '--';
+      if (batchRankSubEl) batchRankSubEl.textContent = forced.testName ? `ERA: ${forced.testName}` : 'ERA forced result stats';
+    }
+  }
+
+  // Next Exam stat card
+  const nextExamValEl = document.getElementById('dash-next-exam-val');
+  const nextExamSubEl = document.getElementById('dash-next-exam-sub');
+  const upListEl = document.getElementById('dashboard-upcoming-list');
+  const now = new Date();
+  const upcomingList = (APP_STATE.calendarEntries || []).filter(t => {
+    const dt = parseExamDateTime(t.dateTime);
+    return !Number.isNaN(dt.getTime()) && dt > new Date(now.getTime() - 86400000);
+  }).sort((a, b) => parseExamDateTime(a.dateTime) - parseExamDateTime(b.dateTime));
+
+  // Populate Next Exam card
+  if (nextExamValEl && nextExamSubEl) {
+    const next = upcomingList[0];
+    if (next) {
+      const dt = parseExamDateTime(next.dateTime);
+      const msUntil = dt - now;
+      const daysUntil = Math.ceil(msUntil / 86400000);
+      if (daysUntil <= 0) {
+        nextExamValEl.textContent = 'Today';
+        nextExamValEl.style.color = 'var(--red)';
+      } else if (daysUntil === 1) {
+        nextExamValEl.textContent = 'Tomorrow';
+        nextExamValEl.style.color = 'var(--amber)';
+      } else {
+        nextExamValEl.textContent = `${daysUntil}d`;
+        nextExamValEl.style.color = '';
+      }
+      // Truncate name to ~22 chars
+      const shortName = next.name && next.name.length > 22 ? next.name.slice(0, 22) + '…' : next.name || 'Exam';
+      nextExamSubEl.textContent = shortName;
+    } else {
+      nextExamValEl.textContent = 'None';
+      nextExamSubEl.textContent = 'No upcoming exams';
+    }
+  }
+
+  // Test Schedule list (full-width, up to 7 entries)
+  if (upListEl) {
+    const list = upcomingList.filter(item => searchMatch(item.name, item.dateTime, item.venue));
+    if (!list.length) {
+      upListEl.innerHTML = '<div class="empty" style="padding:10px 0">No upcoming exams scheduled</div>';
+    } else {
+      upListEl.innerHTML = list.slice(0, 7).map(item => {
+        const dt = parseExamDateTime(item.dateTime);
+        const isToday = dt.toDateString() === now.toDateString();
+        const msUntil = dt - now;
+        const daysUntil = Math.ceil(msUntil / 86400000);
+        let badgeClass = 'badge-upcoming';
+        let badgeText = `${daysUntil}d`;
+        if (isToday || daysUntil <= 0) {
+          badgeClass = 'badge-live';
+          badgeText = 'Today';
+        } else if (daysUntil === 1) {
+          badgeClass = 'badge-live';
+          badgeText = 'Tomorrow';
+        } else if (daysUntil <= 3) {
+          badgeClass = 'badge-upcoming';
+        }
+        const venue = item.venue ? `` : '';
+        return `
+          <div class="exam-item" style="cursor:pointer;padding:11px 0" onclick="openEraFromDashboard('${escapeHtml(item.name)}')">
+            <div class="exam-dot" style="background:${isToday || daysUntil <= 0 ? 'var(--red)' : daysUntil <= 3 ? 'var(--amber)' : 'var(--accent)'}"></div>
+            <div class="exam-info">
+              <div class="exam-name">${escapeHtml(item.name)}</div>
+              <div class="exam-date">${escapeHtml(formatDateTimeLabel(item.dateTime))}</div>
+              ${venue}
+            </div>
+            <span class="exam-badge ${badgeClass}" style="min-width:54px;text-align:center">${badgeText}</span>
+          </div>`;
+      }).join('');
+    }
+  }
+}
+function setUserProfileDetails() {
+  const name = sessionStorage.getItem('fy_user_name') || 'Student';
+  const imgUrl = sessionStorage.getItem('fy_user_img');
+  const topAvatar = document.getElementById('top-avatar');
+  const sideAvatar = document.getElementById('sidebar-avatar');
+  const sideName = document.getElementById('sidebar-name');
+  const initials = name.slice(0, 2).toUpperCase();
+  if (sideName) sideName.textContent = name;
+  const updateAvatar = el => {
+    if (!el) return;
+    if (imgUrl) {
+      el.innerHTML = `<img src="${escapeHtml(imgUrl)}" alt="Avatar" onerror="this.outerHTML='${initials}'"/>`;
+    } else {
+      el.textContent = initials;
+    }
+  };
+  updateAvatar(topAvatar);
+  updateAvatar(sideAvatar);
+}
+
+/* --- NAVIGATION & UI TOGGLES --- */
+const SUBNAV_CONFIG = {
+  dashboard: [{
+    id: 'overview',
+    label: 'Overview'
+  }, {
+    id: 'schedule',
+    label: 'Schedule'
+  }],
+  courses: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'live',
+    label: 'Live'
+  }, {
+    id: 'exam',
+    label: 'Exam'
+  }, {
+    id: 'classroom',
+    label: 'Classroom'
+  }],
+  messages: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'unread',
+    label: 'Unread'
+  }],
+  examhall: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'published',
+    label: 'Published'
+  }, {
+    id: 'pending',
+    label: 'Pending'
+  }, {
+    id: 'live',
+    label: 'Live'
+  }],
+  era: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'published',
+    label: 'Published'
+  }, {
+    id: 'pending',
+    label: 'Pending'
+  }],
+  notices: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'recent',
+    label: 'Recent'
+  }, {
+    id: 'test',
+    label: 'Test Alerts'
+  }],
+  study: [{
+    id: 'all',
+    label: 'All'
+  }, {
+    id: 'physics',
+    label: 'Physics'
+  }, {
+    id: 'chemistry',
+    label: 'Chemistry'
+  }, {
+    id: 'math',
+    label: 'Math'
+  }],
+  neural: [{
+    id: 'predictor',
+    label: 'Rank Predictor'
+  }, {
+    id: 'leaderboard',
+    label: 'Pseudo Leaderboard'
+  }]
+};
+const THEME_PRESETS = [{
+  id: 'default',
+  label: 'Default',
+  colors: ['#ffffff', '#d4d4d4', '#1a1a1a']
+}, {
+  id: 'ocean',
+  label: 'Slate Blue',
+  colors: ['#4f9dff', '#20b6ff', '#143a56']
+}, {
+  id: 'purple',
+  label: 'Violet',
+  colors: ['#9b7bff', '#c25dff', '#2a1f45']
+}, {
+  id: 'emerald',
+  label: 'Green',
+  colors: ['#22c55e', '#14b8a6', '#163f35']
+}];
+const COMMANDS = [{
+  id: 'go-dashboard',
+  label: 'Go to Dashboard',
+  meta: 'Navigation',
+  run: () => nav('dashboard', document.querySelector('.nav-item[onclick*=dashboard]'))
+}, {
+  id: 'go-courses',
+  label: 'Go to My Courses',
+  meta: 'Navigation',
+  run: () => nav('courses', document.querySelector('.nav-item[onclick*=courses]'))
+}, {
+  id: 'go-messages',
+  label: 'Go to Messages',
+  meta: 'Navigation',
+  run: () => nav('messages', document.querySelector('.nav-item[onclick*=messages]'))
+}, {
+  id: 'go-timetable',
+  label: 'Go to Time Table',
+  meta: 'Navigation',
+  run: () => nav('timetable', document.querySelector('.nav-item[onclick*=timetable]'))
+}, {
+  id: 'go-examhall',
+  label: 'Go to Examination Hall',
+  meta: 'Navigation',
+  run: () => nav('examhall', document.querySelector('.nav-item[onclick*=examhall]'))
+}, {
+  id: 'go-era',
+  label: 'Go to ERA Forced Results',
+  meta: 'Navigation',
+  run: () => nav('era', document.querySelector('.nav-item[onclick*=era]'))
+}, {
+  id: 'go-neural',
+  label: 'Go to Neural Network',
+  meta: 'Navigation',
+  run: () => nav('neural', document.querySelector('.nav-item[onclick*=neural]'))
+}, {
+  id: 'go-settings',
+  label: 'Go to Settings',
+  meta: 'Navigation',
+  run: () => nav('settings', document.querySelector('.nav-item[onclick*=settings]'))
+}, {
+  id: 'go-notices',
+  label: 'Go to Notice Board',
+  meta: 'Navigation',
+  run: () => nav('notices', document.querySelector('.nav-item[onclick*=notices]'))
+}, {
+  id: 'go-study',
+  label: 'Go to Study Content',
+  meta: 'Navigation',
+  run: () => nav('study', document.querySelector('.nav-item[onclick*=study]'))
+}, {
+  id: 'go-practice',
+  label: 'Go to Practice',
+  meta: 'Navigation',
+  run: () => nav('practice', document.querySelector('.nav-item[onclick*=practice]'))
+}, {
+  id: 'open-attendance',
+  label: 'Open Attendance Modal',
+  meta: 'Action',
+  run: () => openAttendanceModal()
+}, {
+  id: 'refresh-now',
+  label: 'Refresh Data Now',
+  meta: 'Sync',
+  run: () => refreshPortalDataInBackground()
+}, {
+  id: 'toggle-theme',
+  label: 'Toggle Theme',
+  meta: 'Appearance',
+  run: () => toggleThemeMode()
+}, {
+  id: 'logout',
+  label: 'Logout',
+  meta: 'Session',
+  run: () => logout()
+}];
+const PORTAL_CACHE_KEY = 'fy_portal_cache_v2';
+const PORTAL_CACHE_TTL_MS = 15 * 60 * 1000;
+const PORTAL_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+function debounce(fn, delay) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+function formatRelativeTime(ts) {
+  const deltaSec = Math.max(0, Math.floor((Date.now() - Number(ts || 0)) / 1000));
+  if (deltaSec < 10) return 'just now';
+  if (deltaSec < 60) return `${deltaSec}s ago`;
+  if (deltaSec < 3600) return `${Math.floor(deltaSec / 60)}m ago`;
+  return `${Math.floor(deltaSec / 3600)}h ago`;
+}
+function setSyncPill(mode, text) {
+  const pill = document.getElementById('sync-pill');
+  if (!pill) return;
+  pill.classList.remove('cached', 'offline');
+  if (mode === 'cached') pill.classList.add('cached');
+  if (mode === 'offline') pill.classList.add('offline');
+  pill.textContent = text || (mode === 'live' ? 'Live' : mode === 'cached' ? 'Cached' : 'Offline');
+}
+function readPortalCache() {
+  try {
+    const raw = localStorage.getItem(getUserStorageKey(PORTAL_CACHE_KEY));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!(parsed !== null && parsed !== void 0 && parsed.snapshotAt) || !(parsed !== null && parsed !== void 0 && parsed.data)) return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+function writePortalCache() {
+  try {
+    const payload = {
+      snapshotAt: Date.now(),
+      data: {
+        tests: APP_STATE.tests || [],
+        eraTests: APP_STATE.eraTests || [],
+        calendarEntries: APP_STATE.calendarEntries || [],
+        timetable: APP_STATE.timetable || [],
+        courses: APP_STATE.courses || [],
+        messageGroups: APP_STATE.messageGroups || [],
+        notices: APP_STATE.notices || [],
+        studyContent: APP_STATE.studyContent || [],
+        studyTotal: APP_STATE.studyTotal || 0,
+        examTotal: APP_STATE.examTotal || 0,
+        eraTotal: APP_STATE.eraTotal || 0
+      }
+    };
+    localStorage.setItem(getUserStorageKey(PORTAL_CACHE_KEY), JSON.stringify(payload));
+    APP_STATE.lastSyncAt = payload.snapshotAt;
+  } catch (_) {}
+}
+function hydratePortalCache() {
+  const cached = readPortalCache();
+  if (!cached) return false;
+  APP_STATE.tests = Array.isArray(cached.data.tests) ? cached.data.tests : [];
+  APP_STATE.eraTests = Array.isArray(cached.data.eraTests) ? cached.data.eraTests : [];
+  APP_STATE.calendarEntries = Array.isArray(cached.data.calendarEntries) ? cached.data.calendarEntries : [];
+  if (!APP_STATE.calendarEntries.length && typeof readFullExamSchedules === 'function') {
+    const localSchedules = readFullExamSchedules();
+    if (localSchedules.length) APP_STATE.calendarEntries = localSchedules;
+  }
+  APP_STATE.timetable = Array.isArray(cached.data.timetable) ? cached.data.timetable : [];
+  APP_STATE.courses = Array.isArray(cached.data.courses) ? cached.data.courses : [];
+  APP_STATE.messageGroups = Array.isArray(cached.data.messageGroups) ? cached.data.messageGroups : [];
+  APP_STATE.notices = Array.isArray(cached.data.notices) ? cached.data.notices : [];
+  APP_STATE.studyContent = Array.isArray(cached.data.studyContent) ? cached.data.studyContent : [];
+  APP_STATE.studyTotal = Number(cached.data.studyTotal || APP_STATE.studyContent.length || 0);
+  APP_STATE.examTotal = Number(cached.data.examTotal || APP_STATE.tests.length || 0);
+  APP_STATE.eraTotal = Number(cached.data.eraTotal || APP_STATE.eraTests.length || 0);
+  APP_STATE.lastSyncAt = Number(cached.snapshotAt || Date.now());
+  APP_STATE.loadedSections.dashboard = APP_STATE.tests.length > 0 || APP_STATE.calendarEntries.length > 0;
+  APP_STATE.loadedSections.courses = APP_STATE.courses.length > 0;
+  APP_STATE.loadedSections.messages = APP_STATE.messageGroups.length > 0;
+  APP_STATE.loadedSections.notices = APP_STATE.notices.length > 0;
+  APP_STATE.loadedSections.study = APP_STATE.studyContent.length > 0;
+  renderExamHall(APP_STATE.tests);
+  renderEraTests(APP_STATE.eraTests);
+  renderExamCalendar(APP_STATE.calendarEntries);
+  renderTimetable(APP_STATE.timetable);
+  renderTodayClasses(APP_STATE.timetable);
+  renderCourses(APP_STATE.courses);
+  renderMessageGroups(APP_STATE.messageGroups);
+  renderNotices(APP_STATE.notices);
+  renderStudyContent(APP_STATE.studyContent, APP_STATE.studyTotal);
+  updateDashboardWidgets();
+  const isStale = Date.now() - APP_STATE.lastSyncAt > PORTAL_CACHE_TTL_MS;
+  setSyncPill('cached', isStale ? `Cached · stale` : `Cached · ${formatRelativeTime(APP_STATE.lastSyncAt)}`);
+  return true;
+}
+function getTimetableCacheKey() {
+  return getUserStorageKey(`fy_timetable_cache_${API_CONFIG.academicYear}_${API_CONFIG.classId || 'none'}`);
+}
+function readTimetableCache() {
+  try {
+    const raw = localStorage.getItem(getTimetableCacheKey());
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed === null || parsed === void 0 ? void 0 : parsed.items) ? parsed.items : null;
+  } catch (_) {
+    return null;
+  }
+}
+function writeTimetableCache(items) {
+  try {
+    localStorage.setItem(getTimetableCacheKey(), JSON.stringify({
+      savedAt: Date.now(),
+      items: Array.isArray(items) ? items : []
+    }));
+  } catch (_) {}
+}
+function renderGlobalSkeletons() {
+  const targets = [['dashboard-upcoming-list', 5], ['today-classes-list', 3], ['courses-grid', 6], ['msg-group-list', 5], ['examhall-list', 4], ['era-list', 4], ['notice-list', 4], ['study-list', 4]];
+  targets.forEach(([id, count]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = `<div class="skeleton-stack">${Array.from({
+      length: count
+    }).map(() => '<div class="skeleton"></div>').join('')}</div>`;
+  });
+}
+function getFilteredCommands(query) {
+  const q = String(query || '').trim().toLowerCase();
+  let cmds = COMMANDS;
+  if (hasPracticeAccessCache === false) {
+    cmds = cmds.filter(c => c.id !== 'go-practice');
+  }
+  if (!q) return cmds;
+  return cmds.filter(c => `${c.label} ${c.meta}`.toLowerCase().includes(q));
+}
+function renderCommandPaletteList(query = '') {
+  const list = document.getElementById('command-list');
+  if (!list) return;
+  const results = getFilteredCommands(query);
+  if (!results.length) {
+    list.innerHTML = '<div class="empty" style="padding:18px 0">No matching commands</div>';
+    return;
+  }
+  list.innerHTML = results.map((c, idx) => `<button class="command-item ${idx === 0 ? 'active' : ''}" data-command-id="${c.id}"><span>${escapeHtml(c.label)}</span><span class="command-meta">${escapeHtml(c.meta)}</span></button>`).join('');
+  list.querySelectorAll('.command-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const command = COMMANDS.find(c => c.id === btn.dataset.commandId);
+      if (!command) return;
+      closeCommandPalette();
+      command.run();
+    });
+  });
+}
+window.openCommandPalette = function openCommandPalette() {
+  const backdrop = document.getElementById('command-palette-backdrop');
+  const input = document.getElementById('command-input');
+  if (!backdrop || !input) return;
+  backdrop.style.display = 'flex';
+  input.value = '';
+  renderCommandPaletteList('');
+  setTimeout(() => input.focus(), 0);
+};
+window.closeCommandPalette = function closeCommandPalette(event) {
+  if (event && event.target && event.target.id !== 'command-palette-backdrop') return;
+  const backdrop = document.getElementById('command-palette-backdrop');
+  if (backdrop) backdrop.style.display = 'none';
+};
+function refreshActivePageData() {
+  var _document$querySelect;
+  const activePage = ((_document$querySelect = document.querySelector('.page.active')) === null || _document$querySelect === void 0 || (_document$querySelect = _document$querySelect.id) === null || _document$querySelect === void 0 ? void 0 : _document$querySelect.replace('page-', '')) || 'dashboard';
+  if (activePage === 'dashboard') {
+    updateDashboardWidgets();
+    renderTodayClasses(APP_STATE.timetable || []);
+  }
+  if (activePage === 'courses') renderCourses(APP_STATE.courses || []);
+  if (activePage === 'messages') renderMessageGroups(APP_STATE.messageGroups || []);
+  if (activePage === 'timetable') {
+    renderTimetable(APP_STATE.timetable || []);
+    renderTodayClasses(APP_STATE.timetable || []);
+  }
+  if (activePage === 'examhall') renderExamHall(APP_STATE.tests || []);
+  if (activePage === 'era') renderEraTests(APP_STATE.eraTests || []);
+  if (activePage === 'examcal') renderExamCalendar(APP_STATE.calendarEntries || []);
+  if (activePage === 'notices') renderNotices(APP_STATE.notices || []);
+  if (activePage === 'study') renderStudyContent(APP_STATE.studyContent || [], APP_STATE.studyTotal || 0);
+  scanAndUploadOnlineTests();
+  if (activePage === 'practice') {
+    checkPracticeAccess().then(hasAccess => {
+      if (hasAccess) {
+        chemInitApp();
+        showModeSelection();
+      } else {
+        nav('dashboard');
+      }
+    });
+  }
+  if (activePage === 'settings') {
+    renderThemeSettings();
+  }
+}
+async function ensureDashboardData(force = false) {
+  const hasDashboardData = (APP_STATE.tests || []).length > 0 || (APP_STATE.calendarEntries || []).length > 0;
+  if (APP_STATE.loadedSections.dashboard && hasDashboardData && !force) {
+    updateDashboardWidgets();
+    refreshDashboardForcedStats();
+  }
+  if (!API_CONFIG.token) return;
+  const testsPage = await fetchTestsPage(API_CONFIG.token, 1, APP_STATE.testPageSize);
+  const tests = testsPage.tests || [];
+  scanAndUploadOnlineTests(tests);
+  const [calendar, enriched, eraEnriched] = await Promise.all([fetchCalendar(API_CONFIG.token), enrichExamTests(tests), enrichEraTests(tests)]);
+  APP_STATE.examPage = 1;
+  APP_STATE.eraPage = 1;
+  APP_STATE.examTotal = testsPage.total || enriched.length;
+  APP_STATE.eraTotal = testsPage.total || eraEnriched.length;
+  APP_STATE.tests = enriched;
+  APP_STATE.eraTests = eraEnriched;
+  APP_STATE.calendarEntries = calendar;
+  scanAndUploadExamCalendar(calendar);
+  APP_STATE.loadedSections.dashboard = true;
+  renderExamHall(APP_STATE.tests);
+  renderEraTests(APP_STATE.eraTests);
+  renderExamCalendar(APP_STATE.calendarEntries);
+  updateDashboardWidgets();
+  await refreshDashboardForcedStats();
+  writePortalCache();
+}
+async function ensureCoursesData(force = false) {
+  if (APP_STATE.loadedSections.courses && !force) renderCourses(APP_STATE.courses || []);
+  APP_STATE.courses = await fetchCourses(API_CONFIG.token);
+  APP_STATE.loadedSections.courses = true;
+  renderCourses(APP_STATE.courses);
+  writePortalCache();
+}
+async function ensureMessagesData(force = false) {
+  if (APP_STATE.loadedSections.messages && !force) renderMessageGroups(APP_STATE.messageGroups || []);
+  APP_STATE.messageGroups = await fetchMessageGroups(API_CONFIG.token);
+  APP_STATE.loadedSections.messages = true;
+  renderMessageGroups(APP_STATE.messageGroups);
+  writePortalCache();
+}
+async function ensureNoticesData(force = false) {
+  if (APP_STATE.loadedSections.notices && !force) renderNotices(APP_STATE.notices || []);
+  APP_STATE.notices = await fetchNotices(API_CONFIG.token);
+  APP_STATE.loadedSections.notices = true;
+  renderNotices(APP_STATE.notices);
+  writePortalCache();
+}
+async function ensureStudyData(force = false) {
+  if (APP_STATE.loadedSections.study && !force) renderStudyContent(APP_STATE.studyContent || [], APP_STATE.studyTotal || 0);
+  APP_STATE.studyPage = 1;
+  const studyRes = await fetchStudyContent(API_CONFIG.token, APP_STATE.studyPage);
+  APP_STATE.studyContent = studyRes.data;
+  APP_STATE.studyTotal = studyRes.total || studyRes.data.length;
+  APP_STATE.loadedSections.study = true;
+  renderStudyContent(APP_STATE.studyContent, APP_STATE.studyTotal);
+  writePortalCache();
+}
+async function ensureDataForPage(pageId, force = false) {
+  if (!API_CONFIG.token) return;
+  try {
+    if (['dashboard', 'examcal', 'examhall', 'era'].includes(pageId)) await ensureDashboardData(force);
+    if (pageId === 'courses') await ensureCoursesData(force);
+    if (pageId === 'messages') await ensureMessagesData(force);
+    if (pageId === 'notices') await ensureNoticesData(force);
+    if (pageId === 'study') await ensureStudyData(force);
+  } catch (err) {
+    setSyncPill('offline', 'Offline');
+  }
+}
+function renderSubnav(pageId) {
+  const container = document.getElementById('subnav');
+  if (!container) return;
+  const config = SUBNAV_CONFIG[pageId] || [];
+  if (!config.length) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'flex';
+  const current = APP_STATE.activeSubTabs[pageId] || config[0].id;
+  APP_STATE.activeSubTabs[pageId] = current;
+  container.innerHTML = config.map(tab => `<button class="subnav-chip ${current === tab.id ? 'active' : ''}" onclick="setSubTab('${pageId}','${tab.id}')">${escapeHtml(tab.label)}</button>`).join('');
+  if (pageId === 'dashboard') {
+    const dashboard = document.getElementById('page-dashboard');
+    if (dashboard) dashboard.setAttribute('data-subview', current);
+  }
+  if (pageId === 'neural') {
+    const neural = document.getElementById('page-neural');
+    if (neural) neural.setAttribute('data-subview', current);
+  }
+}
+window.setSubTab = function setSubTab(pageId, tabId) {
+  APP_STATE.activeSubTabs[pageId] = tabId;
+  renderSubnav(pageId);
+  refreshActivePageData();
+};
+let rankModel = null;
+let rankMeta = null;
+let rankLoadingPromise = null;
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+async function initRankPredictor() {
+  if (rankModel && rankMeta) return { model: rankModel, meta: rankMeta };
+  if (rankLoadingPromise) return rankLoadingPromise;
+
+  rankLoadingPromise = (async () => {
+    const dot = document.getElementById("rank-dot");
+    const stat = document.getElementById("rank-status");
+    const btn = document.getElementById("rank-predict-btn");
+    try {
+      if (dot) dot.className = "rank-dot loading";
+      if (stat) stat.textContent = "Loading TensorFlow.js...";
+      if (typeof tf === 'undefined') {
+        await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js");
+      }
+      if (stat) stat.textContent = "Loading model...";
+      const [model, meta] = await Promise.all([
+        tf.loadLayersModel("models/ranknet/model.json"),
+        fetch("models/ranknet/meta.json").then(r => r.json())
+      ]);
+      rankModel = model;
+      rankMeta = meta;
+      if (window.pseudoLeaderboardEngine) {
+        window.pseudoLeaderboardEngine.setModel(model, meta);
+      }
+      if (dot) dot.className = "rank-dot ready";
+      if (stat) stat.textContent = "Model ready ✓";
+      if (btn) btn.disabled = false;
+      return { model, meta };
+    } catch (e) {
+      if (dot) dot.className = "rank-dot error";
+      if (stat) stat.textContent = "Failed to load: " + e.message;
+      console.error("RankPredictor load error:", e);
+      throw e;
+    } finally {
+      rankLoadingPromise = null;
+    }
+  })();
+
+  return rankLoadingPromise;
+}
+function estimateTopper(avg, maxMarks) {
+  if (!rankMeta || !rankMeta.stat_constants) return maxMarks;
+  const {
+    slope_tgn,
+    intercept_tgn
+  } = rankMeta.stat_constants;
+  const difficulty = avg / maxMarks;
+  const topperGapNorm = slope_tgn * difficulty + intercept_tgn;
+  const topper = avg + topperGapNorm * maxMarks;
+  return Math.min(maxMarks, Math.max(avg + 1, topper));
+}
+
+function dynamicK(difficulty) {
+  if (!rankMeta || !rankMeta.stat_constants) return 1.0;
+  const {
+    slope_k,
+    intercept_k
+  } = rankMeta.stat_constants;
+  return slope_k * difficulty + intercept_k;
+}
+
+function normalizeRankInput(score, avg, maxMarks) {
+  const difficulty = avg / maxMarks;
+  const topper = estimateTopper(avg, maxMarks);
+  const k = Math.max(0.1, dynamicK(difficulty));
+  const gap = Math.max(1.0, topper - avg);
+  const sigma = Math.max(0.1, gap / k);
+  const z = (score - avg) / sigma;
+  let x_norm = gap > 0 ? (score - avg) / gap : 0.0;
+  const rawX = x_norm;
+  x_norm = Math.max(0.01, Math.min(x_norm, 1.0));
+  const maxMarks_ref = (rankMeta && rankMeta.maxMarks_ref) || 300.0;
+  const maxMarks_norm = maxMarks / maxMarks_ref;
+  return {
+    z,
+    x_norm,
+    rawX,
+    difficulty,
+    maxMarks_norm,
+    topper,
+    k,
+    sigma
+  };
+}
+
+async function predictRank() {
+  const btn = document.getElementById("rank-predict-btn");
+  const originalText = btn ? btn.textContent : "Predict my rank";
+
+  try {
+    if (!rankModel || !rankMeta) {
+      if (btn) btn.textContent = "Loading Model...";
+      await initRankPredictor();
+    }
+    if (!rankModel) {
+      alert("Neural network model could not be loaded. Please check your internet connection.");
+      return;
+    }
+
+    const score = parseFloat(document.getElementById("inp-score")?.value);
+    const maxM = parseFloat(document.getElementById("inp-max")?.value);
+    const avg = parseFloat(document.getElementById("inp-avg")?.value);
+    const N_in = parseFloat(document.getElementById("inp-N")?.value);
+
+    if (isNaN(score) || isNaN(maxM) || isNaN(avg)) {
+      alert("Please fill in score, max marks and overall average.");
+      return;
+    }
+    if (avg >= maxM) {
+      alert("Average cannot exceed maximum marks.");
+      return;
+    }
+    if (score < 0) {
+      alert("Score cannot be negative.");
+      return;
+    }
+
+    const {
+      z,
+      x_norm,
+      rawX,
+      difficulty,
+      maxMarks_norm,
+      topper,
+      k,
+      sigma
+    } = normalizeRankInput(score, avg, maxM);
+
+    const z_sq = Math.tanh(z / 3.0);
+    let pct = null;
+
+    // Run TF.js inference
+    try {
+      const input = tf.tensor2d([[z, x_norm, difficulty, maxMarks_norm]]);
+      const output = rankModel.predict(input);
+      const data = await output.data();
+      input.dispose();
+      output.dispose();
+      if (data && !isNaN(data[0])) {
+        pct = Math.max(0.01, Math.min(99.99, data[0] * 100.0));
+      }
+    } catch (e) {
+      console.warn("TensorFlow prediction failed, using sigmoid fallback:", e);
+    }
+
+    // High-accuracy statistical sigmoid fallback if TF output failed
+    if (pct === null || isNaN(pct)) {
+      const fallbackY = 1.0 / (1.0 + Math.exp(-z * 1.6));
+      pct = Math.max(0.01, Math.min(99.99, fallbackY * 100.0));
+    }
+
+    const hasN = !isNaN(N_in) && N_in > 0;
+    const gap = score - avg;
+
+    // ── Update stats ──────────────────────────────────────────────────────────
+    const rPct = document.getElementById("r-pct");
+    const rProg = document.getElementById("r-prog");
+    const rRank = document.getElementById("r-rank");
+    const rRankSub = document.getElementById("r-rank-sub");
+    const rTopper = document.getElementById("r-topper");
+    const rDiff = document.getElementById("r-diff");
+    const rGap = document.getElementById("r-gap");
+
+    if (rPct) rPct.textContent = pct.toFixed(2) + "%";
+    if (rProg) rProg.style.width = Math.min(pct, 100).toFixed(1) + "%";
+    if (hasN) {
+      const rank = Math.max(1, Math.round(N_in * (1.0 - pct / 100.0)));
+      if (rRank) rRank.textContent = "~" + rank;
+      if (rRankSub) rRankSub.textContent = "out of " + Math.round(N_in);
+    } else {
+      if (rRank) rRank.textContent = "—";
+      if (rRankSub) rRankSub.textContent = "(Enter Total Students for rank)";
+    }
+    if (rTopper) rTopper.textContent = Math.round(topper);
+    if (rDiff) rDiff.textContent = (difficulty * 100).toFixed(1) + "%";
+    if (rGap) rGap.textContent = (gap >= 0 ? "+" : "") + gap.toFixed(0);
+
+    // ── Update pipeline ───────────────────────────────────────────────────────
+    const hasStats = !!(rankMeta && rankMeta.stat_constants);
+    const tgn = hasStats ? rankMeta.stat_constants.slope_tgn * difficulty + rankMeta.stat_constants.intercept_tgn : null;
+    const pDiff = document.getElementById("p-diff");
+    const pTgn = document.getElementById("p-tgn");
+    const pTopper = document.getElementById("p-topper");
+    const pK = document.getElementById("p-k");
+    const pSigma = document.getElementById("p-sigma");
+    const pZ = document.getElementById("p-z");
+    const pXnorm = document.getElementById("p-xnorm");
+    const pPct = document.getElementById("p-pct");
+
+    if (pDiff) pDiff.textContent = difficulty.toFixed(4);
+    if (pTgn) pTgn.textContent = tgn !== null ? tgn.toFixed(4) : "—";
+    if (pTopper) pTopper.textContent = Math.round(topper) + " / " + maxM;
+    if (pK) pK.textContent = k.toFixed(4);
+    if (pSigma) pSigma.textContent = sigma.toFixed(4);
+    if (pZ) pZ.textContent = z.toFixed(4) + " → squashed: " + z_sq.toFixed(4);
+    if (pXnorm) pXnorm.textContent = rawX.toFixed(4) + " → " + x_norm.toFixed(4);
+    if (pPct) pPct.textContent = pct.toFixed(3) + "%";
+
+    // ── Alerts ────────────────────────────────────────────────────────────────
+    const alLow = document.getElementById("al-low");
+    const alOver = document.getElementById("al-over");
+    const alExtrap = document.getElementById("al-extrap");
+    const alGood = document.getElementById("al-good");
+
+    if (alLow) alLow.style.display = rawX <= 0.05 ? "block" : "none";
+    if (alOver) alOver.style.display = rawX > 1.0 ? "block" : "none";
+    if (alExtrap) alExtrap.style.display = difficulty < 0.248 || difficulty > 0.594 ? "block" : "none";
+    if (alGood) alGood.style.display = rawX > 0.25 && rawX <= 1.0 && difficulty >= 0.248 && difficulty <= 0.594 ? "block" : "none";
+
+    const rankResult = document.getElementById("rank-result");
+    if (rankResult) {
+      rankResult.style.display = "block";
+      rankResult.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  } catch (err) {
+    console.error("predictRank failed:", err);
+    alert("Prediction error: " + err.message);
+  } finally {
+    if (btn) btn.textContent = originalText;
+  }
+}
+window.predictRank = predictRank;
+
+/* ══════════════════════════════════════════════════════════════
+   PSEUDO-LEADERBOARD CONTROLLER & UI
+   ══════════════════════════════════════════════════════════════ */
+const PL_STATE = {
+  anchorIdSeq: 0,
+  anchors: [],
+  fullLeaderboard: [],
+  filteredLeaderboard: [],
+  currentFilter: 'all',
+  currentPage: 1,
+  pageSize: 50,
+  searchRank: null,
+  generationMode: 'one-pass', // 'one-pass' | 'multi-pass' | 'per-rank'
+  multiPasses: 5,
+  batchStats: {
+    avg: 122.5,
+    topper: 275,
+    maxMarks: 300
+  }
+};
+
+function getPLGenerationMode() {
+  const saved = localStorage.getItem(getUserStorageKey('pl_generation_mode'));
+  if (['one-pass', 'multi-pass', 'per-rank'].includes(saved)) {
+    return saved;
+  }
+  return 'one-pass';
+}
+
+function setPLGenerationMode(mode) {
+  if (!['one-pass', 'multi-pass', 'per-rank'].includes(mode)) return;
+  PL_STATE.generationMode = mode;
+  localStorage.setItem(getUserStorageKey('pl_generation_mode'), mode);
+  if (window.pseudoLeaderboardEngine) {
+    window.pseudoLeaderboardEngine.setMode(mode);
+  }
+  updatePLModeUI(mode);
+}
+
+function getPLPassesCount() {
+  const saved = parseInt(localStorage.getItem(getUserStorageKey('pl_multi_passes')), 10);
+  if (!isNaN(saved) && saved >= 2 && saved <= 20) {
+    return saved;
+  }
+  return 5;
+}
+
+function setPLPassesCount(val) {
+  const num = Math.max(2, Math.min(20, parseInt(val, 10) || 5));
+  PL_STATE.multiPasses = num;
+  localStorage.setItem(getUserStorageKey('pl_multi_passes'), num);
+  updatePLPassesUI(num);
+}
+
+function updatePLPassesUI(count) {
+  const num = count || PL_STATE.multiPasses || getPLPassesCount();
+  PL_STATE.multiPasses = num;
+
+  const cardSlider = document.getElementById('pl-card-passes-slider');
+  const cardBadge = document.getElementById('pl-card-passes-badge');
+  if (cardSlider) cardSlider.value = num;
+  if (cardBadge) cardBadge.textContent = `${num}x passes`;
+}
+
+function updatePLModeUI(mode) {
+  const activeMode = mode || PL_STATE.generationMode || getPLGenerationMode();
+  PL_STATE.generationMode = activeMode;
+
+  // Update card chips
+  document.querySelectorAll('#pl-card-mode-chips .pl-card-mode-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === activeMode);
+  });
+
+  // Show/hide passes slider based on activeMode === 'multi-pass'
+  const cardPassesWrap = document.getElementById('pl-card-passes-slider-wrap');
+  if (cardPassesWrap) {
+    cardPassesWrap.style.display = activeMode === 'multi-pass' ? 'block' : 'none';
+  }
+}
+
+function initPseudoLeaderboardUI() {
+  const avgInp = document.getElementById('pl-avg');
+  const topperInp = document.getElementById('pl-topper');
+  const maxInp = document.getElementById('pl-max');
+  if (!avgInp || !topperInp || !maxInp) return;
+
+  if (!avgInp.value) avgInp.value = PL_STATE.batchStats.avg;
+  if (!topperInp.value) topperInp.value = PL_STATE.batchStats.topper;
+  if (!maxInp.value) maxInp.value = PL_STATE.batchStats.maxMarks;
+
+  PL_STATE.generationMode = getPLGenerationMode();
+  PL_STATE.multiPasses = getPLPassesCount();
+  if (window.pseudoLeaderboardEngine) {
+    window.pseudoLeaderboardEngine.setMode(PL_STATE.generationMode);
+  }
+  updatePLModeUI(PL_STATE.generationMode);
+  updatePLPassesUI(PL_STATE.multiPasses);
+
+  const anchorListEl = document.getElementById('pl-anchor-list');
+  if (anchorListEl && (!PL_STATE.anchors || PL_STATE.anchors.length === 0)) {
+    resetAnchorsToDefault();
+  }
+  updateAnchorNCalculation();
+}
+
+function resetAnchorsToDefault() {
+  PL_STATE.anchors = [
+    { id: ++PL_STATE.anchorIdSeq, rank: 63, marks: 208, percentile: 89.51 }
+  ];
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+function addAnchorPointRow(rank = '', marks = '', percentile = '') {
+  PL_STATE.anchors.push({
+    id: ++PL_STATE.anchorIdSeq,
+    rank: rank !== '' ? Number(rank) : '',
+    marks: marks !== '' ? Number(marks) : '',
+    percentile: percentile !== '' ? Number(percentile) : ''
+  });
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+function removeAnchorPointRow(id) {
+  PL_STATE.anchors = PL_STATE.anchors.filter(a => a.id !== id);
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+function clearAllAnchors() {
+  PL_STATE.anchors = [];
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+
+
+function renderAnchorRows() {
+  const container = document.getElementById('pl-anchor-list');
+  const countBadge = document.getElementById('pl-anchor-count-badge');
+  if (!container) return;
+
+  const topperVal = parseFloat(document.getElementById('pl-topper')?.value) || 157;
+  const count = (PL_STATE.anchors ? PL_STATE.anchors.length : 0);
+  if (countBadge) {
+    countBadge.textContent = `${count + 1} anchor${count === 0 ? '' : 's'}`;
+  }
+
+  let html = `
+    <div class="pl-anchor-row topper-anchor">
+      <span style="width: 58px; font-weight: 700; color: #f59e0b; font-size: 11.5px; font-family: 'Space Mono', monospace;">#1</span>
+      <span style="width: 65px; font-weight: 700; color: #f59e0b; font-size: 11.5px; font-family: 'Space Mono', monospace;">${Math.round(topperVal)}</span>
+      <span style="width: 70px; font-size: 11px; color: #f59e0b; font-family: 'Space Mono', monospace; font-weight: 600;">100.0%</span>
+      <span style="color: var(--text3); font-size: 11px; flex: 1;">Cohort Benchmark (Rank 1)</span>
+      <span class="pl-badge pl-badge-topper">Topper</span>
+    </div>
+  `;
+
+  PL_STATE.anchors.forEach((anchor) => {
+    let estN = '';
+    if (anchor.rank && anchor.percentile && anchor.percentile > 0 && anchor.percentile < 100) {
+      const n = Math.round(anchor.rank / (1.0 - anchor.percentile / 100.0));
+      if (n > 0 && isFinite(n)) estN = `N≈${n}`;
+    }
+
+    html += `
+      <div class="pl-anchor-row">
+        <input type="number" class="pl-anchor-input" style="width: 58px;" min="1" placeholder="Rank" value="${anchor.rank !== '' ? anchor.rank : ''}"
+          oninput="handleAnchorChange(${anchor.id}, 'rank', this.value)" />
+        <input type="number" class="pl-anchor-input" style="width: 65px;" placeholder="Marks" value="${anchor.marks !== '' ? anchor.marks : ''}"
+          oninput="handleAnchorChange(${anchor.id}, 'marks', this.value)" />
+        <input type="number" class="pl-anchor-input" style="width: 70px;" step="0.01" min="0.01" max="99.99" placeholder="Pct %" value="${anchor.percentile !== '' ? anchor.percentile : ''}"
+          oninput="handleAnchorChange(${anchor.id}, 'percentile', this.value)" />
+        <span style="font-size: 11px; color: var(--accent); flex: 1; font-family: 'Space Mono', monospace;">${estN}</span>
+        <button type="button" class="pl-anchor-del-btn" title="Remove" onclick="removeAnchorPointRow(${anchor.id})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function handleAnchorChange(id, field, value) {
+  const anchor = PL_STATE.anchors.find(a => a.id === id);
+  if (anchor) {
+    anchor[field] = value !== '' ? Number(value) : '';
+  }
+  updateAnchorNCalculation();
+}
+
+function updateAnchorNCalculation() {
+  const badge = document.getElementById('pl-calculated-n-badge');
+  const overrideInput = document.getElementById('pl-n-override-val');
+
+  let n = 0;
+  if (overrideInput && overrideInput.value) {
+    n = Math.round(Number(overrideInput.value));
+    if (badge) badge.textContent = `Manual N: ${n}`;
+    return n;
+  }
+
+  const validAnchors = PL_STATE.anchors.filter(a => a.rank && a.percentile && a.percentile > 0 && a.percentile < 100);
+  if (validAnchors.length > 0) {
+    const estimates = validAnchors.map(a => a.rank / (1.0 - a.percentile / 100.0)).filter(e => e > 0 && isFinite(e));
+    if (estimates.length > 0) {
+      estimates.sort((a, b) => a - b);
+      n = Math.max(10, Math.round(estimates[Math.floor(estimates.length / 2)]));
+    }
+  }
+
+  if (badge) {
+    badge.textContent = n > 0 ? `Est. cohort: ~${n} students` : 'Auto-computed from percentile';
+  }
+  return n;
+}
+
+function loadSampleLeaderboardData() {
+  const avgInp = document.getElementById('pl-avg');
+  const topperInp = document.getElementById('pl-topper');
+  const maxInp = document.getElementById('pl-max');
+  if (avgInp) avgInp.value = 122.5;
+  if (topperInp) topperInp.value = 275;
+  if (maxInp) maxInp.value = 300;
+
+  PL_STATE.anchors = [
+    { id: ++PL_STATE.anchorIdSeq, rank: 63, marks: 208, percentile: 89.51 }
+  ];
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+function syncPredictorToLeaderboard() {
+  const pScore = parseFloat(document.getElementById('inp-score')?.value);
+  const pMax = parseFloat(document.getElementById('inp-max')?.value);
+  const pAvg = parseFloat(document.getElementById('inp-avg')?.value);
+  const pN = parseFloat(document.getElementById('inp-N')?.value);
+
+  if (!isNaN(pAvg)) document.getElementById('pl-avg').value = pAvg;
+  if (!isNaN(pMax)) document.getElementById('pl-max').value = pMax;
+
+  const topperEl = document.getElementById('r-topper');
+  if (topperEl && topperEl.textContent && !isNaN(parseFloat(topperEl.textContent))) {
+    document.getElementById('pl-topper').value = Math.round(parseFloat(topperEl.textContent));
+  }
+
+  const pctEl = document.getElementById('r-pct');
+  const rankEl = document.getElementById('r-rank');
+  let pct = pctEl ? parseFloat(pctEl.textContent) : NaN;
+  let rank = rankEl ? parseInt(rankEl.textContent.replace(/\D/g, '')) : NaN;
+
+  if (!isNaN(pScore)) {
+    PL_STATE.anchors = [
+      {
+        id: ++PL_STATE.anchorIdSeq,
+        rank: !isNaN(rank) && rank > 0 ? rank : 50,
+        marks: Math.round(pScore),
+        percentile: !isNaN(pct) && pct > 0 ? Number(pct.toFixed(2)) : 90.0
+      }
+    ];
+  }
+
+  if (!isNaN(pN) && pN > 0) {
+    const overrideInput = document.getElementById('pl-n-override-val');
+    if (overrideInput) overrideInput.value = Math.round(pN);
+  }
+
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+function syncLeaderboardToPredictor() {
+  const plAvg = parseFloat(document.getElementById('pl-avg')?.value);
+  const plMax = parseFloat(document.getElementById('pl-max')?.value);
+  const plN = parseFloat(document.getElementById('pl-n-override-val')?.value);
+  const topper = parseFloat(document.getElementById('pl-topper')?.value);
+
+  const inpAvg = document.getElementById('inp-avg');
+  const inpMax = document.getElementById('inp-max');
+  const inpN = document.getElementById('inp-N');
+  const inpScore = document.getElementById('inp-score');
+
+  if (!isNaN(plAvg) && inpAvg) inpAvg.value = plAvg;
+  if (!isNaN(plMax) && inpMax) inpMax.value = plMax;
+  if (!isNaN(plN) && plN > 0 && inpN) inpN.value = Math.round(plN);
+  if (!isNaN(topper) && inpScore && (!inpScore.value || inpScore.value === '')) {
+    inpScore.value = Math.round(topper * 0.82);
+  }
+}
+
+function loadExamPreset(preset) {
+  const avgInp = document.getElementById('pl-avg');
+  const topperInp = document.getElementById('pl-topper');
+  const maxInp = document.getElementById('pl-max');
+  const nInp = document.getElementById('pl-n-override-val');
+
+  if (preset === 'jee-main') {
+    if (avgInp) avgInp.value = 122.5;
+    if (topperInp) topperInp.value = 275;
+    if (maxInp) maxInp.value = 300;
+    if (nInp) nInp.value = 850;
+    PL_STATE.anchors = [
+      { id: ++PL_STATE.anchorIdSeq, rank: 63, marks: 208, percentile: 89.51 },
+      { id: ++PL_STATE.anchorIdSeq, rank: 140, marks: 172, percentile: 79.20 }
+    ];
+  } else if (preset === 'jee-adv') {
+    if (avgInp) avgInp.value = 68.0;
+    if (topperInp) topperInp.value = 152;
+    if (maxInp) maxInp.value = 180;
+    if (nInp) nInp.value = 600;
+    PL_STATE.anchors = [
+      { id: ++PL_STATE.anchorIdSeq, rank: 35, marks: 124, percentile: 94.17 },
+      { id: ++PL_STATE.anchorIdSeq, rank: 110, marks: 95, percentile: 81.67 }
+    ];
+  }
+  renderAnchorRows();
+  updateAnchorNCalculation();
+}
+
+async function generateLeaderboardFromUI() {
+  const avg = parseFloat(document.getElementById('pl-avg')?.value);
+  const topper = parseFloat(document.getElementById('pl-topper')?.value);
+  const maxMarks = parseFloat(document.getElementById('pl-max')?.value) || 300;
+
+  if (isNaN(avg) || isNaN(topper)) {
+    alert("Please fill in batch average marks and topper marks.");
+    return;
+  }
+  if (topper <= avg) {
+    alert("Topper marks must be strictly greater than average marks.");
+    return;
+  }
+  if (topper > maxMarks) {
+    alert("Topper marks cannot exceed total maximum marks.");
+    return;
+  }
+
+  const validAnchors = PL_STATE.anchors.filter(a => a.rank > 0 && a.marks != null && !isNaN(a.marks));
+  if (validAnchors.length === 0) {
+    alert("Please provide at least 1 valid student anchor point.");
+    return;
+  }
+
+  const overrideVal = parseFloat(document.getElementById('pl-n-override-val')?.value);
+
+  const btn = document.getElementById('pl-generate-btn');
+  const originalBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Generating...";
+  }
+
+  try {
+    if (!window.pseudoLeaderboardEngine) {
+      window.pseudoLeaderboardEngine = new PseudoLeaderboardEngine();
+    }
+    if (rankModel && rankMeta) {
+      window.pseudoLeaderboardEngine.setModel(rankModel, rankMeta);
+    } else {
+      await initRankPredictor();
+      if (rankModel && rankMeta) {
+        window.pseudoLeaderboardEngine.setModel(rankModel, rankMeta);
+      }
+    }
+
+    const leaderboard = await window.pseudoLeaderboardEngine.generateLeaderboard({
+      avg,
+      topper,
+      maxMarks,
+      anchorPoints: validAnchors,
+      overrideN: overrideVal && !isNaN(overrideVal) ? overrideVal : null,
+      mode: PL_STATE.generationMode || getPLGenerationMode(),
+      numPasses: PL_STATE.multiPasses || getPLPassesCount()
+    });
+
+    PL_STATE.fullLeaderboard = leaderboard;
+    PL_STATE.currentPage = 1;
+    PL_STATE.currentFilter = 'all';
+    PL_STATE.searchRank = null;
+
+    const totalN = leaderboard.length;
+    const anchorCount = leaderboard.filter(r => r.isAnchor).length;
+
+    const metricN = document.getElementById('pl-metric-n');
+    const metricTopper = document.getElementById('pl-metric-topper');
+    const metricDiff = document.getElementById('pl-metric-diff');
+    const metricAnchors = document.getElementById('pl-metric-anchors');
+
+    if (metricN) metricN.textContent = totalN;
+    if (metricTopper) metricTopper.textContent = Math.round(topper);
+    if (metricDiff) metricDiff.textContent = Number(avg.toFixed(2));
+    if (metricAnchors) metricAnchors.textContent = anchorCount;
+
+    // Update Model & Latency Indicator Banner
+    const runMeta = leaderboard.meta || window.pseudoLeaderboardEngine?.lastRunMeta || {};
+    const modelUsedEl = document.getElementById('pl-model-used');
+    const modelDotEl = document.getElementById('pl-model-dot');
+    const modeBadgeEl = document.getElementById('pl-mode-used-badge');
+    const timeTakenEl = document.getElementById('pl-time-taken');
+
+    if (modelUsedEl) modelUsedEl.textContent = runMeta.modelName || 'RankNet (Model B)';
+    if (modelDotEl) {
+      modelDotEl.style.background = runMeta.isNeural !== false ? '#22c55e' : '#f59e0b';
+      modelDotEl.title = runMeta.isNeural !== false ? 'RankNet Model Active' : 'Statistical Fallback Active';
+    }
+    if (modeBadgeEl) {
+      const passesText = runMeta.passes ? ` (${runMeta.passes}x)` : '';
+      const modeLabel = runMeta.mode === 'per-rank' ? 'Per Rank' : (runMeta.mode === 'multi-pass' ? `More Passes${passesText}` : '1-Pass');
+      modeBadgeEl.textContent = modeLabel;
+    }
+    if (timeTakenEl) {
+      timeTakenEl.textContent = `${runMeta.timeMs != null ? runMeta.timeMs : '—'} ms`;
+    }
+
+    const resSec = document.getElementById('pl-results-section');
+    if (resSec) resSec.style.display = 'block';
+
+    applyLeaderboardFilters();
+
+    if (resSec) {
+      resSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (err) {
+    console.error("Leaderboard generation failed:", err);
+    alert("Error generating pseudo-leaderboard: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+  }
+}
+
+function setLeaderboardFilter(filter) {
+  PL_STATE.currentFilter = filter;
+  PL_STATE.currentPage = 1;
+
+  document.querySelectorAll('.pl-f-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+
+  applyLeaderboardFilters();
+}
+
+function handleRankSearch(query) {
+  const rank = parseInt(query);
+  if (!isNaN(rank) && rank > 0) {
+    PL_STATE.searchRank = rank;
+  } else {
+    PL_STATE.searchRank = null;
+  }
+  PL_STATE.currentPage = 1;
+  applyLeaderboardFilters();
+}
+
+function applyLeaderboardFilters() {
+  let list = PL_STATE.fullLeaderboard;
+
+  if (PL_STATE.searchRank) {
+    list = list.filter(r => r.rank === PL_STATE.searchRank);
+  } else {
+    if (PL_STATE.currentFilter === 'anchors') {
+      list = list.filter(r => r.isAnchor);
+    } else if (PL_STATE.currentFilter === 'top20') {
+      list = list.slice(0, 20);
+    } else if (PL_STATE.currentFilter === 'top50') {
+      list = list.slice(0, 50);
+    }
+  }
+
+  PL_STATE.filteredLeaderboard = list;
+  renderLeaderboardTable();
+}
+
+function renderLeaderboardTable() {
+  const tbody = document.getElementById('pl-table-tbody');
+  const info = document.getElementById('pl-page-info');
+  const prevBtn = document.getElementById('pl-prev-page-btn');
+  const nextBtn = document.getElementById('pl-next-page-btn');
+  const currSpan = document.getElementById('pl-page-curr');
+  if (!tbody) return;
+
+  const total = PL_STATE.filteredLeaderboard.length;
+
+  if (total === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text3);">No records found.</td></tr>`;
+    if (info) info.textContent = `Showing 0 of 0`;
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    if (currSpan) currSpan.textContent = `Page 1`;
+    return;
+  }
+
+  const pageSize = 50;
+  const totalPages = Math.ceil(total / pageSize);
+  PL_STATE.currentPage = Math.max(1, Math.min(PL_STATE.currentPage, totalPages));
+
+  const start = (PL_STATE.currentPage - 1) * pageSize;
+  const end = Math.min(start + pageSize, total);
+  const pageItems = PL_STATE.filteredLeaderboard.slice(start, end);
+
+  const runMeta = PL_STATE.fullLeaderboard?.meta || window.pseudoLeaderboardEngine?.lastRunMeta || {};
+  const predLabel = runMeta.isNeural !== false
+    ? (runMeta.mode === 'per-rank' ? 'RankNet (Per-Rank)' : (runMeta.mode === 'multi-pass' ? 'RankNet (Multi)' : 'RankNet (1-Pass)'))
+    : 'Fallback';
+
+  tbody.innerHTML = pageItems.map(row => {
+    let badge = `<span class="pl-badge pl-badge-pred">${predLabel}</span>`;
+    if (row.rank === 1) {
+      badge = `<span class="pl-badge pl-badge-topper">Topper</span>`;
+    } else if (row.isAnchor) {
+      badge = `<span class="pl-badge pl-badge-anchor">Anchor</span>`;
+    }
+
+    const rankContent = `#${row.rank}`;
+
+    return `
+      <tr>
+        <td class="leaderboard-rank">${rankContent}</td>
+        <td class="leaderboard-score">${row.marks}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11.5px;color:var(--text2);">${row.percentile.toFixed(2)}%</td>
+        <td>${badge}</td>
+      </tr>
+    `;
+  }).join('');
+
+  if (info) info.textContent = `Showing ${start + 1}-${end} of ${total}`;
+  if (prevBtn) prevBtn.disabled = PL_STATE.currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = PL_STATE.currentPage >= totalPages;
+  if (currSpan) currSpan.textContent = `Page ${PL_STATE.currentPage} / ${totalPages}`;
+}
+
+function changeLeaderboardPage(delta) {
+  PL_STATE.currentPage += delta;
+  renderLeaderboardTable();
+}
+
+function exportLeaderboardToCSV() {
+  if (!PL_STATE.fullLeaderboard || PL_STATE.fullLeaderboard.length === 0) {
+    alert("No leaderboard data to export.");
+    return;
+  }
+  let csv = "Rank,Marks,Percentile,Status\n";
+  PL_STATE.fullLeaderboard.forEach(r => {
+    csv += `${r.rank},${r.marks},${r.percentile},${r.isAnchor ? 'Anchor' : 'Predicted'}\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `pseudo_leaderboard_N${PL_STATE.fullLeaderboard.length}.csv`;
+  link.click();
+}
+
+// Window exports
+window.initPseudoLeaderboardUI = initPseudoLeaderboardUI;
+window.resetAnchorsToDefault = resetAnchorsToDefault;
+window.addAnchorPointRow = addAnchorPointRow;
+window.removeAnchorPointRow = removeAnchorPointRow;
+window.clearAllAnchors = clearAllAnchors;
+window.handleAnchorChange = handleAnchorChange;
+window.updateAnchorNCalculation = updateAnchorNCalculation;
+window.loadSampleLeaderboardData = loadSampleLeaderboardData;
+window.loadExamPreset = loadExamPreset;
+window.syncPredictorToLeaderboard = syncPredictorToLeaderboard;
+window.syncLeaderboardToPredictor = syncLeaderboardToPredictor;
+window.generateLeaderboardFromUI = generateLeaderboardFromUI;
+window.setLeaderboardFilter = setLeaderboardFilter;
+window.handleRankSearch = handleRankSearch;
+window.changeLeaderboardPage = changeLeaderboardPage;
+window.exportLeaderboardToCSV = exportLeaderboardToCSV;
+window.setPLGenerationMode = setPLGenerationMode;
+window.getPLGenerationMode = getPLGenerationMode;
+window.updatePLModeUI = updatePLModeUI;
+window.setPLPassesCount = setPLPassesCount;
+window.getPLPassesCount = getPLPassesCount;
+window.updatePLPassesUI = updatePLPassesUI;
+
+window.generatePseudoLeaderboardFromResult = async function generatePseudoLeaderboardFromResult() {
+  const current = APP_STATE.currentResult;
+  if (!current || !current.analysis) {
+    alert("No active exam result found. Please open an exam result first.");
+    return;
+  }
+
+  const analysis = current.analysis || {};
+  const r = analysis.result || {};
+
+  // 1. Student's own score, rank, percentile
+  const studentMarks = parseFloat(r.totalMarks);
+  const studentRank = parseInt(analysis.rank);
+  const studentPct = parseFloat(analysis.percentile);
+  const maxMarks = parseFloat(r.totalSubjectMarks) || 300;
+
+  // 2. Topper's score
+  let topper = parseFloat(r.totalHighest);
+
+  // Check top rows from leaderboard
+  let topRows = Array.isArray(current.leaderboard?.leaderboardScore)
+    ? current.leaderboard.leaderboardScore
+    : [];
+
+  // If leaderboard isn't in currentResult yet, try fetching it
+  if (topRows.length === 0 && API_CONFIG.token) {
+    try {
+      const selected = current.selected || {};
+      const leaderboardId = selected.id || selected.testPaperId || analysis.testPaperId;
+      if (leaderboardId) {
+        const lb = await fetchLeaderboardScore(API_CONFIG.token, leaderboardId);
+        if (lb && Array.isArray(lb.leaderboardScore)) {
+          current.leaderboard = lb;
+          topRows = lb.leaderboardScore;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch leaderboard for anchors:", e);
+    }
+  }
+
+  if (topRows.length > 0) {
+    const firstRow = topRows[0];
+    const topScore = parseFloat(firstRow.totalMarks);
+    if (!isNaN(topScore)) {
+      topper = isNaN(topper) ? topScore : Math.max(topper, topScore);
+    }
+  }
+
+  if (isNaN(topper) || topper <= 0) {
+    const promptTopperMsg = `Topper marks (Rank 1 score) not found in test data.\nMax Marks: ${maxMarks}\nPlease enter the Topper Marks:`;
+    const inputTopper = prompt(promptTopperMsg, "");
+    if (!inputTopper || isNaN(parseFloat(inputTopper.trim())) || parseFloat(inputTopper.trim()) <= 0) {
+      alert("❌ Generation Aborted: Valid Topper marks are required.");
+      return;
+    }
+    topper = parseFloat(inputTopper.trim());
+  }
+
+  // 3. STRICT REQUIREMENT: Average marks MUST be provided!
+  let avg = parseFloat(r.totalAvg || r.totalAvgMarks || analysis.avgMarks);
+  if (isNaN(avg) || avg <= 0 || avg >= topper) {
+    const promptMsg = `⚠️ STRICT REQUIREMENT:\nBatch Average Marks are required by RankNet to calculate paper difficulty and shape the CDF curve.\n\nTopper score: ${topper} / ${maxMarks}\nPlease enter the Batch Average Marks:`;
+    const inputAvg = prompt(promptMsg, !isNaN(avg) && avg > 0 ? avg : "");
+    if (!inputAvg || inputAvg.trim() === "") {
+      alert("❌ Generation Aborted: Average marks are strictly required.");
+      return;
+    }
+    avg = parseFloat(inputAvg.trim());
+    if (isNaN(avg) || avg <= 0) {
+      alert("❌ Invalid Average Marks: Must be a positive number.");
+      return;
+    }
+    if (avg >= topper) {
+      alert(`❌ Invalid Average Marks: Must be strictly less than topper marks (${topper}).`);
+      return;
+    }
+  }
+
+  // 4. Estimate total students N by percentile
+  let estimatedN = null;
+  if (!isNaN(studentRank) && studentRank > 0 && !isNaN(studentPct) && studentPct > 0 && studentPct < 100) {
+    estimatedN = Math.round(studentRank / (1.0 - (studentPct / 100.0)));
+  } else if (!isNaN(parseFloat(analysis.totalStudent)) && parseFloat(analysis.totalStudent) > 0) {
+    estimatedN = Math.round(parseFloat(analysis.totalStudent));
+  }
+
+  // 5. Gather all anchor points (preserving ties!)
+  const anchors = [];
+  let nextAnchorId = 1;
+
+  // Add student's own scorecard as anchor
+  if (!isNaN(studentRank) && studentRank > 1 && !isNaN(studentMarks)) {
+    anchors.push({
+      id: nextAnchorId++,
+      rank: studentRank,
+      marks: Math.round(studentMarks),
+      percentile: !isNaN(studentPct) ? Number(studentPct.toFixed(2)) : ''
+    });
+  }
+
+  // Add all top students from leaderboard (supporting ties!)
+  topRows.forEach(row => {
+    const rk = parseInt(row.ranks);
+    const mk = parseFloat(row.totalMarks);
+    if (!isNaN(rk) && rk > 1 && !isNaN(mk)) {
+      let pct = '';
+      if (estimatedN && estimatedN > rk) {
+        pct = Number(((1.0 - (rk / estimatedN)) * 100).toFixed(2));
+      }
+      anchors.push({
+        id: nextAnchorId++,
+        rank: rk,
+        marks: Math.round(mk),
+        percentile: pct
+      });
+    }
+  });
+
+  // If only Rank 1 exists (e.g. user is Rank 1 and no leaderboard), add a fallback anchor if student is not rank 1
+  if (anchors.length === 0 && !isNaN(studentMarks) && !isNaN(studentRank) && studentRank > 1) {
+    anchors.push({
+      id: nextAnchorId++,
+      rank: studentRank,
+      marks: Math.round(studentMarks),
+      percentile: !isNaN(studentPct) ? Number(studentPct.toFixed(2)) : ''
+    });
+  }
+
+  // Sort anchors by rank ascending, marks descending
+  anchors.sort((a, b) => a.rank - b.rank || b.marks - a.marks);
+
+  // 6. Populate inputs on Neural Network page
+  PL_STATE.batchStats = { avg, topper, maxMarks };
+  PL_STATE.anchors = anchors;
+
+  // 7. Navigate to Neural Network page and switch to leaderboard subtab
+  await nav('neural');
+  window.setSubTab('neural', 'leaderboard');
+
+  // Update DOM inputs
+  const avgInp = document.getElementById('pl-avg');
+  const topperInp = document.getElementById('pl-topper');
+  const maxInp = document.getElementById('pl-max');
+  if (avgInp) avgInp.value = avg;
+  if (topperInp) topperInp.value = topper;
+  if (maxInp) maxInp.value = maxMarks;
+
+  const overrideVal = document.getElementById('pl-n-override-val');
+  if (estimatedN && estimatedN > 0 && overrideVal) {
+    overrideVal.value = estimatedN;
+  }
+
+  renderAnchorRows();
+  updateAnchorNCalculation();
+
+  // 8. Auto-generate the pseudo leaderboard!
+  await generateLeaderboardFromUI();
+};
+
+let hasPracticeAccessCache = null;
+function updatePracticeAccessUI(hasAccess) {
+  const practiceNavItem = document.querySelector('.nav-item[onclick*="practice"]');
+  if (practiceNavItem) {
+    practiceNavItem.style.display = hasAccess ? '' : 'none';
+  }
+  const syncBtn = document.getElementById('settings-sync-btn');
+  if (syncBtn) {
+    syncBtn.style.display = hasAccess ? '' : 'none';
+  }
+  const practiceCard = document.getElementById('practice-settings-card');
+  if (practiceCard) {
+    practiceCard.style.display = hasAccess ? '' : 'none';
+  }
+  const listEditorCard = document.getElementById('list-editor-card');
+  if (listEditorCard) {
+    listEditorCard.style.display = hasAccess ? '' : 'none';
+  }
+}
+async function checkPracticeAccess() {
+  if (hasPracticeAccessCache !== null) {
+    return hasPracticeAccessCache;
+  }
+  const currentClassId = sessionStorage.getItem('fy_class_id') || API_CONFIG.classId;
+  if (String(currentClassId) === '813') {
+    hasPracticeAccessCache = true;
+    return true;
+  }
+  if (API_CONFIG.token) {
+    try {
+      const batches = await fetchStudentBatches(API_CONFIG.token, API_CONFIG.academicYear);
+      if (Array.isArray(batches)) {
+        APP_STATE.batches = batches;
+        uploadBatchesToSupabase(batches, API_CONFIG.academicYear);
+        if (batches.some(b => String(b.id) === '813')) {
+          hasPracticeAccessCache = true;
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error("Error checking batches API:", e);
+    }
+  }
+  hasPracticeAccessCache = false;
+  return false;
+}
+async function nav(id, el) {
+  if (id === 'practice') {
+    const hasAccess = await checkPracticeAccess();
+    if (!hasAccess) {
+      if (typeof chemShowToast === 'function') {
+        chemShowToast("Chemistry Practice is disabled.");
+      } else {
+        alert("Chemistry Practice is disabled.");
+      }
+      return;
+    }
+    const shell = document.querySelector('.chem-practice-shell');
+    const restricted = document.getElementById('chem-practice-restricted');
+    if (shell) shell.style.display = 'block';
+    if (restricted) restricted.style.display = 'none';
+    setSyncPill(navigator.onLine ? 'live' : 'offline', navigator.onLine ? 'Syncing progress...' : 'Offline');
+    await chemEnsureSupabase();
+    await chemDownloadProgress(false);
+    await chemSyncAll(false);
+    setSyncPill(navigator.onLine ? 'live' : 'offline', navigator.onLine ? 'Live' : 'Offline');
+    showModeSelection();
+  }
+  const activePageEl = document.querySelector('.page.active');
+  const prevPageId = activePageEl ? activePageEl.id.replace('page-', '') : '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const msgPage = document.getElementById('page-messages');
+  if (msgPage) msgPage.classList.remove('thread-open');
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.dock-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === id);
+  });
+  document.getElementById('page-title').textContent = pages[id] || id;
+  renderSubnav(id);
+  refreshActivePageData();
+  ensureDataForPage(id, false);
+  if (id === 'settings') {
+    chemLoadVisitorStat();
+    updatePLModeUI();
+  }
+  document.querySelector('.content').scrollTop = 0;
+  if (window.innerWidth <= 768) closeSidebar();
+  if (prevPageId === 'practice' && id !== 'practice') {
+    const hasAccess = await checkPracticeAccess();
+    if (hasAccess) {
+      chemSyncAll(false);
+    }
+  }
+  if (id === 'neural') {
+    initRankPredictor();
+    initPseudoLeaderboardUI();
+    checkShareCooldown();
+  }
+}
+function checkShareCooldown() {
+  const button = document.getElementById('neural-anon-btn');
+  const status = document.getElementById('neural-status');
+  if (!button) return false;
+  const cooldownKey = getUserStorageKey('neural_share_cooldown');
+  const lastShareTimeStr = localStorage.getItem(cooldownKey);
+  if (lastShareTimeStr) {
+    const lastShareTime = Number(lastShareTimeStr);
+    const diffMs = Date.now() - lastShareTime;
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    if (diffMs < sevenDaysMs) {
+      const remainingDays = Math.ceil((sevenDaysMs - diffMs) / (24 * 60 * 60 * 1000));
+      button.disabled = true;
+      if (status) {
+        status.textContent = `You shared performance data recently. Cooldown active. Please wait ${remainingDays} more day(s).`;
+      }
+      return true;
+    }
+  }
+  button.disabled = false;
+  return false;
+}
+window.sendAnonDataToWorker = async function sendAnonDataToWorker() {
+  const button = document.getElementById('neural-anon-btn');
+  const status = document.getElementById('neural-status');
+  if (!API_CONFIG.token) {
+    if (status) status.textContent = 'Login first, then share performance data.';
+    return;
+  }
+  if (checkShareCooldown()) {
+    return;
+  }
+  if (typeof scrapeAllTestResults !== 'function' || typeof cleanScrapedTestsData !== 'function') {
+    if (status) status.textContent = 'Scraper or cleaner is not loaded.';
+    return;
+  }
+  const setStatus = message => {
+    if (status) status.textContent = message;
+  };
+  try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Scraping...';
+    }
+    setStatus('Scraping tests without leaderboard data...');
+    const scraped = await scrapeAllTestResults({
+      includeLeaderboard: false,
+      includeUnpublished: false,
+      download: false
+    });
+    setStatus('Cleaning scraped test data...');
+    const cleanedJson = cleanScrapedTestsData(scraped);
+    if (button) button.textContent = 'Sending...';
+    setStatus(`Sending ${cleanedJson.length} cleaned test records...`);
+    const response = await fetch('https://reciver.evodev.workers.dev/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(cleanedJson)
+    });
+    if (!response.ok) {
+      throw new Error(`Worker returned HTTP ${response.status}`);
+    }
+    const cooldownKey = getUserStorageKey('neural_share_cooldown');
+    localStorage.setItem(cooldownKey, String(Date.now()));
+    setStatus(`Done. Sent ${cleanedJson.length} cleaned test records.`);
+  } catch (err) {
+    console.error(err);
+    setStatus((err === null || err === void 0 ? void 0 : err.message) || 'Failed to share performance data.');
+  } finally {
+    if (button) {
+      button.textContent = 'Share Performance Analytics';
+      checkShareCooldown();
+    }
+  }
+};
+window.openEraFromDashboard = function openEraFromDashboard() {
+  nav('examcal', document.querySelector('.nav-item[onclick*=examcal]'));
+};
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').style.display = document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+}
+window.closeMessageThread = function closeMessageThread() {
+  const msgPage = document.getElementById('page-messages');
+  if (!msgPage) return;
+  msgPage.classList.remove('thread-open');
+  const title = document.getElementById('msg-thread-title');
+  const list = document.getElementById('msg-thread-list');
+  if (title) title.textContent = 'Select a conversation';
+  if (list) list.innerHTML = '<div class="empty" style="margin:auto">No conversation selected</div>';
+};
+window.setThemeMode = function setThemeMode(mode) {
+  const body = document.body;
+  const useLight = mode === 'light';
+  body.classList.toggle('light-mode', useLight);
+  localStorage.setItem(getUserStorageKey('fy_theme_mode'), useLight ? 'light' : 'dark');
+  renderThemeSettings();
+};
+window.toggleThemeMode = function toggleThemeMode() {
+  const isLight = document.body.classList.contains('light-mode');
+  setThemeMode(isLight ? 'dark' : 'light');
+};
+function applyThemePreset(presetId, persist = true) {
+  const body = document.body;
+  body.classList.remove('theme-ocean', 'theme-purple', 'theme-emerald');
+  if (presetId && presetId !== 'default') body.classList.add(`theme-${presetId}`);
+  APP_STATE.themePreset = presetId || 'default';
+  if (persist) localStorage.setItem(getUserStorageKey('fy_theme_preset'), APP_STATE.themePreset);
+}
+window.selectThemePreset = function selectThemePreset(presetId) {
+  applyThemePreset(presetId, true);
+  renderThemeSettings();
+};
+window.resetAppearance = function resetAppearance() {
+  setThemeMode('dark');
+  applyThemePreset('default', true);
+  renderThemeSettings();
+};
+window.clearLocalCache = function clearLocalCache() {
+  localStorage.removeItem(getUserStorageKey(PORTAL_CACHE_KEY));
+  localStorage.removeItem(getUserStorageKey('fy_theme_mode'));
+  localStorage.removeItem(getUserStorageKey('fy_theme_preset'));
+  APP_STATE.loadedSections = {
+    dashboard: false,
+    courses: false,
+    messages: false,
+    notices: false,
+    study: false
+  };
+  setSyncPill('cached', 'Local cache cleared');
+};
+window.hardRefreshAndClearCache = async function hardRefreshAndClearCache() {
+  localStorage.removeItem(getUserStorageKey(PORTAL_CACHE_KEY));
+  Object.keys(localStorage).filter(key => key.startsWith('fy_timetable_cache_') || key.includes('_fy_timetable_cache_')).forEach(key => localStorage.removeItem(key));
+  if ('caches' in window) {
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    } catch (_) {}
+  }
+  setSyncPill('live', 'Refreshing...');
+  window.location.reload();
+};
+window.refreshCurrentSection = async function refreshCurrentSection() {
+  var _document$querySelect2;
+  const activePage = ((_document$querySelect2 = document.querySelector('.page.active')) === null || _document$querySelect2 === void 0 || (_document$querySelect2 = _document$querySelect2.id) === null || _document$querySelect2 === void 0 ? void 0 : _document$querySelect2.replace('page-', '')) || 'dashboard';
+  await ensureDataForPage(activePage, true);
+  scanAndUploadOnlineTests();
+};
+function renderThemeSettings() {
+  const root = document.getElementById('theme-preset-grid');
+  if (!root) return;
+  const darkBtn = document.getElementById('theme-mode-dark');
+  const lightBtn = document.getElementById('theme-mode-light');
+  const isLight = document.body.classList.contains('light-mode');
+  if (darkBtn) darkBtn.classList.toggle('active', !isLight);
+  if (lightBtn) lightBtn.classList.toggle('active', isLight);
+  const active = APP_STATE.themePreset || 'default';
+  root.innerHTML = THEME_PRESETS.map(p => `
+      <button class="theme-preset-btn ${active === p.id ? 'active' : ''}" onclick="selectThemePreset('${p.id}')">
+        <div class="theme-preset-name">${escapeHtml(p.label)}</div>
+        <div class="theme-preset-preview">
+          ${p.colors.map(c => `<span class="theme-dot" style="background:${c}"></span>`).join('')}
+        </div>
+      </button>
+    `).join('');
+}
+let chemListEditorTab = 'compounds';
+let chemListEditorSearch = '';
+let listEditorLoaded = false;
+async function renderListEditor() {
+  const hasAccess = await checkPracticeAccess();
+  if (!hasAccess) return;
+  await Promise.all([chemInitApp(), reagentInitApp(), pkaInitApp()]);
+  const root = document.getElementById('list-editor-root');
+  if (!root) return;
+  root.innerHTML = `
+      <style>
+        #list-editor-items::-webkit-scrollbar {
+          width: 6px;
+        }
+        #list-editor-items::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        #list-editor-items::-webkit-scrollbar-thumb {
+          background: var(--border);
+          border-radius: 3px;
+        }
+        #list-editor-items::-webkit-scrollbar-thumb:hover {
+          background: var(--text3);
+        }
+      </style>
+      <div class="list-editor-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap: 10px; flex-wrap: wrap;">
+        <div class="chem-board-tabs" style="margin:0;">
+          <button class="chem-tab-btn ${chemListEditorTab === 'compounds' ? 'active' : ''}" id="list-editor-tab-compounds" onclick="setListEditorTab('compounds')">
+            Compounds (${chemMyData.myList.length}/${chemAllCompounds.length})
+          </button>
+          <button class="chem-tab-btn ${chemListEditorTab === 'reagents' ? 'active' : ''}" id="list-editor-tab-reagents" onclick="setListEditorTab('reagents')">
+            Reagents (${reagentMyData.myList.length}/${reagentAllReagents.length})
+          </button>
+          <button class="chem-tab-btn ${chemListEditorTab === 'pka' ? 'active' : ''}" id="list-editor-tab-pka" onclick="setListEditorTab('pka')">
+            pKa (${pkaMyData.myList.length}/${pkaAllCompounds.length})
+          </button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="chem-btn chem-btn-ghost" style="min-height:30px; font-size:12px; padding:4px 10px;" onclick="listEditorSelectAll(true)">Select All</button>
+          <button class="chem-btn chem-btn-ghost" style="min-height:30px; font-size:12px; padding:4px 10px;" onclick="listEditorSelectAll(false)">Deselect All</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <input type="text" id="list-editor-search" placeholder="Search ${chemListEditorTab === 'compounds' ? 'compounds...' : chemListEditorTab === 'reagents' ? 'reagents...' : 'pKa compounds...'}" 
+          style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s;" 
+          value="${escapeHtml(chemListEditorSearch)}" oninput="handleListEditorSearch(this.value)" />
+      </div>
+      <div id="list-editor-items" style="max-height: 250px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg2);">
+      </div>
+    `;
+  renderListEditorItems();
+}
+function renderListEditorItems() {
+  const container = document.getElementById('list-editor-items');
+  if (!container) return;
+  const searchLower = chemListEditorSearch.toLowerCase().trim();
+  if (chemListEditorTab === 'compounds') {
+    const filtered = chemAllCompounds.filter(c => c.name.toLowerCase().includes(searchLower) || c.smiles && c.smiles.toLowerCase().includes(searchLower));
+    if (!filtered.length) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text3); font-size: 13px;">No compounds found.</div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(c => {
+      const isChecked = chemMyData.myList.includes(c.name);
+      return `
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; user-select: none;">
+            <input type="checkbox" style="cursor: pointer; accent-color: var(--accent);" ${isChecked ? 'checked' : ''} onchange="toggleListEditorCompound('${escapeHtml(c.name)}', this.checked)" />
+            <div style="font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
+          </label>
+        `;
+    }).join('');
+  } else if (chemListEditorTab === 'reagents') {
+    const filtered = reagentAllReagents.filter(r => r.toLowerCase().includes(searchLower));
+    if (!filtered.length) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text3); font-size: 13px;">No reagents found.</div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(r => {
+      const isChecked = reagentMyData.myList.includes(r);
+      return `
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; user-select: none;">
+            <input type="checkbox" style="cursor: pointer; accent-color: var(--accent);" ${isChecked ? 'checked' : ''} onchange="toggleListEditorReagent('${escapeHtml(r)}', this.checked)" />
+            <div style="font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(r)}">${escapeHtml(r)}</div>
+          </label>
+        `;
+    }).join('');
+  } else if (chemListEditorTab === 'pka') {
+    const filtered = pkaAllCompounds.filter(c => c.name.toLowerCase().includes(searchLower));
+    if (!filtered.length) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text3); font-size: 13px;">No pKa compounds found.</div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(c => {
+      const isChecked = pkaMyData.myList.includes(c.name);
+      return `
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; user-select: none;">
+            <input type="checkbox" style="cursor: pointer; accent-color: var(--accent);" ${isChecked ? 'checked' : ''} onchange="toggleListEditorPka('${escapeHtml(c.name)}', this.checked)" />
+            <div style="font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
+          </label>
+        `;
+    }).join('');
+  }
+}
+window.setListEditorTab = function (tab) {
+  chemListEditorTab = tab;
+  renderListEditor();
+};
+window.handleListEditorSearch = function (val) {
+  chemListEditorSearch = val;
+  renderListEditorItems();
+};
+window.toggleListEditorCompound = function (name, isChecked) {
+  if (isChecked) {
+    if (!chemMyData.myList.includes(name)) {
+      chemMyData.myList.push(name);
+      if (!chemMyData.stats[name]) {
+        chemMyData.stats[name] = {
+          wrong: 0,
+          correct: 0,
+          streak: 0,
+          lastSeen: 0
+        };
+      }
+    }
+  } else {
+    chemMyData.myList = chemMyData.myList.filter(n => n !== name);
+  }
+  chemSave();
+  chemSyncAll(false);
+  const tabBtn = document.getElementById('list-editor-tab-compounds');
+  if (tabBtn) {
+    tabBtn.textContent = `Compounds (${chemMyData.myList.length}/${chemAllCompounds.length})`;
+  }
+};
+window.toggleListEditorReagent = function (name, isChecked) {
+  if (isChecked) {
+    if (!reagentMyData.myList.includes(name)) {
+      reagentMyData.myList.push(name);
+      const newReactions = reagentAllReactions.filter(r => r.Reagent === name);
+      newReactions.forEach(r => {
+        const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+        if (!reagentMyData.stats[key]) {
+          reagentMyData.stats[key] = {
+            wrong: 0,
+            correct: 0,
+            streak: 0,
+            lastSeen: 0
+          };
+        }
+      });
+    }
+  } else {
+    reagentMyData.myList = reagentMyData.myList.filter(r => r !== name);
+  }
+  reagentSave();
+  chemSave();
+  chemSyncAll(false);
+  const tabBtn = document.getElementById('list-editor-tab-reagents');
+  if (tabBtn) {
+    tabBtn.textContent = `Reagents (${reagentMyData.myList.length}/${reagentAllReagents.length})`;
+  }
+};
+window.toggleListEditorPka = function (name, isChecked) {
+  if (isChecked) {
+    if (!pkaMyData.myList.includes(name)) {
+      pkaMyData.myList.push(name);
+      if (!pkaMyData.stats[name]) {
+        pkaMyData.stats[name] = {
+          wrong: 0,
+          correct: 0,
+          streak: 0,
+          lastSeen: 0
+        };
+      }
+    }
+  } else {
+    pkaMyData.myList = pkaMyData.myList.filter(n => n !== name);
+  }
+  pkaSave();
+  chemSyncAll(false);
+  const tabBtn = document.getElementById('list-editor-tab-pka');
+  if (tabBtn) {
+    tabBtn.textContent = `pKa (${pkaMyData.myList.length}/${pkaAllCompounds.length})`;
+  }
+};
+window.listEditorSelectAll = function (selectAll) {
+  const searchLower = chemListEditorSearch.toLowerCase().trim();
+  if (chemListEditorTab === 'compounds') {
+    const filtered = chemAllCompounds.filter(c => c.name.toLowerCase().includes(searchLower) || c.smiles && c.smiles.toLowerCase().includes(searchLower));
+    filtered.forEach(c => {
+      if (selectAll) {
+        if (!chemMyData.myList.includes(c.name)) {
+          chemMyData.myList.push(c.name);
+          if (!chemMyData.stats[c.name]) {
+            chemMyData.stats[c.name] = {
+              wrong: 0,
+              correct: 0,
+              streak: 0,
+              lastSeen: 0
+            };
+          }
+        }
+      } else {
+        chemMyData.myList = chemMyData.myList.filter(n => n !== c.name);
+      }
+    });
+    chemSave();
+    chemSyncAll(false);
+  } else if (chemListEditorTab === 'reagents') {
+    const filtered = reagentAllReagents.filter(r => r.toLowerCase().includes(searchLower));
+    filtered.forEach(r => {
+      if (selectAll) {
+        if (!reagentMyData.myList.includes(r)) {
+          reagentMyData.myList.push(r);
+          const newReactions = reagentAllReactions.filter(x => x.Reagent === r);
+          newReactions.forEach(x => {
+            const key = `${x.Reactant} | ${x.Reagent} | ${x.Product}`;
+            if (!reagentMyData.stats[key]) {
+              reagentMyData.stats[key] = {
+                wrong: 0,
+                correct: 0,
+                streak: 0,
+                lastSeen: 0
+              };
+            }
+          });
+        }
+      } else {
+        reagentMyData.myList = reagentMyData.myList.filter(x => x !== r);
+      }
+    });
+    reagentSave();
+    chemSave();
+    chemSyncAll(false);
+  } else if (chemListEditorTab === 'pka') {
+    const filtered = pkaAllCompounds.filter(c => c.name.toLowerCase().includes(searchLower));
+    filtered.forEach(c => {
+      if (selectAll) {
+        if (!pkaMyData.myList.includes(c.name)) {
+          pkaMyData.myList.push(c.name);
+          if (!pkaMyData.stats[c.name]) {
+            pkaMyData.stats[c.name] = {
+              wrong: 0,
+              correct: 0,
+              streak: 0,
+              lastSeen: 0
+            };
+          }
+        }
+      } else {
+        pkaMyData.myList = pkaMyData.myList.filter(n => n !== c.name);
+      }
+    });
+    pkaSave();
+    chemSyncAll(false);
+  }
+  renderListEditor();
+};
+window.chemToggleTextMode = function (el) {
+  localStorage.setItem(getUserStorageKey('chem_setting_text_mode'), el.checked ? 'true' : 'false');
+};
+window.chemToggleWizardMode = function (el) {
+  localStorage.setItem(getUserStorageKey('chem_setting_wizard_mode'), el.checked ? 'true' : 'false');
+  chemUpdatePracticeButton();
+};
+window.chemChangeRenderer = function (val) {
+  localStorage.setItem(getUserStorageKey('chem_setting_renderer'), val);
+  if (val === 'rdkit') {
+    loadRDKitDynamic().then(() => {
+      chemShowToast("RDKit JS loaded successfully!");
+      chemRefreshCurrentDrawing();
+    }).catch(() => {
+      chemShowToast("Failed to load RDKit JS. Using Smiles Drawer.");
+      const rendererSelect = document.getElementById('chem-setting-renderer');
+      if (rendererSelect) rendererSelect.value = 'smiles';
+      localStorage.setItem(getUserStorageKey('chem_setting_renderer'), 'smiles');
+    });
+  } else {
+    chemRefreshCurrentDrawing();
+  }
+};
+function chemUpdatePracticeButton() {
+  const btn = document.getElementById('chem-btn-practice');
+  if (!btn) return;
+  const wizardMode = localStorage.getItem(getUserStorageKey('chem_setting_wizard_mode')) === 'true';
+  if (wizardMode) {
+    btn.textContent = 'Run';
+    btn.classList.add('chem-btn-primary');
+    btn.classList.remove('chem-btn-secondary');
+  } else {
+    btn.textContent = 'Practice Mode';
+    btn.classList.add('chem-btn-secondary');
+    btn.classList.remove('chem-btn-primary');
+  }
+}
+function initTopbarEnhancements() {
+  if (window.__fyEnhancementsInited) return;
+  window.__fyEnhancementsInited = true;
+  const textModeSetting = localStorage.getItem(getUserStorageKey('chem_setting_text_mode')) !== 'false';
+  const checkbox = document.getElementById('chem-setting-text-mode');
+  if (checkbox) checkbox.checked = textModeSetting;
+  const wizardModeSetting = localStorage.getItem(getUserStorageKey('chem_setting_wizard_mode')) === 'true';
+  const wizardCheckbox = document.getElementById('chem-setting-wizard-mode');
+  if (wizardCheckbox) wizardCheckbox.checked = wizardModeSetting;
+  chemUpdatePracticeButton();
+  const rendererSetting = localStorage.getItem(getUserStorageKey('chem_setting_renderer')) || 'smiles';
+  const rendererSelect = document.getElementById('chem-setting-renderer');
+  if (rendererSelect) rendererSelect.value = rendererSetting;
+  if (rendererSetting === 'rdkit') {
+    loadRDKitDynamic();
+  }
+  const savedTheme = localStorage.getItem(getUserStorageKey('fy_theme_mode'));
+  if (savedTheme === 'light') document.body.classList.add('light-mode');
+  const savedPreset = localStorage.getItem(getUserStorageKey('fy_theme_preset')) || 'default';
+  applyThemePreset(savedPreset, false);
+  setSyncPill(navigator.onLine ? 'live' : 'offline', navigator.onLine ? 'Live' : 'Offline');
+  const searchInput = document.getElementById('global-search');
+  if (searchInput) {
+    searchInput.value = APP_STATE.globalSearch || '';
+    searchInput.addEventListener('input', debounce(function onSearchInput() {
+      APP_STATE.globalSearch = this.value.trim();
+      refreshActivePageData();
+    }, 150));
+  }
+  const commandInput = document.getElementById('command-input');
+  if (commandInput) {
+    commandInput.addEventListener('input', function onCommandInput() {
+      renderCommandPaletteList(this.value);
+    });
+    commandInput.addEventListener('keydown', function onCommandKeydown(e) {
+      const items = Array.from(document.querySelectorAll('.command-item'));
+      if (!items.length) return;
+      const activeIndex = items.findIndex(i => i.classList.contains('active'));
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const direction = e.key === 'ArrowDown' ? 1 : -1;
+        const nextIndex = activeIndex < 0 ? 0 : (activeIndex + direction + items.length) % items.length;
+        items.forEach(i => i.classList.remove('active'));
+        items[nextIndex].classList.add('active');
+        items[nextIndex].scrollIntoView({
+          block: 'nearest'
+        });
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const active = items.find(i => i.classList.contains('active')) || items[0];
+        active === null || active === void 0 || active.click();
+      }
+      if (e.key === 'Escape') {
+        closeCommandPalette();
+      }
+    });
+  }
+  document.addEventListener('keydown', e => {
+    const isCmdPalette = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k';
+    if (isCmdPalette) {
+      e.preventDefault();
+      openCommandPalette();
+      return;
+    }
+    if (e.key === 'Escape') closeCommandPalette();
+  });
+  window.addEventListener('online', () => {
+    setSyncPill('live', 'Back online · syncing');
+    chemSyncAll(false);
+    refreshPortalDataInBackground();
+    setTimeout(() => window.location.reload(), 1200);
+  });
+  window.addEventListener('offline', () => {
+    setSyncPill('offline', 'Offline');
+  });
+}
+
+/* --- MESSAGES --- */
+window.selectMessageGroup = async function (groupId, title) {
+  currentGroupId = groupId;
+  renderMessageGroups(APP_STATE.messageGroups || []);
+  const msgPage = document.getElementById('page-messages');
+  if (window.innerWidth <= 768 && msgPage) msgPage.classList.add('thread-open');
+  const threadTitle = document.getElementById('msg-thread-title');
+  const threadList = document.getElementById('msg-thread-list');
+  if (threadTitle) threadTitle.textContent = title;
+  if (threadList) threadList.innerHTML = '<div class="empty" style="margin:auto">Loading messages...</div>';
+  const messages = await fetchMessages(API_CONFIG.token, groupId);
+  if (!messages.length) {
+    if (threadList) threadList.innerHTML = '<div class="empty" style="margin:auto">No messages in this group</div>';
+    return;
+  }
+
+  // Sort by date so newest messages are at bottom
+  messages.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate));
+  if (threadList) {
+    threadList.innerHTML = messages.map(m => {
+      const dateStr = new Date(m.createdDate).toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric'
+      });
+      let attachHtml = '';
+      if (m.attachment) {
+        attachHtml = `<div style="margin-top:8px"><a href="${escapeHtml(m.attachment)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 1v8M4 6l3 3 3-3M2 11h10"/></svg> View Attachment</a></div>`;
+      }
+      return `
+          <div class="msg-bubble">
+            <div class="msg-bubble-text">${formatMessageText(m.messageText)}</div>
+            ${attachHtml}
+            <div class="msg-bubble-meta">${escapeHtml(m.displayTime)} · ${escapeHtml(dateStr)}</div>
+          </div>
+        `;
+    }).join('');
+    threadList.scrollTop = threadList.scrollHeight;
+  }
+};
+
+/* --- ATTENDANCE --- */
+window.openAttendanceModal = function () {
+  ensureAttendanceModal();
+  const now = new Date();
+  const mSelect = document.getElementById('att-month');
+  const ySelect = document.getElementById('att-year');
+  if (!mSelect.options.length) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    months.forEach((m, i) => mSelect.add(new Option(m, i + 1)));
+    const curY = now.getFullYear();
+    for (let y = curY - 1; y <= curY + 1; y++) ySelect.add(new Option(y, y));
+    mSelect.value = now.getMonth() + 1;
+    ySelect.value = curY;
+  }
+  document.getElementById('att-modal-backdrop').style.display = 'flex';
+  renderAttendanceModal(); // Auto-load initially
+};
+window.renderAttendanceModal = async function () {
+  const body = document.getElementById('att-modal-body');
+  body.innerHTML = '<div class="empty">Loading...</div>';
+  const m = document.getElementById('att-month').value;
+  const y = document.getElementById('att-year').value;
+  const data = await fetchAttendance(API_CONFIG.token, Number(m), Number(y));
+  if (!data.length) {
+    body.innerHTML = '<div class="empty">No attendance records found</div>';
+    return;
+  }
+  body.innerHTML = data.map(d => {
+    const bg = d.isPresent ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.15)';
+    const color = d.isPresent ? 'var(--green)' : 'var(--red)';
+    return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+          <div style="font-size:13px;color:var(--text);font-weight:500">${escapeHtml(d.classDate)}</div>
+          <div style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:${bg};color:${color}">${d.isPresent ? 'Present' : 'Absent'}</div>
+        </div>`;
+  }).join('');
+};
+async function loadCurrentAttendance() {
+  const now = new Date();
+  const data = await fetchAttendance(API_CONFIG.token, now.getMonth() + 1, now.getFullYear());
+  const valEl = document.getElementById('att-val');
+  const subEl = document.getElementById('att-sub');
+  if (!valEl || !subEl) return;
+  if (!data.length) {
+    valEl.textContent = 'N/A';
+    subEl.innerHTML = 'No data this month';
+    return;
+  }
+  const total = data.length;
+  const present = data.filter(d => d.isPresent).length;
+  const absent = total - present;
+  const pct = Math.round(present / total * 100);
+  valEl.textContent = pct + '%';
+  subEl.innerHTML = absent > 0 ? `<span class="dn">${absent} class${absent > 1 ? 'es' : ''}</span> missed this month` : `<span class="up">Perfect attendance</span> this month`;
+}
+
+/* --- EXAMS & RESULTS --- */
+async function openResultSubpage(testId, options = {}) {
+  const cleanId = String(testId || '').trim();
+  if (!cleanId || !API_CONFIG.token) return;
+  APP_STATE.lastResultSource = options.source || (options.forced ? 'era' : 'examhall');
+  const body = document.getElementById('result-detail-body');
+  nav('result-detail');
+  if (body) body.innerHTML = `<div class="empty">${options.forced ? 'Forcing result fetch...' : 'Loading result...'}</div>`;
+  try {
+    var _analysis, _analysis2;
+    const allTests = [...(APP_STATE.tests || []), ...(APP_STATE.eraTests || [])];
+    const selected = allTests.find(t => String(t.id || '') === cleanId || String(t.testPaperId || '') === cleanId) || null;
+    const appearedReqId = (selected === null || selected === void 0 ? void 0 : selected.id) || cleanId;
+    const appeared = await fetchAppearedResult(API_CONFIG.token, appearedReqId);
+    if (selected && appeared) {
+      selected.appeared = appeared;
+    }
+    const examId = appeared === null || appeared === void 0 ? void 0 : appeared.examId;
+    if (!examId) {
+      if (body) body.innerHTML = `<div class="empty">No examId returned for this test. The request completed, but result analysis cannot be fetched.</div><details open style="margin-top:10px"><summary style="font-size:12px;color:var(--accent);cursor:pointer">Appeared result raw data</summary><pre style="margin-top:8px;background:#05070b;border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre-wrap;overflow:auto;font-size:11px;color:var(--text2)">${escapeHtml(JSON.stringify(appeared, null, 2))}</pre></details>`;
+      return;
+    }
+    const key = `${options.forced ? 'era:' : ''}${examId}`;
+    let analysis = APP_STATE.resultCache[key];
+    if (!analysis) {
+      analysis = await fetchResultAnalysis(API_CONFIG.token, examId);
+      if (analysis) APP_STATE.resultCache[key] = analysis;
+    }
+    if (!((_analysis = analysis) !== null && _analysis !== void 0 && _analysis.result)) {
+      if (body) body.innerHTML = '<div class="empty">Result analysis did not return parsed result data.</div>';
+      return;
+    }
+    const leaderboardId = (selected === null || selected === void 0 ? void 0 : selected.id) || cleanId || (selected === null || selected === void 0 ? void 0 : selected.testPaperId) || ((_analysis2 = analysis) === null || _analysis2 === void 0 ? void 0 : _analysis2.testPaperId);
+    const leaderboard = await fetchLeaderboardScore(API_CONFIG.token, leaderboardId);
+
+    APP_STATE.currentResult = {
+      analysis,
+      selected,
+      appeared,
+      leaderboard,
+      forced: Boolean(options.forced)
+    };
+    if (body) body.innerHTML = buildResultAnalysisHtml(analysis, selected, {
+      forced: Boolean(options.forced),
+      appeared,
+      includeRaw: Boolean(options.forced),
+      leaderboard,
+      showLeaderboardButton: true
+    });
+  } catch (err) {
+    if (body) body.innerHTML = `<div class="empty">${escapeHtml((err === null || err === void 0 ? void 0 : err.message) || 'Failed to load result')}</div>`;
+  }
+}
+window.openExamResult = function openExamResult(testId) {
+  openResultSubpage(testId, {
+    forced: false,
+    source: 'examhall'
+  });
+};
+window.openEraForcedResult = function openEraForcedResult(testId) {
+  openResultSubpage(testId, {
+    forced: true,
+    source: 'era'
+  });
+};
+window.openForcedResultByTestId = function openForcedResultByTestId(event) {
+  if (event !== null && event !== void 0 && event.preventDefault) event.preventDefault();
+  const input = document.getElementById('manual-force-test-id');
+  const testId = String((input === null || input === void 0 ? void 0 : input.value) || '').trim();
+  if (!testId) {
+    if (input) input.focus();
+    return;
+  }
+  openResultSubpage(testId, {
+    forced: true,
+    source: 'era'
+  });
+};
+window.scanTestIds = async function scanTestIds(startId, endId, options = {}) {
+  var _options$delayMs;
+  const start = Number(startId);
+  const end = Number(endId);
+  if (!API_CONFIG.token) {
+    console.warn('[scanTestIds] Login first, then run scanTestIds(startId, endId).');
+    return [];
+  }
+  if (!Number.isInteger(start) || !Number.isInteger(end)) {
+    console.warn('[scanTestIds] Usage: scanTestIds(1000, 1050)');
+    return [];
+  }
+  const from = Math.min(start, end);
+  const to = Math.max(start, end);
+  const delayMs = Number((_options$delayMs = options.delayMs) !== null && _options$delayMs !== void 0 ? _options$delayMs : 120);
+  const found = [];
+  console.log(`[scanTestIds] Scanning test IDs ${from} to ${to}...`);
+  for (let id = from; id <= to; id += 1) {
+    try {
+      const appeared = await fetchAppearedResult(API_CONFIG.token, id);
+      const examId = appeared === null || appeared === void 0 ? void 0 : appeared.examId;
+      if (examId) {
+        var _analysis3;
+        const cacheKey = `scan:${examId}`;
+        let analysis = APP_STATE.resultCache[cacheKey];
+        if (!analysis) {
+          analysis = await fetchResultAnalysis(API_CONFIG.token, examId);
+          if (analysis) APP_STATE.resultCache[cacheKey] = analysis;
+        }
+        const name = ((_analysis3 = analysis) === null || _analysis3 === void 0 ? void 0 : _analysis3.testName) || (appeared === null || appeared === void 0 ? void 0 : appeared.testName) || (appeared === null || appeared === void 0 ? void 0 : appeared.name) || `Exam ${examId}`;
+        const row = {
+          testId: id,
+          examId,
+          name
+        };
+        found.push(row);
+        console.log(`[scanTestIds] ${id}: ${name}`);
+      }
+    } catch (err) {
+      if (options.verbose) console.warn(`[scanTestIds] ${id}: ${(err === null || err === void 0 ? void 0 : err.message) || 'failed'}`);
+    }
+    if (delayMs > 0 && id < to) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  console.table(found);
+  console.log(`[scanTestIds] Done. Found ${found.length} result${found.length === 1 ? '' : 's'}.`);
+  return found;
+};
+window.downloadResultPdf = async function downloadResultPdf(testId, isForced, buttonEl) {
+  const cleanId = String(testId || '').trim();
+  if (!cleanId || !API_CONFIG.token) {
+    alert('Authentication token or test ID not found. Please log in.');
+    return;
+  }
+  let originalHtml = '';
+  if (buttonEl) {
+    originalHtml = buttonEl.innerHTML;
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.2);border-radius:50%;border-top-color:#fff;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px"></span>Loading...';
+  }
+
+  // Open print window synchronously to avoid popup blocker
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Loading Academic Report...</title>
+          <style>
+            body {
+              background: #05070b;
+              color: #ffffff;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+            }
+            .loader {
+              text-align: center;
+            }
+            .spinner {
+              border: 3px solid rgba(255,255,255,0.1);
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              border-left-color: #10b981;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 16px auto;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .text {
+              font-size: 14px;
+              font-weight: 500;
+              color: #9ca3af;
+              letter-spacing: 0.05em;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="loader">
+            <div class="spinner"></div>
+            <div class="text">PREPARING REPORT PDF...</div>
+          </div>
+        </body>
+        </html>
+      `);
+    printWindow.document.close();
+  }
+  try {
+    var _appeared, _analysis4;
+    const allTests = [...(APP_STATE.tests || []), ...(APP_STATE.eraTests || [])];
+    const selected = allTests.find(t => String(t.id || '') === cleanId || String(t.testPaperId || '') === cleanId) || null;
+    const appearedReqId = (selected === null || selected === void 0 ? void 0 : selected.id) || cleanId;
+    let appeared = (selected === null || selected === void 0 ? void 0 : selected.appeared) || null;
+    if (!appeared) {
+      appeared = await fetchAppearedResult(API_CONFIG.token, appearedReqId);
+    }
+    const examId = (_appeared = appeared) === null || _appeared === void 0 ? void 0 : _appeared.examId;
+    if (!examId) {
+      throw new Error('No exam ID found for this test.');
+    }
+    const key = `${isForced ? 'era:' : ''}${examId}`;
+    let analysis = APP_STATE.resultCache[key];
+    if (!analysis) {
+      analysis = await fetchResultAnalysis(API_CONFIG.token, examId);
+      if (analysis) APP_STATE.resultCache[key] = analysis;
+    }
+    if (!analysis || !analysis.result) {
+      throw new Error('Result analysis data is not available.');
+    }
+    const leaderboardId = (selected === null || selected === void 0 ? void 0 : selected.id) || cleanId || (selected === null || selected === void 0 ? void 0 : selected.testPaperId) || ((_analysis4 = analysis) === null || _analysis4 === void 0 ? void 0 : _analysis4.testPaperId);
+    let leaderboard = null;
+    if (leaderboardId) {
+      leaderboard = await fetchLeaderboardScore(API_CONFIG.token, leaderboardId);
+    }
+    const studentName = sessionStorage.getItem('fy_user_name') || 'Student';
+    const testName = analysis.testName || (selected === null || selected === void 0 ? void 0 : selected.testName) || (selected === null || selected === void 0 ? void 0 : selected.name) || 'Exam';
+    const attemptDate = formatDateLabel(analysis.attemptDate || (selected === null || selected === void 0 ? void 0 : selected.examDate) || (selected === null || selected === void 0 ? void 0 : selected.testDate) || '');
+    const testPaperIdStr = analysis.testPaperId || cleanId;
+    const totalStudents = analysis.totalStudent || '-';
+    const r = analysis.result;
+    const fmt = v => v === null || v === undefined || v === '' ? '-' : v;
+    const topTotal = Array.isArray(r.topScoreTotal) && r.topScoreTotal.length ? r.topScoreTotal.join(', ') : '-';
+    const performanceMap = new Map((analysis.subjectPerformance || []).map(p => [String(p.subjectName || '').toLowerCase(), p.performance]));
+    const topBySubject = {};
+    if (Array.isArray(r.topScoreSubjectData)) {
+      r.topScoreSubjectData.forEach(item => {
+        var _item$subjectId2;
+        const key = String((_item$subjectId2 = item.subjectId) !== null && _item$subjectId2 !== void 0 ? _item$subjectId2 : '');
+        if (!topBySubject[key]) topBySubject[key] = [];
+        topBySubject[key].push(item.totalMarks);
+      });
+    }
+
+    // Calculate subjects breakdown html
+    let tableRowsHtml = '';
+    if (Array.isArray(r.subjectData) && r.subjectData.length) {
+      tableRowsHtml = r.subjectData.map(s => {
+        var _s$totalCorrect2, _ref6, _s$totalInCorrect2, _s$totalAttempted2, _topBySubject$String2, _s$subjectId3;
+        const correct = Number((_s$totalCorrect2 = s.totalCorrect) !== null && _s$totalCorrect2 !== void 0 ? _s$totalCorrect2 : 0);
+        const incorrect = Number((_ref6 = (_s$totalInCorrect2 = s.totalInCorrect) !== null && _s$totalInCorrect2 !== void 0 ? _s$totalInCorrect2 : s.totalIncorrect) !== null && _ref6 !== void 0 ? _ref6 : 0);
+        const attempted = Number((_s$totalAttempted2 = s.totalAttempted) !== null && _s$totalAttempted2 !== void 0 ? _s$totalAttempted2 : correct + incorrect);
+        const subjectTopScores = ((_topBySubject$String2 = topBySubject[String((_s$subjectId3 = s.subjectId) !== null && _s$subjectId3 !== void 0 ? _s$subjectId3 : '')]) === null || _topBySubject$String2 === void 0 ? void 0 : _topBySubject$String2.join(', ')) || '-';
+        const performance = performanceMap.get(String(s.subjectName || '').toLowerCase()) || '-';
+        return `
+            <tr>
+              <td style="font-weight: 700; color: #0f172a;">${escapeHtml(s.subjectName || 'Subject')}</td>
+              <td class="mono font-semibold" style="color: #059669;">${escapeHtml(fmt(s.totalMarks))}/${escapeHtml(fmt(s.totalSubjectMarks))}</td>
+              <td class="mono">${escapeHtml(fmt(s.totalAvgMarks))}</td>
+              <td class="mono">${escapeHtml(fmt(s.highestMarks))}</td>
+              <td class="mono">${escapeHtml(fmt(s.rank))}</td>
+              <td class="mono">${escapeHtml(fmt(s.percentile))}</td>
+              <td>
+                <div class="score-breakdown-row font-medium">
+                  <span class="c">${correct}c</span>
+                  <span style="color: #cbd5e1;">/</span>
+                  <span class="w">${incorrect}w</span>
+                </div>
+              </td>
+            </tr>
+          `;
+      }).join('');
+    } else {
+      tableRowsHtml = `<tr><td colspan="7" style="text-align: center; color: #64748b;">No subject breakdown available</td></tr>`;
+    }
+
+    // Check performance compared to average
+    const isAboveAvg = Number(r.totalMarks) >= Number(r.totalAvg);
+    const diffFromAvg = (Number(r.totalMarks) - Number(r.totalAvg)).toFixed(2);
+    const performanceInsight = isAboveAvg ? `<div class="insight-badge badge-success">✓ You scored ${diffFromAvg} marks above the class average. Prediction confidence is high.</div>` : `<div class="insight-badge badge-warning">⚠ Score is at or below class average. Treat prediction with caution.</div>`;
+
+    // Leaderboard Top 5 if available
+    let leaderboardHtml = '';
+    if (leaderboard && Array.isArray(leaderboard.leaderboardScore) && leaderboard.leaderboardScore.length) {
+      const top5 = leaderboard.leaderboardScore.slice(0, 5);
+      const top5Rows = top5.map((entry, index) => {
+        return `
+            <div class="leaderboard-entry">
+              <div class="lead-rank">${index + 1}</div>
+              <div class="lead-name">${escapeHtml(entry.studentName || 'Student')}</div>
+              <div class="lead-score mono">${escapeHtml(entry.totalMarks)}</div>
+            </div>
+          `;
+      }).join('');
+      leaderboardHtml = `
+          <div style="margin-top: 30px;">
+            <h2 class="section-title">Class Top Performers</h2>
+            <div class="leaderboard-card">
+              ${top5Rows}
+            </div>
+          </div>
+        `;
+    }
+    const reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Performance Report - ${escapeHtml(testName)}</title>
+          <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+          <style>
+            :root {
+              --primary: #0f172a;
+              --accent: #10b981; /* emerald green */
+              --accent-light: #ecfdf5;
+              --border: #e2e8f0;
+              --bg-light: #f8fafc;
+              --text-main: #334155;
+              --text-dark: #0f172a;
+              --text-muted: #64748b;
+            }
+
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+
+            body {
+              font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              color: var(--text-main);
+              background: #ffffff;
+              line-height: 1.5;
+              padding: 30px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            @page {
+              size: A4;
+              margin: 15mm;
+            }
+
+            .report {
+              max-width: 800px;
+              margin: 0 auto;
+            }
+
+            /* Header Section */
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid var(--accent);
+              padding-bottom: 16px;
+              margin-bottom: 24px;
+            }
+
+            .logo-section {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+
+            .logo-icon {
+              width: 38px;
+              height: 38px;
+              background: var(--accent);
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 700;
+              font-size: 20px;
+              font-family: 'Space Mono', monospace;
+            }
+
+            .logo-text h1 {
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--text-dark);
+              letter-spacing: -0.02em;
+            }
+
+            .logo-text p {
+              font-size: 10px;
+              color: var(--text-muted);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+
+            .badge {
+              background: var(--accent-light);
+              color: #065f46;
+              font-size: 11px;
+              font-weight: 700;
+              padding: 6px 12px;
+              border-radius: 20px;
+              text-transform: uppercase;
+              letter-spacing: 0.03em;
+            }
+
+            /* Profile Card & Info Grid */
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1.8fr 1fr;
+              gap: 16px;
+              margin-bottom: 24px;
+            }
+
+            .student-card {
+              background: var(--primary);
+              color: white;
+              padding: 20px;
+              border-radius: 12px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+
+            .student-card h2 {
+              font-size: 20px;
+              font-weight: 700;
+              margin-bottom: 4px;
+              color: white;
+            }
+
+            .student-card p {
+              font-size: 12px;
+              color: #94a3b8;
+            }
+
+            .exam-card {
+              background: var(--bg-light);
+              border: 1px solid var(--border);
+              padding: 20px;
+              border-radius: 12px;
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
+            }
+
+            .info-item {
+              display: flex;
+              flex-direction: column;
+            }
+
+            .info-label {
+              font-size: 10px;
+              font-weight: 700;
+              color: var(--text-muted);
+              text-transform: uppercase;
+              letter-spacing: 0.02em;
+              margin-bottom: 2px;
+            }
+
+            .info-val {
+              font-size: 13px;
+              font-weight: 700;
+              color: var(--text-dark);
+            }
+
+            /* Metrics Summary Cards */
+            .metrics-row {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 12px;
+              margin-bottom: 24px;
+            }
+
+            .metric-card {
+              background: var(--bg-light);
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              padding: 16px;
+              text-align: center;
+            }
+
+            .metric-card.accent-card {
+              border-color: var(--accent);
+              background: var(--accent-light);
+            }
+
+            .metric-label {
+              font-size: 10px;
+              font-weight: 700;
+              color: var(--text-muted);
+              text-transform: uppercase;
+              margin-bottom: 6px;
+            }
+
+            .metric-val {
+              font-family: 'Space Mono', monospace;
+              font-size: 24px;
+              font-weight: 700;
+              color: var(--text-dark);
+              line-height: 1;
+            }
+
+            .accent-card .metric-val {
+              color: #047857;
+            }
+
+            .metric-sub {
+              font-size: 10px;
+              color: var(--text-muted);
+              margin-top: 6px;
+            }
+
+            /* Subject Breakdown Section */
+            .section-title {
+              font-size: 14px;
+              font-weight: 700;
+              color: var(--text-dark);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin-bottom: 12px;
+              border-left: 3px solid var(--accent);
+              padding-left: 8px;
+            }
+
+            .table-container {
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              overflow: hidden;
+              margin-bottom: 24px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12px;
+            }
+
+            th {
+              background: var(--bg-light);
+              font-weight: 700;
+              color: var(--text-dark);
+              text-align: left;
+              padding: 10px 14px;
+              border-bottom: 1px solid var(--border);
+              font-size: 10px;
+              text-transform: uppercase;
+            }
+
+            td {
+              padding: 10px 14px;
+              border-bottom: 1px solid var(--border);
+              color: var(--text-dark);
+              vertical-align: middle;
+            }
+
+            tr:last-child td {
+              border-bottom: none;
+            }
+
+            .mono {
+              font-family: 'Space Mono', monospace;
+              font-size: 13px;
+            }
+
+            .font-semibold {
+              font-weight: 700;
+            }
+
+            .score-breakdown-row {
+              display: flex;
+              gap: 4px;
+              align-items: center;
+            }
+
+            .score-breakdown-row span {
+              font-size: 11px;
+            }
+
+            .score-breakdown-row .c { color: #059669; }
+            .score-breakdown-row .w { color: #dc2626; }
+            .score-breakdown-row .u { color: var(--text-muted); }
+
+            /* Insights / Leaderboard */
+            .insight-badge {
+              font-size: 12px;
+              font-weight: 500;
+              padding: 10px 14px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            }
+
+            .insight-badge.badge-success {
+              background: var(--accent-light);
+              color: #065f46;
+              border: 1px solid rgba(16,185,129,0.2);
+            }
+
+            .insight-badge.badge-warning {
+              background: #fffbeb;
+              color: #92400e;
+              border: 1px solid rgba(245,158,11,0.2);
+            }
+
+            .leaderboard-card {
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              background: var(--bg-light);
+              padding: 8px 16px;
+            }
+
+            .leaderboard-entry {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+              border-bottom: 1px dashed var(--border);
+            }
+
+            .leaderboard-entry:last-child {
+              border-bottom: none;
+            }
+
+            .lead-rank {
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #e2e8f0;
+              color: var(--text-dark);
+              font-size: 11px;
+              font-weight: 700;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-family: 'Space Mono', monospace;
+            }
+
+            .lead-name {
+              flex: 1;
+              margin-left: 12px;
+              font-size: 12px;
+              font-weight: 500;
+              color: var(--text-dark);
+            }
+
+            .lead-score {
+              font-weight: 700;
+              color: var(--accent);
+            }
+
+            /* Footer */
+            .footer {
+              border-top: 1px solid var(--border);
+              padding-top: 12px;
+              margin-top: 36px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 10px;
+              color: var(--text-muted);
+            }
+
+            .footer-right {
+              font-weight: 500;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+                background: transparent;
+              }
+              .no-print {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report">
+            <!-- Header -->
+            <header class="header">
+              <div class="logo-section">
+                <div class="logo-icon">N</div>
+                <div class="logo-text">
+                  <h1>Narayana Talent</h1>
+                  <p>Academic Analytics Portal</p>
+                </div>
+              </div>
+              <div class="badge">Performance Report</div>
+            </header>
+
+            <!-- Profile & Exam Meta Grid -->
+            <section class="info-grid">
+              <div class="student-card">
+                <p class="info-label" style="color: #94a3b8;">STUDENT NAME</p>
+                <h2>${escapeHtml(studentName)}</h2>
+                <p>Narayana talent registered student profile analytics report.</p>
+              </div>
+              <div class="exam-card">
+                <div class="info-item">
+                  <span class="info-label">Exam Date</span>
+                  <span class="info-val">${escapeHtml(attemptDate)}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Paper ID</span>
+                  <span class="info-val">${escapeHtml(testPaperIdStr)}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Academic Year</span>
+                  <span class="info-val">${API_CONFIG.academicYear} - ${API_CONFIG.academicYear + 1}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Total Candidates</span>
+                  <span class="info-val">${escapeHtml(totalStudents)}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Performance Insight -->
+            ${performanceInsight}
+
+            <!-- Overall Performance Metrics Row -->
+            <section class="metrics-row">
+              <div class="metric-card accent-card">
+                <div class="metric-label">Your Score</div>
+                <div class="metric-val">${escapeHtml(fmt(r.totalMarks))}</div>
+                <div class="metric-sub">Out of ${escapeHtml(fmt(r.totalSubjectMarks))}</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Rank</div>
+                <div class="metric-val">${escapeHtml(fmt(analysis.rank))}</div>
+                <div class="metric-sub">City Rank: ${escapeHtml(fmt(analysis.cityRank))}</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Batch Rank</div>
+                <div class="metric-val">${escapeHtml(fmt(analysis.batchRank))}</div>
+                <div class="metric-sub">Group Rank</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Percentile</div>
+                <div class="metric-val">${escapeHtml(fmt(analysis.percentile))}%</div>
+                <div class="metric-sub">Competency Index</div>
+              </div>
+            </section>
+
+            <!-- Subject-wise performance table -->
+            <section style="margin-top: 30px;">
+              <h2 class="section-title">Subject Breakdown</h2>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Your Marks</th>
+                      <th>Class Avg</th>
+                      <th>Highest</th>
+                      <th>Rank</th>
+                      <th>Percentile</th>
+                      <th>Correct / Wrong</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- Extra stats (Toppers) -->
+            <section style="margin-top: 24px; display: grid; grid-template-columns: 1fr; gap: 16px;">
+              <div class="exam-card" style="grid-template-columns: 1fr; gap: 6px;">
+                <div class="info-item">
+                  <span class="info-label">Top Class Scores</span>
+                  <span class="info-val" style="font-family: 'Space Mono', monospace; font-size: 14px; color: #059669;">${escapeHtml(topTotal)}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Leaderboard top 5 if loaded -->
+            ${leaderboardHtml}
+
+            <!-- Footer -->
+            <footer class="footer">
+              <div>Generated on ${new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })}</div>
+              <div class="footer-right">Powered by Narayana Talent Portal</div>
+            </footer>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 400);
+            };
+          </script>
+        </body>
+        </html>
+      `;
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(reportHtml);
+      printWindow.document.close();
+    }
+  } catch (err) {
+    console.error(err);
+    if (printWindow) {
+      printWindow.document.body.innerHTML = `
+          <div style="color:#ef4444;text-align:center;padding:40px;font-family:sans-serif;">
+            <h3 style="margin-bottom:8px">Failed to Generate Report</h3>
+            <p style="color:#6b7280;font-size:14px">${escapeHtml((err === null || err === void 0 ? void 0 : err.message) || 'Unknown error occurred.')}</p>
+          </div>
+        `;
+    }
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = originalHtml;
+    }
+  }
+};
+window.downloadSolutionsPdf = async function downloadSolutionsPdf(buttonEl) {
+  var _current$analysis;
+  const current = APP_STATE.currentResult;
+  if (!current || !((_current$analysis = current.analysis) !== null && _current$analysis !== void 0 && (_current$analysis = _current$analysis.result) !== null && _current$analysis !== void 0 && _current$analysis.questionData)) {
+    alert('No solutions data available to download.');
+    return;
+  }
+  let originalHtml = '';
+  if (buttonEl) {
+    originalHtml = buttonEl.innerHTML;
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.2);border-radius:50%;border-top-color:#fff;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px"></span>Preparing PDF...';
+  }
+  const questionData = current.analysis.result.questionData;
+  const cardsHtml = questionData.filter(q => Boolean(q.solutionImage)).map(q => {
+    return `
+          <div class="sol-pdf-card">
+            <div class="sol-pdf-title">Question ${q.questionNo}</div>
+            <div class="sol-img-box"><img src="${escapeHtml(q.solutionImage)}" alt="Q${q.questionNo} Solution" /></div>
+          </div>
+        `;
+  }).join('');
+  if (!cardsHtml) {
+    alert('No solution images found in this exam.');
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = originalHtml;
+    }
+    return;
+  }
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Loading Solutions...</title>
+          <style>
+            body {
+              background: #05070b;
+              color: #ffffff;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+            }
+            .loader {
+              text-align: center;
+            }
+            .spinner {
+              border: 3px solid rgba(255,255,255,0.1);
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              border-left-color: #10b981;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 16px auto;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .text {
+              font-size: 14px;
+              font-weight: 500;
+              color: #9ca3af;
+              letter-spacing: 0.05em;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="loader">
+            <div class="spinner"></div>
+            <div class="text">PREPARING SOLUTIONS...</div>
+          </div>
+        </body>
+        </html>
+      `);
+    printWindow.document.close();
+  }
+  try {
+    const documentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Solutions Report</title>
+          <style>
+            :root {
+              --border: #e2e8f0;
+              --bg-light: #f8fafc;
+              --text-dark: #0f172a;
+            }
+
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              color: var(--text-dark);
+              background: #ffffff;
+              line-height: 1.5;
+              padding: 20px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+
+            .report {
+              max-width: 800px;
+              margin: 0 auto;
+            }
+
+            .sol-pdf-card {
+              background: #ffffff;
+              border: 1px solid var(--border);
+              border-radius: 8px;
+              padding: 16px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
+            }
+
+            .sol-pdf-title {
+              font-weight: 700;
+              font-size: 16px;
+              color: var(--text-dark);
+              margin-bottom: 12px;
+              border-bottom: 1px solid var(--border);
+              padding-bottom: 8px;
+            }
+
+            .sol-img-box {
+              background: var(--bg-light);
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              padding: 8px;
+              text-align: center;
+            }
+
+            .sol-img-box img {
+              max-width: 100%;
+              max-height: 800px;
+              object-fit: contain;
+              border-radius: 4px;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+                background: transparent;
+              }
+              .sol-pdf-card {
+                box-shadow: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report">
+            ${cardsHtml}
+          </div>
+
+          <script>
+            window.onload = function() {
+              const images = Array.from(document.querySelectorAll('img'));
+              let loadedCount = 0;
+              const totalImages = images.length;
+              
+              if (totalImages === 0) {
+                window.print();
+                return;
+              }
+              
+              images.forEach(img => {
+                if (img.complete) {
+                  onImageLoad();
+                } else {
+                  img.addEventListener('load', onImageLoad);
+                  img.addEventListener('error', onImageLoad);
+                }
+              });
+              
+              function onImageLoad() {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                  setTimeout(function() {
+                    window.print();
+                  }, 500);
+                }
+              }
+              
+              setTimeout(function() {
+                if (loadedCount < totalImages) {
+                  window.print();
+                }
+              }, 10000);
+            };
+          </script>
+        </body>
+        </html>
+    `;
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(documentHtml);
+      printWindow.document.close();
+    }
+  } catch (err) {
+    console.error(err);
+    if (printWindow) {
+      printWindow.document.body.innerHTML = `
+          <div style="color:#ef4444;text-align:center;padding:40px;font-family:sans-serif;">
+            <h3 style="margin-bottom:8px">Failed to Generate Solutions PDF</h3>
+            <p style="color:#6b7280;font-size:14px">${escapeHtml((err === null || err === void 0 ? void 0 : err.message) || 'Unknown error occurred.')}</p>
+          </div>
+        `;
+    }
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = originalHtml;
+    }
+  }
+};
+window.openCurrentLeaderboard = function openCurrentLeaderboard() {
+  var _current$analysis2, _current$selected;
+  const body = document.getElementById('leaderboard-body');
+  const current = APP_STATE.currentResult;
+  nav('leaderboard');
+  if (!body) return;
+  if (!current) {
+    body.innerHTML = '<div class="empty">Open a result first.</div>';
+    return;
+  }
+  body.innerHTML = `<div class="result-title">${escapeHtml(((_current$analysis2 = current.analysis) === null || _current$analysis2 === void 0 ? void 0 : _current$analysis2.testName) || ((_current$selected = current.selected) === null || _current$selected === void 0 ? void 0 : _current$selected.testName) || 'Leaderboard')}</div><div class="result-sub">Top 50 students by marks with subject-wise scores.</div>${buildLeaderboardHtml(current.analysis, current.leaderboard)}`;
+};
+window.openCurrentSolutions = function openCurrentSolutions() {
+  var _current$analysis3, _current$analysis4, _current$selected2;
+  const body = document.getElementById('solutions-body');
+  const current = APP_STATE.currentResult;
+  nav('solutions');
+  if (!body) return;
+  if (!current || !((_current$analysis3 = current.analysis) !== null && _current$analysis3 !== void 0 && (_current$analysis3 = _current$analysis3.result) !== null && _current$analysis3 !== void 0 && _current$analysis3.questionData)) {
+    body.innerHTML = '<div class="empty">No solutions data available for this test.</div>';
+    return;
+  }
+  const questionData = current.analysis.result.questionData;
+  const uniqueSubjects = [...new Set(questionData.map(q => q.subjectName).filter(Boolean))];
+
+  // Build answer key panel grouped by subject
+  const grouped = {};
+  questionData.forEach(q => {
+    const sub = q.subjectName || 'Other';
+    if (!grouped[sub]) grouped[sub] = [];
+    grouped[sub].push(q);
+  });
+  let answerKeyPanelHtml = '<div class="ak-panel" id="ak-panel" style="display:none">';
+  Object.keys(grouped).forEach(sub => {
+    const qs = [...grouped[sub]].sort((a, b) => a.questionNo - b.questionNo);
+    answerKeyPanelHtml += `<div class="ak-subject-block"><div class="ak-subject-label">${escapeHtml(sub)}</div><div class="ak-grid">`;
+    qs.forEach(q => {
+      const cls = q.isRightAns ? 'ak-correct' : q.isUnAttempted ? 'ak-skipped' : 'ak-wrong';
+      answerKeyPanelHtml += `<div class="ak-cell ${cls}"><span class="ak-qno">Q${q.questionNo}</span><span class="ak-ans">${escapeHtml(q.rightAns || '-')}</span></div>`;
+    });
+    answerKeyPanelHtml += '</div></div>';
+  });
+  answerKeyPanelHtml += '</div>';
+  let tabsHtml = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+        <div class="sol-tabs" style="margin:0">
+          <button class="sol-tab-btn active" onclick="filterSolutionsSubject('all', this)">All (${questionData.length})</button>
+    `;
+  uniqueSubjects.forEach(sub => {
+    const count = questionData.filter(q => q.subjectName === sub).length;
+    tabsHtml += `<button class="sol-tab-btn" onclick="filterSolutionsSubject('${escapeHtml(sub.toLowerCase())}', this)">${escapeHtml(sub)} (${count})</button>`;
+  });
+  tabsHtml += `</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="start-btn" onclick="downloadSolutionsPdf(this)" style="margin:0">Download Solutions PDF</button>
+        <button class="start-btn gray" id="ak-toggle-btn" onclick="toggleAnswerKey()" style="margin:0">Answer Key ▾</button>
+      </div>
+  </div>`;
+  const cardsHtml = questionData.map((q, idx) => {
+    const statusClass = q.isRightAns ? 'correct-card' : q.isUnAttempted ? 'skipped-card' : 'incorrect-card';
+    const statusText = q.isRightAns ? 'Correct' : q.isUnAttempted ? 'Skipped' : 'Incorrect';
+    const statusBadgeClass = q.isRightAns ? 'correct' : q.isUnAttempted ? 'skipped' : 'incorrect';
+    const marksVal = q.marks != null ? `${q.marks >= 0 ? '+' : ''}${q.marks}` : '';
+    const marksBadge = marksVal ? `<span class="sol-badge ${statusBadgeClass}">${escapeHtml(statusText)} (${marksVal})</span>` : `<span class="sol-badge ${statusBadgeClass}">${escapeHtml(statusText)}</span>`;
+    const difficultyClass = String(q.level || '').toLowerCase();
+    const diffBadge = q.level ? `<span class="sol-badge ${difficultyClass}">${escapeHtml(q.level)}</span>` : '';
+    let timeBadge = '';
+    if (q.timeTaken != null && q.qaTime != null) {
+      const overTime = q.timeTaken > q.qaTime;
+      const timeClass = overTime ? 'over' : 'under';
+      timeBadge = `<span class="sol-badge time ${timeClass}">Time: ${q.timeTaken}s / Rec: ${q.qaTime}s</span>`;
+    } else if (q.timeTaken != null) {
+      timeBadge = `<span class="sol-badge time">Time: ${q.timeTaken}s</span>`;
+    }
+    const ansClass = q.isRightAns ? 'correct' : 'incorrect';
+    const studentAnsText = q.studentAns ? q.studentAns : '-';
+    const rightAnsText = q.rightAns ? q.rightAns : '-';
+    const hasImg = Boolean(q.solutionImage);
+    const actionButton = hasImg ? `<button class="sol-toggle-btn" onclick="toggleSolutionAccordion('${idx}', this)">View Solution ▾</button>` : `<span style="font-size:12px;color:var(--text3)">No solution image available</span>`;
+    const imageSection = hasImg ? `
+          <div class="sol-img-container" id="sol-img-container-${idx}">
+            <div class="sol-img-wrapper">
+              <div class="sol-spinner"></div>
+              <div class="sol-error">Failed to load solution image.</div>
+              <img class="sol-img" data-src="${escapeHtml(q.solutionImage)}" src="" alt="Question ${q.questionNo} Solution" />
+              <div class="sol-action-row">
+                <a class="sol-action-btn" href="${escapeHtml(q.solutionImage)}" target="_blank" rel="noopener noreferrer">Open in New Tab ↗</a>
+              </div>
+            </div>
+          </div>
+        ` : '';
+    return `
+        <div class="sol-card ${statusClass}" data-subject="${escapeHtml(String(q.subjectName || '').toLowerCase())}">
+          <div class="sol-card-header">
+            <div class="sol-card-title">${escapeHtml(q.subjectName || 'Subject')} · Q${q.questionNo}</div>
+            <div class="sol-card-badges">
+              ${diffBadge}
+              ${timeBadge}
+              ${marksBadge}
+            </div>
+          </div>
+          <div class="sol-card-body">
+            <div class="sol-answers">
+              <div class="sol-ans-item">
+                <span class="sol-ans-label">Your Response:</span>
+                <span class="sol-ans-val ${ansClass}">${escapeHtml(studentAnsText)}</span>
+              </div>
+              <div class="sol-ans-item">
+                <span class="sol-ans-label">Correct Response:</span>
+                <span class="sol-ans-val correct">${escapeHtml(rightAnsText)}</span>
+              </div>
+            </div>
+            ${actionButton}
+            ${imageSection}
+          </div>
+        </div>
+      `;
+  }).join('');
+  body.innerHTML = `
+      <div class="result-title">${escapeHtml(((_current$analysis4 = current.analysis) === null || _current$analysis4 === void 0 ? void 0 : _current$analysis4.testName) || ((_current$selected2 = current.selected) === null || _current$selected2 === void 0 ? void 0 : _current$selected2.testName) || 'Solutions')}</div>
+      <div class="result-sub">Detailed solutions and response analysis.</div>
+      ${tabsHtml}
+      ${answerKeyPanelHtml}
+      <div class="sol-cards-list" style="margin-top:16px;">
+        ${cardsHtml}
+      </div>
+    `;
+};
+window.filterSolutionsSubject = function filterSolutionsSubject(subject, btnEl) {
+  const tabsContainer = btnEl.parentElement;
+  if (tabsContainer) {
+    tabsContainer.querySelectorAll('.sol-tab-btn').forEach(btn => btn.classList.remove('active'));
+  }
+  btnEl.classList.add('active');
+  const cards = document.querySelectorAll('.sol-card');
+  cards.forEach(card => {
+    const cardSubject = card.dataset.subject;
+    if (subject === 'all' || cardSubject === subject) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+};
+window.toggleAnswerKey = function toggleAnswerKey() {
+  const panel = document.getElementById('ak-panel');
+  const btn = document.getElementById('ak-toggle-btn');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.innerHTML = isOpen ? 'Answer Key ▾' : 'Answer Key ▴';
+};
+window.toggleSolutionAccordion = function toggleSolutionAccordion(qId, btnEl) {
+  const container = document.getElementById(`sol-img-container-${qId}`);
+  if (!container) return;
+  const isExpanded = container.classList.contains('expanded');
+  if (isExpanded) {
+    container.classList.remove('expanded');
+    container.style.maxHeight = '0px';
+    btnEl.innerHTML = 'View Solution ▾';
+  } else {
+    container.classList.add('expanded');
+    btnEl.innerHTML = 'Hide Solution ▴';
+    const img = container.querySelector('.sol-img');
+    const spinner = container.querySelector('.sol-spinner');
+    const errEl = container.querySelector('.sol-error');
+    if (img && !img.src) {
+      spinner.style.display = 'block';
+      img.src = img.dataset.src;
+      img.onload = function () {
+        spinner.style.display = 'none';
+        img.style.display = 'block';
+        container.style.maxHeight = img.scrollHeight + 100 + 'px';
+      };
+      img.onerror = function () {
+        spinner.style.display = 'none';
+        if (errEl) errEl.style.display = 'block';
+      };
+    } else {
+      container.style.maxHeight = (img ? img.scrollHeight + 100 : 1000) + 'px';
+    }
+  }
+};
+window.backToResultsList = function backToResultsList() {
+  nav(APP_STATE.lastResultSource === 'era' ? 'era' : 'examhall');
+};
+function ensureCalendarDetailModal() {
+  if (document.getElementById('calendar-detail-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'calendar-detail-modal-backdrop';
+  wrapper.className = 'calendar-detail-backdrop';
+  wrapper.innerHTML = `
+    <div class="calendar-detail-header">
+      <button onclick="closeCalendarDetailModal()" class="report-btn" style="display:inline-flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back
+      </button>
+      <div style="font-size:15px;font-weight:600;color:var(--text)">Exam Calendar Details</div>
+      <button id="calendar-detail-print-btn" class="report-btn primary" style="display:inline-flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download PDF / Print
+      </button>
+    </div>
+    <div class="calendar-detail-body">
+      <!-- Exam Main Card -->
+      <div class="calendar-detail-card">
+        <div>
+          <span id="calendar-detail-badge" class="exam-badge" style="font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;margin-bottom:12px;display:inline-block">Upcoming</span>
+          <h1 id="calendar-detail-name" style="font-size:22px;font-weight:700;color:var(--text);margin:0;line-height:1.3">Exam Title</h1>
+        </div>
+        
+        <div class="calendar-detail-grid">
+          <!-- Date Time -->
+          <div class="calendar-detail-meta-item">
+            <div class="calendar-detail-meta-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <div class="calendar-detail-meta-info">
+              <span class="calendar-detail-meta-label">Date & Time</span>
+              <span id="calendar-detail-date" class="calendar-detail-meta-val">-</span>
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="calendar-detail-meta-item">
+            <div class="calendar-detail-meta-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div class="calendar-detail-meta-info">
+              <span class="calendar-detail-meta-label">Venue</span>
+              <span id="calendar-detail-venue" class="calendar-detail-meta-val">-</span>
+            </div>
+          </div>
+
+          <!-- Mode -->
+          <div class="calendar-detail-meta-item">
+            <div class="calendar-detail-meta-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </div>
+            <div class="calendar-detail-meta-info">
+              <span class="calendar-detail-meta-label">Exam Mode</span>
+              <span id="calendar-detail-mode" class="calendar-detail-meta-val">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Syllabus Card -->
+      <div class="calendar-detail-card" style="gap:20px">
+        <div class="calendar-detail-syllabus-header">
+          <span style="font-size:16px">📚</span>
+          <h2 style="font-size:15px;font-weight:700;color:var(--text);margin:0">Syllabus Details</h2>
+        </div>
+        <div id="calendar-detail-syllabus-list" class="calendar-detail-syllabus-list">
+          <!-- Syllabus items rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  `;
+  wrapper.addEventListener('click', e => {
+    if (e.target === wrapper) closeCalendarDetailModal();
+  });
+  document.body.appendChild(wrapper);
+}
+window.closeCalendarDetailModal = function closeCalendarDetailModal() {
+  const el = document.getElementById('calendar-detail-modal-backdrop');
+  if (el) el.style.display = 'none';
+};
+window.printCalendarDetail = function printCalendarDetail(index) {
+  const t = APP_STATE.calendarEntries[Number(index)];
+  if (!t) return;
+  const venue = t.venue ? t.venue : 'N/A';
+  const syllabusLines = Array.isArray(t.syllabusLines) && t.syllabusLines.length ? t.syllabusLines : ['N/A'];
+  const modeText = t.mode ? t.mode : 'N/A';
+  const dateTimeText = formatDateTimeLabel(t.dateTime);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Popup blocked! Please allow popups to download/print the PDF.');
+    return;
+  }
+  const syllabusHtml = syllabusLines.map(line => `<li style="margin-bottom: 8px;">${escapeHtml(line)}</li>`).join('');
+  const docHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Exam Calendar - ${escapeHtml(t.name)}</title>
+      <style>
+        body {
+          background: #ffffff;
+          color: #000000;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          margin: 0;
+          padding: 40px;
+          line-height: 1.5;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          border: 2px solid #000000;
+          padding: 30px;
+          background: #ffffff;
+        }
+        .header {
+          border-bottom: 3px solid #000000;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 26px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .header p {
+          margin: 5px 0 0 0;
+          font-size: 13px;
+          color: #555555;
+          font-weight: 500;
+        }
+        .badge {
+          border: 2px solid #000000;
+          padding: 4px 10px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          background: #ffffff;
+          display: inline-block;
+        }
+        .meta-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 30px;
+        }
+        .meta-table td {
+          padding: 12px;
+          border: 1px solid #000000;
+          font-size: 14px;
+        }
+        .meta-table td.label {
+          background: #f2f2f2;
+          font-weight: 700;
+          width: 25%;
+          text-transform: uppercase;
+          font-size: 12px;
+          letter-spacing: 0.5px;
+        }
+        .meta-table td.value {
+          font-weight: 600;
+        }
+        .section-title {
+          font-size: 16px;
+          font-weight: 700;
+          text-transform: uppercase;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 8px;
+          margin-top: 0;
+          margin-bottom: 16px;
+          letter-spacing: 0.5px;
+        }
+        .syllabus-box {
+          border: 1px solid #000000;
+          padding: 20px;
+          background: #ffffff;
+        }
+        .syllabus-list {
+          margin: 0;
+          padding-left: 20px;
+          font-size: 14px;
+        }
+        .footer {
+          border-top: 1px solid #dddddd;
+          padding-top: 15px;
+          margin-top: 40px;
+          text-align: center;
+          font-size: 11px;
+          color: #666666;
+        }
+        @media print {
+          body {
+            padding: 0;
+          }
+          .container {
+            border: none;
+            padding: 0;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div>
+            <h1>Exam Details</h1>
+            <p>Narayana Talent Academic Portal · Student Exam Schedule</p>
+          </div>
+          <div>
+            <span class="badge">Official Schedule</span>
+          </div>
+        </div>
+
+        <table class="meta-table">
+          <tr>
+            <td class="label">Exam Name</td>
+            <td class="value" style="font-size:16px">${escapeHtml(t.name)}</td>
+          </tr>
+          <tr>
+            <td class="label">Date & Time</td>
+            <td class="value">${escapeHtml(dateTimeText)}</td>
+          </tr>
+          <tr>
+            <td class="label">Venue</td>
+            <td class="value" style="white-space:pre-wrap">${escapeHtml(venue)}</td>
+          </tr>
+          <tr>
+            <td class="label">Mode</td>
+            <td class="value">${escapeHtml(modeText)}</td>
+          </tr>
+        </table>
+
+        <div class="syllabus-box">
+          <h2 class="section-title">Syllabus</h2>
+          <ul class="syllabus-list">
+            ${syllabusHtml}
+          </ul>
+        </div>
+
+        <div class="footer">
+          Generated on ${new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })} · Narayana Talent Academic Portal
+        </div>
+      </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+  printWindow.document.open();
+  printWindow.document.write(docHtml);
+  printWindow.document.close();
+};
+window.openCalendarTest = function openCalendarTest(index) {
+  const t = APP_STATE.calendarEntries[Number(index)];
+  if (!t) {
+    alert('Invalid calendar index');
+    return;
+  }
+  ensureCalendarDetailModal();
+  const backdrop = document.getElementById('calendar-detail-modal-backdrop');
+  if (!backdrop) return;
+  const now = new Date();
+  const dt = parseExamDateTime(t.dateTime);
+  const status = Number.isNaN(dt.getTime()) ? 'upcoming' : dt < now ? 'done' : dt.toDateString() === now.toDateString() ? 'live' : 'upcoming';
+
+  // Update badge status and classes
+  const badgeEl = document.getElementById('calendar-detail-badge');
+  if (badgeEl) {
+    badgeEl.textContent = status === 'done' ? 'Done' : status === 'live' ? 'Today' : 'Upcoming';
+    badgeEl.className = `exam-badge ${status === 'done' ? 'badge-done' : status === 'live' ? 'badge-live' : 'badge-upcoming'}`;
+  }
+
+  // Update meta elements
+  const nameEl = document.getElementById('calendar-detail-name');
+  if (nameEl) nameEl.textContent = t.name;
+  const dateEl = document.getElementById('calendar-detail-date');
+  if (dateEl) dateEl.textContent = formatDateTimeLabel(t.dateTime);
+  const venueEl = document.getElementById('calendar-detail-venue');
+  if (venueEl) venueEl.textContent = t.venue ? t.venue : 'N/A';
+  const modeEl = document.getElementById('calendar-detail-mode');
+  if (modeEl) modeEl.textContent = t.mode ? t.mode : 'N/A';
+
+  // Render syllabus list
+  const syllabusListEl = document.getElementById('calendar-detail-syllabus-list');
+  if (syllabusListEl) {
+    const syllabusLines = Array.isArray(t.syllabusLines) && t.syllabusLines.length ? t.syllabusLines : ['N/A'];
+    syllabusListEl.innerHTML = syllabusLines.map(line => `
+      <div class="calendar-detail-syllabus-item">
+        <div style="font-weight: 500;">${escapeHtml(line)}</div>
+      </div>
+    `).join('');
+  }
+
+  // Hook up print button click handler
+  const printBtn = document.getElementById('calendar-detail-print-btn');
+  if (printBtn) {
+    printBtn.onclick = function () {
+      printCalendarDetail(index);
+    };
+  }
+
+  // Display the full screen modal
+  backdrop.style.display = 'flex';
+};
+function ensureCourseDetailModal() {
+  if (document.getElementById('course-detail-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'course-detail-modal-backdrop';
+  wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:5000;padding:16px';
+  wrapper.innerHTML = `
+      <div class="course-detail-modal-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+          <div id="course-detail-modal-title" style="font-size:15px;font-weight:600;color:var(--text);line-height:1.35">Course details</div>
+          <button type="button" onclick="closeCourseDetailModal()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;flex-shrink:0">Close</button>
+        </div>
+        <div id="course-detail-modal-body" style="padding:16px;overflow-y:auto;flex:1;min-height:0"></div>
+      </div>`;
+  wrapper.addEventListener('click', e => {
+    if (e.target === wrapper) closeCourseDetailModal();
+  });
+  document.body.appendChild(wrapper);
+}
+function closeCourseDetailModal() {
+  const el = document.getElementById('course-detail-modal-backdrop');
+  if (el) el.style.display = 'none';
+}
+function buildCourseDetailBodyHtml(d) {
+  if (!d) return '<div class="empty">No details returned.</div>';
+  const metaParts = [];
+  if (d.courseMedium) metaParts.push(escapeHtml(d.courseMedium));
+  if (d.startDate) metaParts.push(`Start: ${escapeHtml(d.startDate)}`);
+  if (d.expiryDate) metaParts.push(`Expiry: ${escapeHtml(d.expiryDate)}`);
+  if (d.batchName) {
+    const bId = d.batchId || d.classId || '';
+    const displayBatchName = bId ? `${d.batchName}(${bId})` : d.batchName;
+    metaParts.push(`Batch: ${escapeHtml(displayBatchName)}`);
+  }
+  if (d.registrationNo) metaParts.push(`Reg: ${escapeHtml(d.registrationNo)}`);
+  const imgUrl = d.detailImage || d.image;
+  const hero = imgUrl ? `<div style="margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"><img src="${escapeHtml(imgUrl)}" alt="" style="width:100%;max-height:220px;object-fit:cover;display:block"/></div>` : '';
+  const fees = d.courseFees;
+  let feeBlock = '';
+  if (fees && (fees.price != null || fees.displayPrice != null)) {
+    const display = fees.displayPrice != null ? fees.displayPrice : fees.price;
+    const strike = fees.displayPrice != null && fees.price != null && Number(fees.displayPrice) !== Number(fees.price) ? ` <span style="text-decoration:line-through;color:var(--text3);font-size:12px">${escapeHtml(String(fees.price))}</span>` : '';
+    feeBlock = `<div style="margin-top:4px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text)"><strong style="color:var(--text2)">Fee</strong> · ${escapeHtml(String(display))}${strike}</div>`;
+  }
+  const campusBlock = Array.isArray(d.campus) && d.campus.length ? `<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Campus</div><ul style="margin:0;padding-left:18px;font-size:13px;color:var(--text2);line-height:1.5">${d.campus.map(c => `<li>${escapeHtml(c.campusName || '')}</li>`).join('')}</ul></div>` : '';
+  const liveChip = d.isLive ? '<span style="display:inline-block;margin-top:10px;padding:4px 10px;border-radius:20px;background:rgba(239,68,68,0.15);color:var(--red);font-size:11px;font-weight:600">Live</span>' : '';
+  const videoBlock = d.videoUrl ? `<div style="margin-top:12px"><a href="${escapeHtml(d.videoUrl)}" target="_blank" rel="noopener noreferrer" class="start-btn" style="display:inline-block;margin:0;text-decoration:none">Watch video</a></div>` : '';
+  const scholarship = d.scholarshipDescription ? `<div style="margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg3)" class="course-detail-prose">${d.scholarshipDescription}</div>` : '';
+  const desc = d.description ? `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px" class="course-detail-prose">${d.description}</div>` : '';
+  return `${hero}
+      <div style="font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center">${metaParts.map(p => `<span>${p}</span>`).join('<span style="color:var(--border2)">·</span>')}</div>
+      ${liveChip}
+      ${feeBlock}
+      ${campusBlock}
+      ${videoBlock}
+      ${scholarship}
+      ${desc}`;
+}
+window.openCourseDetail = async function openCourseDetail(courseId) {
+  const id = Number(courseId);
+  if (!id || !API_CONFIG.token) return;
+  ensureCourseDetailModal();
+  const backdrop = document.getElementById('course-detail-modal-backdrop');
+  const body = document.getElementById('course-detail-modal-body');
+  const titleEl = document.getElementById('course-detail-modal-title');
+  if (!backdrop || !body) return;
+  body.innerHTML = '<div class="empty">Loading course…</div>';
+  if (titleEl) titleEl.textContent = 'Course details';
+  backdrop.style.display = 'flex';
+  try {
+    const d = await fetchCourseDetail(API_CONFIG.token, id);
+    if (!d) {
+      body.innerHTML = '<div class="empty">Could not load this course. It may be unavailable or your session may have expired.</div>';
+      return;
+    }
+    if (titleEl) titleEl.textContent = d.title || 'Course details';
+    body.innerHTML = buildCourseDetailBodyHtml(d);
+  } catch (err) {
+    body.innerHTML = `<div class="empty">${escapeHtml((err === null || err === void 0 ? void 0 : err.message) || 'Failed to load course')}</div>`;
+  }
+};
+
+/* --- FILE OPENERS --- */
+window.openNoticeFile = async function (id) {
+  if (!API_CONFIG.token) return;
+  try {
+    const res = await fetch(API_ENDPOINTS.noticeFile(id), {
+      method: 'GET',
+      headers: authHeaders(API_CONFIG.token)
+    });
+    const json = await res.json();
+    if (json !== null && json !== void 0 && json.data) window.open(json.data, '_blank');else alert('Notice file URL not found.');
+  } catch (err) {
+    alert('Failed to open notice.');
+  }
+};
+window.openStudyFile = async function (id) {
+  if (!API_CONFIG.token) return;
+  try {
+    const res = await fetch(API_ENDPOINTS.studyFile(id), {
+      method: 'GET',
+      headers: authHeaders(API_CONFIG.token)
+    });
+    const json = await res.json();
+    if (json !== null && json !== void 0 && json.data) window.open(json.data, '_blank');else alert('Study file URL not found.');
+  } catch (err) {
+    alert('Failed to open study content.');
+  }
+};
+
+/* --- DROPDOWN CHANGE HANDLERS & LOADERS --- */
+window.changeTtYear = async function (newYear) {
+  API_CONFIG.academicYear = Number(newYear);
+  sessionStorage.setItem('fy_academic_year', newYear);
+  await loadTtBatches();
+};
+window.changeTtBatch = async function (newBatchId) {
+  API_CONFIG.classId = Number(newBatchId);
+  sessionStorage.setItem('fy_class_id', newBatchId);
+  const grid = document.getElementById('timetable-grid');
+  const todayList = document.getElementById('today-classes-list');
+  if (grid) grid.innerHTML = '<div class="empty">Loading timetable...</div>';
+  if (todayList) todayList.innerHTML = '<div class="empty">Loading today\'s classes...</div>';
+  const cachedTimetable = readTimetableCache();
+  if (cachedTimetable !== null && cachedTimetable !== void 0 && cachedTimetable.length) {
+    APP_STATE.timetable = cachedTimetable;
+    renderTimetable(cachedTimetable);
+    renderTodayClasses(cachedTimetable);
+    setSyncPill('cached', 'Using cached timetable');
+  }
+  try {
+    const currentId = Number(API_CONFIG.classId);
+    const isEnrolled = Array.isArray(APP_STATE.batches) && APP_STATE.batches.some(b => Number(b.id) === currentId);
+    const batchIdsToFetch = new Set();
+    if (isEnrolled) {
+      APP_STATE.batches.forEach(b => {
+        if (b.id) batchIdsToFetch.add(Number(b.id));
+      });
+    } else if (currentId) {
+      batchIdsToFetch.add(currentId);
+    }
+    const ids = [...batchIdsToFetch];
+    let timetable = [];
+    if (ids.length > 0) {
+      const timetablePromises = ids.map(id => fetchTimetable(API_CONFIG.token, id).catch(() => []));
+      const results = await Promise.all(timetablePromises);
+      const seenKeys = new Set();
+      for (const list of results) {
+        if (!Array.isArray(list)) continue;
+        for (const c of list) {
+          if (!c) continue;
+          const key = `${normalizeDateKey(c.classDate)}_${c.startTime}_${c.subjects}_${c.classType}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            timetable.push(c);
+          }
+        }
+      }
+    } else {
+      timetable = await fetchTimetable(API_CONFIG.token);
+    }
+    APP_STATE.timetable = timetable;
+    writeTimetableCache(timetable);
+    writePortalCache();
+    renderTimetable(timetable);
+    renderTodayClasses(timetable);
+    setSyncPill('live', `Live · ${formatRelativeTime(APP_STATE.lastSyncAt || Date.now())}`);
+  } catch (e) {
+    if (!(cachedTimetable !== null && cachedTimetable !== void 0 && cachedTimetable.length) && grid) grid.innerHTML = '<div class="empty">Failed to load timetable</div>';
+    if (!(cachedTimetable !== null && cachedTimetable !== void 0 && cachedTimetable.length)) setSyncPill('offline', 'Offline');
+  }
+};
+window.loadTimetableByBatchId = async function loadTimetableByBatchId(event) {
+  if (event !== null && event !== void 0 && event.preventDefault) event.preventDefault();
+  const input = document.getElementById('manual-batch-id');
+  const rawBatchId = String((input === null || input === void 0 ? void 0 : input.value) || '').trim();
+  if (!rawBatchId) {
+    if (input) input.focus();
+    return;
+  }
+  const batchSelector = document.getElementById('tt-batch-selector');
+  if (batchSelector && ![...batchSelector.options].some(option => String(option.value) === rawBatchId)) {
+    batchSelector.add(new Option(`Manual batch(${rawBatchId})`, rawBatchId, false, true));
+    batchSelector.style.display = 'block';
+  }
+  if (batchSelector) batchSelector.value = rawBatchId;
+  await changeTtBatch(rawBatchId);
+};
+async function loadTtBatches() {
+  const batchSelector = document.getElementById('tt-batch-selector');
+  if (!batchSelector) return;
+  batchSelector.innerHTML = '<option>Loading batches...</option>';
+  batchSelector.style.display = 'block';
+  const batches = await fetchStudentBatches(API_CONFIG.token, API_CONFIG.academicYear);
+  if (Array.isArray(batches)) {
+    APP_STATE.batches = batches;
+    if (batches.length > 0) {
+      uploadBatchesToSupabase(batches, API_CONFIG.academicYear);
+    }
+  }
+  if (batches.length > 0) {
+    if (!API_CONFIG.classId || !batches.find(b => String(b.id) === String(API_CONFIG.classId))) {
+      API_CONFIG.classId = batches[0].id;
+      sessionStorage.setItem('fy_class_id', API_CONFIG.classId);
+    }
+    batchSelector.innerHTML = batches.map(b => `<option value="${b.id}" ${String(b.id) === String(API_CONFIG.classId) ? 'selected' : ''}>${escapeHtml(b.title)}(${b.id})</option>`).join('');
+    await changeTtBatch(API_CONFIG.classId);
+  } else {
+    batchSelector.innerHTML = '<option value="">No batches found</option>';
+    document.getElementById('timetable-grid').innerHTML = '<div class="empty">No batches available for this year</div>';
+    document.getElementById('today-classes-list').innerHTML = '<div class="empty">No batches available</div>';
+  }
+  return batches;
+}
+function initTtDropdowns() {
+  const yearSelector = document.getElementById('tt-year-selector');
+  if (yearSelector && yearSelector.options.length === 0) {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+      yearSelector.add(new Option(`${y} - ${y + 1}`, y, false, y === API_CONFIG.academicYear));
+    }
+  }
+}
+window.changeExamYear = async function (newYear) {
+  API_CONFIG.academicYear = Number(newYear);
+  sessionStorage.setItem('fy_academic_year', newYear);
+  const eraYearSelector = document.getElementById('era-year-selector');
+  if (eraYearSelector) eraYearSelector.value = newYear;
+  await loadExamTestsPage(true);
+};
+function initExamDropdowns() {
+  const yearSelector = document.getElementById('exam-year-selector');
+  if (yearSelector && yearSelector.options.length === 0) {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+      yearSelector.add(new Option(`${y} - ${y + 1}`, y, false, y === API_CONFIG.academicYear));
+    }
+  }
+}
+window.changeEraYear = async function (newYear) {
+  API_CONFIG.academicYear = Number(newYear);
+  sessionStorage.setItem('fy_academic_year', newYear);
+  const examYearSelector = document.getElementById('exam-year-selector');
+  if (examYearSelector) examYearSelector.value = newYear;
+  await loadEraTestsPage(true);
+};
+function initEraDropdowns() {
+  const yearSelector = document.getElementById('era-year-selector');
+  if (yearSelector && yearSelector.options.length === 0) {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+      yearSelector.add(new Option(`${y} - ${y + 1}`, y, false, y === API_CONFIG.academicYear));
+    }
+  }
+}
+async function enrichExamTests(tests) {
+  return tests;
+}
+async function enrichEraTests(tests) {
+  return tests;
+}
+async function loadExamTestsPage(reset = false) {
+  const root = document.getElementById('examhall-list');
+  const btn = document.getElementById('examhall-load-more');
+  if (reset) {
+    APP_STATE.examPage = 1;
+    APP_STATE.tests = [];
+    APP_STATE.examTotal = 0;
+    if (root) root.innerHTML = '<div class="empty">Loading exam hall tests...</div>';
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+  }
+  try {
+    const page = reset ? 1 : APP_STATE.examPage + 1;
+    const {
+      tests,
+      total
+    } = await fetchTestsPage(API_CONFIG.token, page, APP_STATE.testPageSize);
+    const enriched = await enrichExamTests(tests);
+    APP_STATE.examPage = page;
+    APP_STATE.examTotal = total || (reset ? enriched.length : APP_STATE.examTotal);
+    APP_STATE.tests = reset ? enriched : [...APP_STATE.tests, ...enriched];
+    if (reset && tests.length > 0) {
+      scanAndUploadOnlineTests(tests);
+    }
+    renderExamHall(APP_STATE.tests);
+    writePortalCache();
+  } catch (e) {
+    if (root) root.innerHTML = '<div class="empty">Failed to load tests</div>';
+    updateExamLoadMoreButton();
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+async function loadEraTestsPage(reset = false) {
+  const root = document.getElementById('era-list');
+  const btn = document.getElementById('era-load-more');
+  if (reset) {
+    APP_STATE.eraPage = 1;
+    APP_STATE.eraTests = [];
+    APP_STATE.eraTotal = 0;
+    if (root) root.innerHTML = '<div class="empty">Loading tests...</div>';
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+  }
+  try {
+    const page = reset ? 1 : APP_STATE.eraPage + 1;
+    const {
+      tests,
+      total
+    } = await fetchTestsPage(API_CONFIG.token, page, APP_STATE.testPageSize);
+    const enriched = await enrichEraTests(tests);
+    APP_STATE.eraPage = page;
+    APP_STATE.eraTotal = total || (reset ? enriched.length : APP_STATE.eraTotal);
+    APP_STATE.eraTests = reset ? enriched : [...APP_STATE.eraTests, ...enriched];
+    renderEraTests(APP_STATE.eraTests);
+    writePortalCache();
+  } catch (e) {
+    if (root) root.innerHTML = '<div class="empty">Failed to load ERA tests</div>';
+    updateEraLoadMoreButton();
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+window.loadMoreExamTests = function loadMoreExamTests() {
+  loadExamTestsPage(false);
+};
+window.loadMoreEraTests = function loadMoreEraTests() {
+  loadEraTestsPage(false);
+};
+window.loadMoreStudyContent = async function () {
+  const btn = document.getElementById('study-load-more');
+  if (btn) {
+    btn.textContent = 'Loading...';
+    btn.disabled = true;
+  }
+  try {
+    APP_STATE.studyPage += 1;
+    const result = await fetchStudyContent(API_CONFIG.token, APP_STATE.studyPage);
+    APP_STATE.studyContent = [...APP_STATE.studyContent, ...result.data];
+    APP_STATE.studyTotal = result.total || APP_STATE.studyTotal || APP_STATE.studyContent.length;
+    renderStudyContent(APP_STATE.studyContent, APP_STATE.studyTotal);
+    writePortalCache();
+  } catch (_) {
+    setSyncPill('offline', 'Offline');
+  }
+  if (btn) {
+    btn.textContent = 'Load More';
+    btn.disabled = false;
+  }
+};
+
+/* --- BOOTSTRAP / DATA LOADING --- */
+
+async function refreshDashboardForcedStats() {
+  const tests = (APP_STATE.eraTests || []).filter(t => {
+    var _t$appeared;
+    return (t === null || t === void 0 || (_t$appeared = t.appeared) === null || _t$appeared === void 0 ? void 0 : _t$appeared.examId) || (t === null || t === void 0 ? void 0 : t.id) || (t === null || t === void 0 ? void 0 : t.testPaperId);
+  }).sort((a, b) => new Date(b.examDate || b.testDate || b.startDate || 0) - new Date(a.examDate || a.testDate || a.startDate || 0));
+  let summary = null;
+  for (const test of tests.slice(0, 8)) {
+    var _appeared2, _analysis5, _ref7, _ref8, _ref9, _analysis$batchRank, _appeared3, _appeared4, _ref0, _analysis$result$tota, _appeared5, _ref1, _analysis$result$tota2, _appeared6, _analysis$batchRank2;
+    const testId = test.id || test.testPaperId;
+    let appeared = test.appeared || null;
+    if (!appeared && testId) {
+      appeared = await fetchAppearedResult(API_CONFIG.token, testId);
+      if (appeared) {
+        test.appeared = appeared;
+      }
+    }
+    const examId = (_appeared2 = appeared) === null || _appeared2 === void 0 ? void 0 : _appeared2.examId;
+    if (!examId) continue;
+    const cacheKey = `dash:${examId}`;
+    let analysis = APP_STATE.resultCache[cacheKey];
+    if (!analysis) {
+      analysis = await fetchResultAnalysis(API_CONFIG.token, examId);
+      if (analysis) APP_STATE.resultCache[cacheKey] = analysis;
+    }
+    if (!((_analysis5 = analysis) !== null && _analysis5 !== void 0 && _analysis5.result)) continue;
+    const rankVal = (_ref7 = (_ref8 = (_ref9 = (_analysis$batchRank = analysis.batchRank) !== null && _analysis$batchRank !== void 0 ? _analysis$batchRank : analysis.rank) !== null && _ref9 !== void 0 ? _ref9 : (_appeared3 = appeared) === null || _appeared3 === void 0 ? void 0 : _appeared3.batchRank) !== null && _ref8 !== void 0 ? _ref8 : (_appeared4 = appeared) === null || _appeared4 === void 0 ? void 0 : _appeared4.rank) !== null && _ref7 !== void 0 ? _ref7 : null;
+    summary = {
+      testName: analysis.testName || test.testName || 'Latest Test',
+      marks: (_ref0 = (_analysis$result$tota = analysis.result.totalMarks) !== null && _analysis$result$tota !== void 0 ? _analysis$result$tota : (_appeared5 = appeared) === null || _appeared5 === void 0 ? void 0 : _appeared5.totalMarks) !== null && _ref0 !== void 0 ? _ref0 : null,
+      totalMarks: (_ref1 = (_analysis$result$tota2 = analysis.result.totalSubjectMarks) !== null && _analysis$result$tota2 !== void 0 ? _analysis$result$tota2 : (_appeared6 = appeared) === null || _appeared6 === void 0 ? void 0 : _appeared6.totalSubjectMarks) !== null && _ref1 !== void 0 ? _ref1 : null,
+      rank: rankVal,
+      batchRank: (_analysis$batchRank2 = analysis.batchRank) !== null && _analysis$batchRank2 !== void 0 ? _analysis$batchRank2 : rankVal
+    };
+
+    break;
+  }
+  APP_STATE.dashboardForcedStats = summary;
+  updateDashboardWidgets();
+}
+async function refreshPortalDataInBackground() {
+  if (document.visibilityState === 'hidden') return;
+  if (!API_CONFIG.token) return;
+  if (APP_STATE.isRefreshing) return;
+  APP_STATE.isRefreshing = true;
+  try {
+    var _document$querySelect3;
+    const activePage = ((_document$querySelect3 = document.querySelector('.page.active')) === null || _document$querySelect3 === void 0 || (_document$querySelect3 = _document$querySelect3.id) === null || _document$querySelect3 === void 0 ? void 0 : _document$querySelect3.replace('page-', '')) || 'dashboard';
+    await ensureDataForPage(activePage, true);
+    if (activePage === 'timetable' || activePage === 'dashboard') {
+      loadTtBatches();
+      loadCurrentAttendance();
+    }
+    scanAndUploadOnlineTests();
+    setSyncPill('live', `Live · ${formatRelativeTime(APP_STATE.lastSyncAt || Date.now())}`);
+  } catch (_) {
+    const hadCache = Boolean(readPortalCache());
+    setSyncPill(hadCache ? 'cached' : 'offline', hadCache ? 'Offline · showing cache' : 'Offline');
+  } finally {
+    APP_STATE.isRefreshing = false;
+  }
+}
+function startBackgroundRefreshLoop() {
+  if (window.__fyRefreshLoopStarted) return;
+  window.__fyRefreshLoopStarted = true;
+  window.setInterval(refreshPortalDataInBackground, PORTAL_REFRESH_INTERVAL_MS);
+}
+async function loadPortalData() {
+  if (!API_CONFIG.token) return;
+
+  // Resolve practice access first
+  const hasAccess = await checkPracticeAccess();
+  updatePracticeAccessUI(hasAccess);
+  chemReloadUserPracticeData();
+  cleanupLegacyKeys();
+  cleanupOtherUsersCaches();
+  initTopbarEnhancements();
+  renderSubnav('dashboard');
+  renderGlobalSkeletons();
+  setUserProfileDetails();
+  chemTrackUserActivity(); // Track Unique Monthly Active Users (MAU)
+  chemLoadVisitorStat(); // Load unique monthly visitor stats
+  scanAndUploadOnlineTests(); // Automatically scan latest 10 tests for online exams and sync to Supabase
+  const hasCache = hydratePortalCache();
+  if (hasCache) {
+    refreshActivePageData();
+    refreshDashboardForcedStats();
+  }
+  try {
+    // Initialize dashboard-critical data first; other tabs load on-demand.
+    initTtDropdowns();
+    loadTtBatches();
+    initExamDropdowns();
+    initEraDropdowns();
+    loadCurrentAttendance();
+    await ensureDashboardData(false);
+    setSyncPill('live', `Live · ${formatRelativeTime(APP_STATE.lastSyncAt || Date.now())}`);
+  } catch (err) {
+    if (typeof isAuthError === 'function' && isAuthError(err)) {
+      throw err; // Always bubble auth failure to trigger auto-relogin!
+    }
+    const hasCache = Boolean(readPortalCache());
+    if (!hasCache) {
+      renderApiError((err === null || err === void 0 ? void 0 : err.message) || 'Failed to load API data');
+      setSyncPill('offline', 'Offline');
+      throw err; // Throw error to trigger auto-relogin if token expired
+    }
+    setSyncPill('cached', 'Offline · showing cache');
+  } finally {
+    startBackgroundRefreshLoop();
+  }
+}
+
+/* --- COOKIES & AUTH UTILS --- */
+function setCookie(name, value, days) {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + encodeURIComponent(value || "") + expires + "; path=/";
+}
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) {
+      const value = c.substring(nameEQ.length, c.length);
+      try {
+        return decodeURIComponent(value);
+      } catch (_) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+function eraseCookie(name) {
+  document.cookie = name + '=; Max-Age=-99999999; path=/';
+}
+async function attemptLogin(user, pass) {
+  var _data$studentDetail;
+  const encryptedPassword = encryptLoginPassword(pass);
+  const res = await loginProxyFetch(API_ENDPOINTS.login, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      userName: user,
+      password: encryptedPassword,
+      deviceType: "Web",
+      browser: "firefox",
+      appVersion: "",
+      deviceToken: ""
+    })
+  });
+  const json = await res.json();
+  const {
+    payload,
+    data,
+    token
+  } = normalizeLoginResponse(json);
+  if (!res.ok || !token || payload.statusCode && payload.statusCode !== 200) {
+    throw new Error(payload.message || (data === null || data === void 0 ? void 0 : data.message) || 'Login failed. Please check your credentials.');
+  }
+  API_CONFIG.token = token;
+  sessionStorage.setItem('fy_token', token);
+  localStorage.setItem('fy_token', token);
+  if (data.academicYear) {
+    API_CONFIG.academicYear = data.academicYear;
+    sessionStorage.setItem('fy_academic_year', data.academicYear);
+    localStorage.setItem('fy_academic_year', data.academicYear);
+  }
+  const cId = (_data$studentDetail = data.studentDetail) === null || _data$studentDetail === void 0 ? void 0 : _data$studentDetail.curentClassId;
+  if (cId) {
+    API_CONFIG.classId = cId;
+    sessionStorage.setItem('fy_class_id', cId);
+    localStorage.setItem('fy_class_id', cId);
+  } else {
+    API_CONFIG.classId = null;
+    sessionStorage.removeItem('fy_class_id');
+    localStorage.removeItem('fy_class_id');
+  }
+  if (data.studentDetail) {
+    sessionStorage.setItem('fy_user_name', data.studentDetail.name || 'Student');
+    localStorage.setItem('fy_user_name', data.studentDetail.name || 'Student');
+    if (data.studentDetail.profileImage) {
+      sessionStorage.setItem('fy_user_img', data.studentDetail.profileImage);
+      localStorage.setItem('fy_user_img', data.studentDetail.profileImage);
+    }
+  }
+  sessionStorage.setItem('fy_logged_in_user', user);
+  localStorage.setItem('fy_logged_in_user', user);
+
+  // Save credentials for Auto-Relogin (Valid for 30 days)
+  setCookie('fy_u', user, 30);
+  setCookie('fy_p', pass, 30);
+}
+
+/* --- LOGIN HANDLING & APP START --- */
+document.getElementById('login-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-submit');
+  errEl.textContent = '';
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+  try {
+    await attemptLogin(user, pass);
+    document.getElementById('login-screen').style.display = 'none';
+    loadPortalData();
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.textContent = 'Login';
+    btn.disabled = false;
+  }
+});
+window.logout = function () {
+  sessionStorage.clear();
+  localStorage.removeItem('fy_token');
+  localStorage.removeItem('fy_class_id');
+  localStorage.removeItem('fy_academic_year');
+  localStorage.removeItem('fy_user_name');
+  localStorage.removeItem('fy_user_img');
+  localStorage.removeItem('fy_logged_in_user');
+  eraseCookie('fy_u');
+  eraseCookie('fy_p');
+  location.reload();
+};
+
+/* --- USER STORAGE ISOLATION HELPERS --- */
+function getCurrentUserId() {
+  const rawName = sessionStorage.getItem('fy_user_name');
+  if (rawName && rawName.trim() && rawName.trim() !== 'Student') return rawName.trim();
+  const user = sessionStorage.getItem('fy_logged_in_user') || getCookie('fy_u');
+  if (user) {
+    const cleanUser = user.trim();
+    const isPhone = /^\+?[0-9\s\-]{8,15}$/.test(cleanUser);
+    if (!isPhone) return cleanUser;
+  }
+  return '';
+}
+function getUserStorageKey(baseKey) {
+  const userId = getCurrentUserId();
+  if (userId) {
+    const cleanId = userId.replace(/[^a-zA-Z0-9_]/g, '_');
+    return `${baseKey}_${cleanId}`;
+  }
+  return baseKey;
+}
+function chemReloadUserPracticeData() {
+  chemCombinedData = chemLoadCombinedData();
+  chemMyData = chemCombinedData.compounds;
+  reagentMyData = chemCombinedData.reagents;
+  pkaMyData = chemCombinedData.pka || {
+    myList: [],
+    stats: {}
+  };
+  listEditorLoaded = false;
+  const root = document.getElementById('list-editor-root');
+  if (root) root.style.display = 'none';
+  const chevron = document.getElementById('list-editor-chevron');
+  if (chevron) chevron.textContent = '▼';
+}
+function cleanupOtherUsersCaches() {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+  const cleanId = userId.replace(/[^a-zA-Z0-9_]/g, '_');
+  const userSuffix = `_${cleanId}`;
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+
+    // Delete portal caches of other users
+    if (key.startsWith('fy_portal_cache_v2_') && !key.endsWith(userSuffix)) {
+      localStorage.removeItem(key);
+    }
+    // Delete timetable caches of other users
+    else if (key.includes('fy_timetable_cache_') && !key.endsWith(userSuffix)) {
+      localStorage.removeItem(key);
+    }
+  }
+}
+function cleanupLegacyKeys() {
+  const legacyKeys = ['chem_v5_data', 'reagent_v1_data', 'chem_progress_updated_at', 'chem_v4_data', 'chem_v3_data', 'chem_v2_data', 'chem_v1_data', 'reagent_data', 'chem_data'];
+  legacyKeys.forEach(key => {
+    localStorage.removeItem(key);
+  });
+}
+
+/* --- CHEMISTRY PRACTICE --- */
+const CHEM_SUPABASE_URL = "https://rhsrrljgejgyqnndcdia.supabase.co";
+const CHEM_SUPABASE_KEY = "sb_publishable_vGRx87SiIMaJXeGnrMVN9g_bLPu899U";
+const CHEM_DATA_KEY = 'chem_v5_data';
+let chemSupabase = null;
+let chemDrawer = null;
+let chemAllCompounds = [];
+let chemLearnQueue = [];
+let chemLearnIdx = 0;
+let chemWizardQueue = [];
+let chemWizardIdx = 0;
+let chemPracticeSessionCount = 0;
+let chemPracticeCorrectCount = 0;
+let chemLastPracticeName = null;
+let chemAppReady = false;
+let chemSyncQueue = Promise.resolve();
+let chemCombinedData = chemLoadCombinedData();
+let chemMyData = chemCombinedData.compounds;
+let pkaMyData = chemCombinedData.pka || {
+  myList: [],
+  stats: {}
+};
+function chemLoadCombinedData() {
+  try {
+    const key = getUserStorageKey(CHEM_DATA_KEY);
+    let stored = localStorage.getItem(key);
+
+    // Migration: copy old data if user-specific key is not found
+    if (!stored && key !== CHEM_DATA_KEY) {
+      const legacyStored = localStorage.getItem(CHEM_DATA_KEY);
+      if (legacyStored) {
+        localStorage.setItem(key, legacyStored);
+        stored = legacyStored;
+        localStorage.removeItem(CHEM_DATA_KEY);
+      }
+    }
+    if (!stored) {
+      return chemMigrateOrGetDefault();
+    }
+    const data = JSON.parse(stored);
+    if (data && data.compounds && data.reagents) {
+      if (!data.pka) data.pka = {
+        myList: [],
+        stats: {}
+      };
+      return data;
+    }
+    const migrated = chemMigrateOldData(data);
+    if (!migrated.pka) migrated.pka = {
+      myList: [],
+      stats: {}
+    };
+    return migrated;
+  } catch (_) {
+    return chemMigrateOrGetDefault();
+  }
+}
+function chemMigrateOrGetDefault() {
+  const defaultChem = {
+    myList: [],
+    stats: {},
+    dailyStats: {}
+  };
+  const defaultReagents = {
+    myList: [],
+    stats: {}
+  };
+  const defaultPka = {
+    myList: [],
+    stats: {}
+  };
+  let oldChem = defaultChem;
+  let oldReagent = defaultReagents;
+  let oldPka = defaultPka;
+  try {
+    const key = getUserStorageKey(CHEM_DATA_KEY);
+    const storedChem = localStorage.getItem(key);
+    if (storedChem) {
+      const parsed = JSON.parse(storedChem);
+      oldChem = parsed || defaultChem;
+      oldPka = (parsed === null || parsed === void 0 ? void 0 : parsed.pka) || defaultPka;
+    }
+  } catch (_) {}
+  try {
+    const key = getUserStorageKey('reagent_v1_data');
+    if (!localStorage.getItem(key)) {
+      const legacyReagent = localStorage.getItem('reagent_v1_data');
+      if (legacyReagent) {
+        localStorage.setItem(key, legacyReagent);
+        localStorage.removeItem('reagent_v1_data');
+      }
+    }
+    const storedReagent = localStorage.getItem(key);
+    if (storedReagent) oldReagent = JSON.parse(storedReagent) || defaultReagents;
+  } catch (_) {}
+  return {
+    compounds: {
+      myList: oldChem && Array.isArray(oldChem.myList) ? oldChem.myList : [],
+      stats: oldChem && oldChem.stats ? oldChem.stats : {},
+      dailyStats: oldChem && oldChem.dailyStats ? oldChem.dailyStats : {}
+    },
+    reagents: {
+      myList: oldReagent && Array.isArray(oldReagent.myList) ? oldReagent.myList : [],
+      stats: oldReagent && oldReagent.stats ? oldReagent.stats : {}
+    },
+    pka: {
+      myList: oldPka && Array.isArray(oldPka.myList) ? oldPka.myList : [],
+      stats: oldPka && oldPka.stats ? oldPka.stats : {}
+    }
+  };
+}
+function chemMigrateOldData(oldChemData) {
+  const defaultReagents = {
+    myList: [],
+    stats: {}
+  };
+  const defaultPka = {
+    myList: [],
+    stats: {}
+  };
+  let oldReagentData = defaultReagents;
+  let oldPkaData = defaultPka;
+  try {
+    const key = getUserStorageKey('reagent_v1_data');
+    if (!localStorage.getItem(key)) {
+      const legacyReagent = localStorage.getItem('reagent_v1_data');
+      if (legacyReagent) {
+        localStorage.setItem(key, legacyReagent);
+        localStorage.removeItem('reagent_v1_data');
+      }
+    }
+    const storedReagent = localStorage.getItem(key);
+    if (storedReagent) {
+      oldReagentData = JSON.parse(storedReagent) || defaultReagents;
+    }
+  } catch (_) {}
+  if (oldChemData && oldChemData.pka) {
+    oldPkaData = oldChemData.pka;
+  }
+  return {
+    compounds: {
+      myList: oldChemData && Array.isArray(oldChemData.myList) ? oldChemData.myList : [],
+      stats: oldChemData && oldChemData.stats ? oldChemData.stats : {},
+      dailyStats: oldChemData && oldChemData.dailyStats ? oldChemData.dailyStats : {}
+    },
+    reagents: {
+      myList: oldReagentData && Array.isArray(oldReagentData.myList) ? oldReagentData.myList : [],
+      stats: oldReagentData && oldReagentData.stats ? oldReagentData.stats : {}
+    },
+    pka: {
+      myList: oldPkaData && Array.isArray(oldPkaData.myList) ? oldPkaData.myList : [],
+      stats: oldPkaData && oldPkaData.stats ? oldPkaData.stats : {}
+    }
+  };
+}
+function chemReadSavedData() {
+  return chemMyData;
+}
+function chemTodayKey() {
+  return getIstDateKey();
+}
+function chemDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+function chemRecentStartKey(days = 7) {
+  const d = new Date();
+  d.setDate(d.getDate() - Math.max(0, days - 1));
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(d);
+}
+function chemEnsureDailyStats() {
+  if (!chemMyData.dailyStats) chemMyData.dailyStats = {};
+  if (!chemMyData.stats) chemMyData.stats = {};
+  if (!Array.isArray(chemMyData.myList)) chemMyData.myList = [];
+}
+function chemNormalizeProgressData(source = {}) {
+  let compList = [];
+  let reagList = [];
+  let compStats = {};
+  let reagStats = {};
+
+  // Handle myList (which can be array or combined object)
+  if (source.myList) {
+    if (Array.isArray(source.myList)) {
+      compList = source.myList;
+    } else if (typeof source.myList === 'object') {
+      compList = Array.isArray(source.myList.compounds) ? source.myList.compounds : [];
+      reagList = Array.isArray(source.myList.reagents) ? source.myList.reagents : [];
+    }
+  }
+
+  // Handle stats (which can be old compound-only stats or combined object)
+  if (source.stats && typeof source.stats === 'object') {
+    if (source.stats.compounds || source.stats.reagents) {
+      compStats = source.stats.compounds && typeof source.stats.compounds === 'object' ? source.stats.compounds : {};
+      reagStats = source.stats.reagents && typeof source.stats.reagents === 'object' ? source.stats.reagents : {};
+    } else {
+      // Old format: all stats are compound stats
+      compStats = source.stats;
+    }
+  }
+  const dailyStats = source.dailyStats && typeof source.dailyStats === 'object' ? source.dailyStats : {};
+  return {
+    compounds: {
+      myList: compList,
+      stats: compStats,
+      dailyStats: dailyStats
+    },
+    reagents: {
+      myList: reagList,
+      stats: reagStats
+    }
+  };
+}
+function chemProgressAttemptedTotal(source = {}) {
+  var _source$compounds;
+  const dailyStats = ((_source$compounds = source.compounds) === null || _source$compounds === void 0 ? void 0 : _source$compounds.dailyStats) || source.dailyStats || {};
+  return Object.values(dailyStats).reduce((total, stats) => {
+    return total + Number((stats === null || stats === void 0 ? void 0 : stats.attempted) || 0);
+  }, 0);
+}
+function chemCurrentUserName() {
+  const rawName = sessionStorage.getItem('fy_user_name');
+  if (rawName && rawName.trim() && rawName.trim() !== 'Student') {
+    return rawName.trim();
+  }
+  return 'Student';
+}
+function chemBuildDailyPayload(statDate, stats) {
+  const ntscName = chemCurrentUserName();
+  const displayName = (sessionStorage.getItem('fy_user_name') || 'Student').trim() || 'Student';
+  return {
+    user_id: ntscName,
+    username: displayName,
+    stat_date: statDate,
+    correct: (stats === null || stats === void 0 ? void 0 : stats.correct) || 0,
+    wrong: (stats === null || stats === void 0 ? void 0 : stats.wrong) || 0,
+    attempted: (stats === null || stats === void 0 ? void 0 : stats.attempted) || 0,
+    time_spent: (stats === null || stats === void 0 ? void 0 : stats.timeSpent) || (stats === null || stats === void 0 ? void 0 : stats.time_spent) || 0
+  };
+}
+function chemBuildProgressPayload() {
+  const ntscName = chemCurrentUserName();
+  const displayName = (sessionStorage.getItem('fy_user_name') || 'Student').trim() || 'Student';
+  return {
+    user_id: ntscName,
+    username: displayName,
+    my_list: {
+      compounds: chemMyData.myList || [],
+      reagents: reagentMyData.myList || []
+    },
+    compound_stats: {
+      compounds: chemMyData.stats || {},
+      reagents: reagentMyData.stats || {}
+    },
+    daily_stats: chemMyData.dailyStats || {},
+    updated_at: new Date().toISOString()
+  };
+}
+async function chemEnsureSupabase() {
+  const hasAccess = await checkPracticeAccess();
+  if (!hasAccess) return null;
+  if (!chemSupabase && window.supabase) {
+    chemSupabase = window.supabase.createClient(CHEM_SUPABASE_URL, CHEM_SUPABASE_KEY);
+  }
+  return chemSupabase;
+}
+let publicSupabaseClient = null;
+function getPublicSupabaseClient() {
+  if (!publicSupabaseClient && window.supabase) {
+    publicSupabaseClient = window.supabase.createClient(CHEM_SUPABASE_URL, CHEM_SUPABASE_KEY);
+  }
+  return publicSupabaseClient;
+}
+async function uploadBatchesToSupabase(batches, academicYear) {
+  if (!Array.isArray(batches) || batches.length === 0) return;
+  const client = getPublicSupabaseClient();
+  if (!client) return;
+  const payload = batches.map(b => ({
+    id: Number(b.id),
+    name: String(b.title || '').trim(),
+    year: academicYear ? Number(academicYear) : null,
+    updated_at: new Date().toISOString()
+  }));
+  try {
+    const {
+      error
+    } = await client.from('batches').upsert(payload, {
+      onConflict: 'id'
+    });
+    if (error) {
+      console.error("Error uploading batches to Supabase:", error);
+    }
+  } catch (e) {
+    console.error("Exception uploading batches to Supabase:", e);
+  }
+}
+function getTestModeLabel(t) {
+  if (t.isOffline === false || t.isOffline === 'false' || t.isOffline === 0) return 'Online';
+  if (t.isOffline === true || t.isOffline === 'true' || t.isOffline === 1) return 'Offline';
+  const mode = t.mode || t.testMode || t.examMode || t.examType || t.testType || '';
+  if (mode) return String(mode).trim();
+  return 'Offline';
+}
+
+function isOnlineTest(test) {
+  if (!test) return false;
+  return test.isOffline === false || test.isOffline === 'false' || test.isOffline === 0;
+}
+
+async function uploadTestsToSupabase(tests, academicYear) {
+  if (!Array.isArray(tests) || tests.length === 0) return;
+  const client = getPublicSupabaseClient();
+  if (!client) return;
+  const payload = tests.map(t => {
+    const testId = Number(t.id || t.testPaperId || t.testId || t.examId);
+    const testName = String(t.testName || t.name || t.examName || t.title || 'Exam').trim();
+    const examDate = t.examDate || t.testDate || t.startDate || t.dateTime || null;
+    const mode = getTestModeLabel(t);
+    return {
+      id: testId,
+      name: testName,
+      mode: mode,
+      academic_year: academicYear ? Number(academicYear) : (t.academicYear ? Number(t.academicYear) : null),
+      exam_date: examDate ? String(examDate) : null,
+      updated_at: new Date().toISOString()
+    };
+  }).filter(t => t.id && !Number.isNaN(t.id) && t.name);
+
+  if (!payload.length) return;
+
+  try {
+    const { error } = await client.from('test_ids').upsert(payload, {
+      onConflict: 'id'
+    });
+    if (error) {
+      console.error("Error uploading test IDs to Supabase:", error);
+    }
+  } catch (e) {
+    console.error("Exception uploading test IDs to Supabase:", e);
+  }
+}
+const uploadOnlineTestsToSupabase = uploadTestsToSupabase;
+
+async function scanAndUploadOnlineTests(tests = null) {
+  // Disabled auto-sync: only exams that appear in the Exam Calendar are synced to Supabase
+  return;
+}
+
+// Manual console command to scan latest 10 tests and show upload details
+window.scanTestIds = async function scanTestIds() {
+  console.group('%c🔍 [Test IDs Scanner] Scanning latest 10 tests...', 'color: #6366f1; font-weight: bold; font-size: 13px;');
+  try {
+    if (!API_CONFIG.token) {
+      console.error('❌ Error: No session token found. Please log into the portal first.');
+      console.groupEnd();
+      return { success: false, error: 'No token' };
+    }
+
+    let candidateTests = [];
+    if (Array.isArray(APP_STATE.tests) && APP_STATE.tests.length) {
+      candidateTests = [...APP_STATE.tests];
+      console.log('📦 Loaded tests from active APP_STATE.tests (' + candidateTests.length + ' tests)');
+    } else if (Array.isArray(APP_STATE.eraTests) && APP_STATE.eraTests.length) {
+      candidateTests = [...APP_STATE.eraTests];
+      console.log('📦 Loaded tests from active APP_STATE.eraTests (' + candidateTests.length + ' tests)');
+    } else {
+      console.log('🌐 Fetching latest tests directly from ExaminationHall API...');
+      const page = await fetchTestsPage(API_CONFIG.token, 1, 10);
+      candidateTests = page.tests || [];
+    }
+
+    if (!candidateTests.length) {
+      console.warn('⚠️ No tests found for the current academic year (' + API_CONFIG.academicYear + ').');
+      console.groupEnd();
+      return { success: true, count: 0, tests: [] };
+    }
+
+    const latest10 = candidateTests.slice(0, 10);
+    console.log(`📋 Found ${latest10.length} latest tests:`);
+
+    const evaluated = latest10.map((t, idx) => {
+      const testId = Number(t.id || t.testPaperId || t.testId || t.examId);
+      const testName = String(t.testName || t.name || t.examName || t.title || 'Exam').trim();
+      const mode = getTestModeLabel(t);
+      return {
+        Index: idx + 1,
+        ID: testId,
+        Name: testName,
+        isOffline: t.isOffline,
+        Mode: mode,
+        'Exam Type': t.examType || t.testType || 'N/A',
+        Date: formatDateLabel(t.examDate || t.testDate || t.startDate || t.dateTime)
+      };
+    });
+
+    console.table(evaluated);
+
+    console.log('🚀 Uploading ' + latest10.length + ' tests to Supabase table `test_ids`...');
+    const client = getPublicSupabaseClient();
+    if (!client) {
+      console.error('❌ Supabase client not initialized.');
+      console.groupEnd();
+      return { success: false, error: 'Supabase client missing' };
+    }
+
+    const payload = latest10.map(t => {
+      const testId = Number(t.id || t.testPaperId || t.testId || t.examId);
+      const testName = String(t.testName || t.name || t.examName || t.title || 'Exam').trim();
+      const examDate = t.examDate || t.testDate || t.startDate || t.dateTime || null;
+      const mode = getTestModeLabel(t);
+      return {
+        id: testId,
+        name: testName,
+        mode: mode,
+        academic_year: API_CONFIG.academicYear ? Number(API_CONFIG.academicYear) : (t.academicYear ? Number(t.academicYear) : null),
+        exam_date: examDate ? String(examDate) : null,
+        updated_at: new Date().toISOString()
+      };
+    }).filter(t => t.id && !Number.isNaN(t.id) && t.name);
+
+    const { data, error } = await client.from('test_ids').upsert(payload, { onConflict: 'id' }).select();
+
+    if (error) {
+      console.error('❌ Supabase Upload Error:', error);
+      console.groupEnd();
+      return { success: false, error, payload };
+    }
+
+    console.log('%c✅ Successfully uploaded ' + payload.length + ' test(s) to Supabase!', 'color: #22c55e; font-weight: bold;');
+    console.table(payload);
+    console.groupEnd();
+
+    return {
+      success: true,
+      scannedCount: evaluated.length,
+      uploadedCount: payload.length,
+      scanned: evaluated,
+      uploaded: payload
+    };
+  } catch (err) {
+    console.error('❌ Exception during scanTestIds:', err);
+    console.groupEnd();
+    return { success: false, error: err.message || err };
+  }
+};
+window.scanOnlineTests = window.scanTestIds;
+window.scanAndUploadTests = scanAndUploadOnlineTests;
+window.uploadTestsToSupabase = uploadTestsToSupabase;
+window.isOnlineTest = isOnlineTest;
+window.uploadOnlineTestsToSupabase = uploadOnlineTestsToSupabase;
+window.scanAndUploadOnlineTests = scanAndUploadOnlineTests;
+
+// Internal Schedule ID generation & conflict resolution for Exam Calendar (which has NO testId)
+function normalizeExamName(raw) {
+  if (!raw) return '';
+  return String(raw)
+    .toLowerCase()
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
+
+function extractScheduleDateKey(t) {
+  if (!t) return '';
+  const d = t.examDate || t.dateTime || t.testDate || t.startDate || t.date || '';
+  if (d) {
+    const dt = parseExamDateTime(d);
+    if (!Number.isNaN(dt.getTime())) {
+      const yr = dt.getFullYear();
+      const mo = String(dt.getMonth() + 1).padStart(2, '0');
+      const da = String(dt.getDate()).padStart(2, '0');
+      return `${yr}-${mo}-${da}`;
+    }
+  }
+  // Extract date from syllabus HTML/text if present (e.g. "05 April 2026", "26-July-26", "05-04-2026")
+  const text = String(t.syllabus || '') + ' ' + String(t.name || t.testName || t.examName || '');
+  const matchD = text.match(/(\d{1,2})[\s\-_/]+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\s\-_/]+(\d{2,4})/i);
+  if (matchD) {
+    const [, day, monStr, rawYr] = matchD;
+    const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+    const mo = months[monStr.slice(0, 3).toLowerCase()] || '01';
+    const yr = rawYr.length === 2 ? `20${rawYr}` : rawYr;
+    return `${yr}-${mo}-${String(day).padStart(2, '0')}`;
+  }
+  const matchNum = text.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+  if (matchNum) {
+    const [, day, mon, rawYr] = matchNum;
+    const yr = rawYr.length === 2 ? `20${rawYr}` : rawYr;
+    return `${yr}-${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  return '';
+}
+
+function getInternalScheduleId(t) {
+  if (!t) return 0;
+  if (typeof t.id === 'number' && t.id >= 100000000 && t._isInternal) {
+    return t.id;
+  }
+
+  const nameKey = normalizeExamName(t.name || t.testName || t.examName || '');
+  const dateKey = extractScheduleDateKey(t);
+  const yearKey = String(t.academicYear || API_CONFIG.academicYear || '').trim();
+
+  // Signature uniquely identifying this exam schedule event across all batches & students
+  const signature = `${yearKey}|${nameKey}|${dateKey}`;
+
+  // 32-bit FNV-1a hash
+  let hash = 2166136261;
+  for (let i = 0; i < signature.length; i++) {
+    hash ^= signature.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  // Positive 9-digit internal ID: 100000000 to 999999999
+  const internalId = 100000000 + (Math.abs(hash >>> 0) % 899999999);
+  return internalId;
+}
+
+const getScheduleId = getInternalScheduleId;
+const getStableScheduleId = getInternalScheduleId;
+
+
+// Utility helpers to merge courses, syllabus and venue across multiple students/batches without duplicates
+function mergeCoursesString(oldCourses, newCourses) {
+  if (!oldCourses && !newCourses) return '';
+  if (!oldCourses) return String(newCourses).trim();
+  if (!newCourses) return String(oldCourses).trim();
+
+  const tokens = [];
+  const seen = new Set();
+
+  const addToken = str => {
+    if (!str) return;
+    String(str)
+      .split(/[,;|•·\n]+/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .forEach(t => {
+        const lower = t.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          tokens.push(t);
+        }
+      });
+  };
+
+  addToken(oldCourses);
+  addToken(newCourses);
+  return tokens.join(', ');
+}
+
+function pickRicherSyllabus(oldSyllabus, newSyllabus) {
+  const o = String(oldSyllabus || '').trim();
+  const n = String(newSyllabus || '').trim();
+  if (!o) return n;
+  if (!n) return o;
+  return n.length >= o.length ? n : o;
+}
+
+function pickBetterVenue(oldVenue, newVenue) {
+  const o = String(oldVenue || '').trim();
+  const n = String(newVenue || '').trim();
+  if (!o) return n || 'Campus Examination Hall';
+  if (!n) return o;
+  const isGeneric = s => /^(campus examination hall|examination hall|campus|exam hall)$/i.test(s);
+  if (isGeneric(n) && !isGeneric(o)) return o;
+  return n;
+}
+
+// Local storage for exam schedules in Exam Hall
+function getScheduleStorageKey() {
+  return getUserStorageKey('fy_exam_schedule_cache');
+}
+
+function readFullExamSchedules() {
+  try {
+    const raw = localStorage.getItem(getScheduleStorageKey()) || localStorage.getItem('fy_exam_schedule_cache');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveFullExamSchedules(entries) {
+  if (!Array.isArray(entries) || !entries.length) return readFullExamSchedules();
+  try {
+    const existing = readFullExamSchedules();
+    const map = new Map();
+    existing.forEach(item => {
+      if (!item) return;
+      const id = getScheduleId(item);
+      map.set(id, item);
+    });
+    entries.forEach(entry => {
+      if (!entry) return;
+      const id = getScheduleId(entry);
+      const prev = map.get(id) || {};
+      const mergedCourses = mergeCoursesString(prev.courses, entry.courses || entry.batchName);
+      const richerSyllabus = pickRicherSyllabus(prev.syllabus, entry.syllabus);
+      const betterVenue = pickBetterVenue(prev.venue, entry.venue);
+
+      map.set(id, {
+        ...prev,
+        ...entry,
+        id: id,
+        name: entry.name || entry.testName || entry.examName || prev.name || prev.testName || 'Exam',
+        testName: entry.testName || entry.name || entry.examName || prev.testName || 'Exam',
+        examDate: entry.examDate || entry.dateTime || entry.testDate || entry.startDate || prev.examDate || null,
+        mode: getTestModeLabel(entry) || prev.mode || 'Offline',
+        venue: betterVenue,
+        courses: mergedCourses,
+        duration: entry.duration || (entry.durationMinutes ? `${entry.durationMinutes} mins` : prev.duration || ''),
+        syllabus: richerSyllabus,
+        updatedAt: new Date().toISOString()
+      });
+    });
+    const merged = Array.from(map.values());
+    localStorage.setItem(getScheduleStorageKey(), JSON.stringify(merged));
+    return merged;
+  } catch (e) {
+    console.warn("Notice saving exam schedules locally for Exam Hall:", e);
+    return entries;
+  }
+}
+window.readFullExamSchedules = readFullExamSchedules;
+window.saveFullExamSchedules = saveFullExamSchedules;
+
+async function uploadExamCalendarToSupabase(calendarItems, academicYear) {
+  if (!Array.isArray(calendarItems) || calendarItems.length === 0) return { success: true, count: 0 };
+  const client = getPublicSupabaseClient();
+  if (!client) return { success: false, error: 'Supabase client missing' };
+
+  const rawPayload = calendarItems.map(t => {
+    const sId = getInternalScheduleId(t);
+    const testName = String(t.testName || t.name || t.examName || t.title || 'Exam').trim();
+    const dateKey = extractScheduleDateKey(t);
+    const examDate = t.examDate || t.dateTime || t.testDate || t.startDate || (dateKey ? `${dateKey}T09:00:00` : null);
+    const mode = getTestModeLabel(t);
+    const year = academicYear ? Number(academicYear) : (t.academicYear ? Number(t.academicYear) : null);
+    const venue = t.venue ? String(t.venue).trim() : null;
+    const courses = t.courses ? String(t.courses).trim() : (t.batchName || t.courseName || null);
+    const duration = t.duration || (t.durationMinutes ? `${t.durationMinutes} mins` : null);
+    const syllabus = t.syllabus || (Array.isArray(t.syllabusLines) ? t.syllabusLines.join('\n') : null);
+
+    // Skip empty dummy "Exam" rows without syllabus or date
+    if (testName.toLowerCase() === 'exam' && !syllabus && !examDate) return null;
+
+    return {
+      id: sId,
+      name: testName,
+      exam_date: examDate ? String(examDate) : null,
+      venue: venue,
+      courses: courses,
+      mode: mode,
+      duration: duration,
+      syllabus: syllabus,
+      academic_year: year,
+      updated_at: new Date().toISOString()
+    };
+  }).filter(t => t && t.id && !Number.isNaN(t.id) && t.name);
+
+  if (!rawPayload.length) return { success: true, count: 0 };
+
+  try {
+    // Merge with existing Supabase records so courses and rich syllabus from different students/batches accumulate
+    const ids = rawPayload.map(p => p.id);
+    const existingMap = new Map();
+    try {
+      const { data: existingRows } = await client
+        .from('test_schedules')
+        .select('*')
+        .in('id', ids);
+      if (Array.isArray(existingRows)) {
+        existingRows.forEach(r => existingMap.set(Number(r.id), r));
+      }
+    } catch (_) {}
+
+    const finalPayload = rawPayload.map(item => {
+      const prev = existingMap.get(item.id);
+      if (!prev) return item;
+      return {
+        ...item,
+        name: item.name && item.name.toLowerCase() !== 'exam' ? item.name : prev.name,
+        exam_date: item.exam_date || prev.exam_date,
+        courses: mergeCoursesString(prev.courses, item.courses),
+        syllabus: pickRicherSyllabus(prev.syllabus, item.syllabus),
+        venue: pickBetterVenue(prev.venue, item.venue),
+        duration: item.duration || prev.duration,
+        mode: item.mode || prev.mode,
+        academic_year: item.academic_year || prev.academic_year,
+        updated_at: new Date().toISOString()
+      };
+    });
+
+    const { data, error } = await client.from('test_schedules').upsert(finalPayload, {
+      onConflict: 'id'
+    }).select();
+
+    if (error) {
+      console.warn("Notice syncing to Supabase table test_schedules:", error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true, count: finalPayload.length, data: finalPayload };
+  } catch (e) {
+    console.warn("Exception syncing to Supabase table test_schedules:", e);
+    return { success: false, error: e.message || e };
+  }
+}
+
+async function scanAndUploadExamCalendar(calendarEntries = null) {
+  try {
+    let entries = [];
+    if (Array.isArray(calendarEntries) && calendarEntries.length) {
+      entries = calendarEntries;
+    } else if (Array.isArray(APP_STATE.calendarEntries) && APP_STATE.calendarEntries.length) {
+      entries = APP_STATE.calendarEntries;
+    } else if (API_CONFIG.token) {
+      entries = await fetchCalendar(API_CONFIG.token);
+    }
+
+    if (!entries || !entries.length) return;
+
+    // 1. Save full schedules to local storage for Exam Hall
+    saveFullExamSchedules(entries);
+
+    // 2. Direct online sync to Supabase dedicated table test_schedules
+    await uploadExamCalendarToSupabase(entries, API_CONFIG.academicYear);
+  } catch (e) {
+    console.error("Exception scanning and uploading exam calendar:", e);
+  }
+}
+
+window.scanExamCalendar = async function scanExamCalendar() {
+  console.group('%c📅 [Exam Calendar Scanner] Scanning schedules & syncing to Supabase test_schedules...', 'color: #f59e0b; font-weight: bold; font-size: 13px;');
+  try {
+    let entries = [];
+    if (Array.isArray(APP_STATE.calendarEntries) && APP_STATE.calendarEntries.length) {
+      entries = [...APP_STATE.calendarEntries];
+      console.log('📦 Loaded calendar from APP_STATE.calendarEntries (' + entries.length + ' entries)');
+    } else if (API_CONFIG.token) {
+      console.log('🌐 Fetching latest calendar from GetStudentCalendar API...');
+      entries = await fetchCalendar(API_CONFIG.token);
+    }
+
+    if (!entries.length) {
+      console.warn('⚠️ No calendar entries found for the current academic year (' + API_CONFIG.academicYear + ').');
+      console.groupEnd();
+      return { success: true, count: 0, entries: [] };
+    }
+
+    // Save full schedules locally without duplicates
+    const merged = saveFullExamSchedules(entries);
+    console.log('💾 Merged full schedules locally (' + merged.length + ' deduplicated schedules in storage)');
+
+    const evaluated = entries.map((t, idx) => {
+      const sId = getInternalScheduleId(t);
+      const testName = String(t.testName || t.name || t.examName || 'Exam').trim();
+      const mode = getTestModeLabel(t);
+      const examDate = t.examDate || t.dateTime || t.testDate || t.startDate || null;
+      return {
+        Index: idx + 1,
+        Internal_ID: sId,
+        Name: testName,
+        Mode: mode,
+        Venue: t.venue || 'Campus Exam Hall',
+        Date: formatDateTimeLabel(examDate)
+      };
+    });
+
+    console.table(evaluated);
+
+    // Sync online with full conflict resolution
+    const uploadRes = await uploadExamCalendarToSupabase(entries, API_CONFIG.academicYear);
+
+    if (!uploadRes.success) {
+      console.warn('⚠️ Supabase test_schedules sync notice:', uploadRes.error);
+      console.groupEnd();
+      return { success: false, error: uploadRes.error };
+    }
+
+    console.log('%c✅ Successfully synced ' + (uploadRes.count || 0) + ' schedule(s) to Supabase table `test_schedules` with conflict handling!', 'color: #22c55e; font-weight: bold;');
+    console.groupEnd();
+
+    return {
+      success: true,
+      scannedCount: evaluated.length,
+      syncedCount: uploadRes.count || 0,
+      scanned: evaluated,
+      synced: uploadRes.data || []
+    };
+  } catch (err) {
+    console.error('❌ Exception during scanExamCalendar:', err);
+    console.groupEnd();
+    return { success: false, error: err.message || err };
+  }
+};
+
+async function clearTestSchedulesTable() {
+  const client = getPublicSupabaseClient();
+  if (!client) {
+    console.error("Supabase client not initialized.");
+    return false;
+  }
+  try {
+    const { data: rows, error: selectError } = await client.from('test_schedules').select('id');
+    if (selectError) {
+      console.error("Error fetching rows to clear:", selectError.message);
+      return false;
+    }
+    if (!rows || !rows.length) {
+      console.log("Table `test_schedules` is already empty.");
+      return true;
+    }
+    const ids = rows.map(r => r.id);
+    const { error: delError } = await client.from('test_schedules').delete().in('id', ids);
+    if (delError) {
+      console.error("Failed to clear `test_schedules`:", delError.message);
+      return false;
+    }
+    console.log(`✅ Successfully cleared ${ids.length} rows from \`test_schedules\` table.`);
+    return true;
+  } catch (err) {
+    console.error("Exception clearing `test_schedules`:", err);
+    return false;
+  }
+}
+
+window.scanAndUploadExamCalendar = scanAndUploadExamCalendar;
+window.uploadExamCalendarToSupabase = uploadExamCalendarToSupabase;
+window.getScheduleId = getScheduleId;
+window.getStableScheduleId = getScheduleId;
+window.getInternalScheduleId = getInternalScheduleId;
+window.clearTestSchedulesTable = clearTestSchedulesTable;
+
+async function chemTrackUserActivity() {
+  const username = getCurrentUserId();
+  if (!username) return;
+  const client = getPublicSupabaseClient();
+  if (!client) return;
+  const currentMonthYear = new Date().toLocaleString('en-US', {
+    month: 'long',
+    year: 'numeric'
+  });
+  try {
+    const {
+      data,
+      error
+    } = await client.from('user_activity').select('month_1, month_2, month_3').eq('username', username).maybeSingle();
+    if (error) {
+      console.error("Error fetching user activity:", error);
+      return;
+    }
+    let m1 = null;
+    let m2 = null;
+    let m3 = null;
+    if (data) {
+      m1 = data.month_1;
+      m2 = data.month_2;
+      m3 = data.month_3;
+    }
+
+    // If already tracked in one of the fields, only update timestamp
+    if (m1 === currentMonthYear || m2 === currentMonthYear || m3 === currentMonthYear) {
+      await client.from('user_activity').upsert({
+        username: username,
+        month_1: m1,
+        month_2: m2,
+        month_3: m3,
+        updated_at: new Date().toISOString()
+      });
+      return;
+    }
+
+    // If not found, assign to empty slots or overwrite the oldest
+    if (!m1) {
+      m1 = currentMonthYear;
+    } else if (!m2) {
+      m2 = currentMonthYear;
+    } else if (!m3) {
+      m3 = currentMonthYear;
+    } else {
+      const parseMonthYear = str => {
+        if (!str) return new Date(0);
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? new Date(0) : d;
+      };
+      const d1 = parseMonthYear(m1);
+      const d2 = parseMonthYear(m2);
+      const d3 = parseMonthYear(m3);
+      const oldest = Math.min(d1.getTime(), d2.getTime(), d3.getTime());
+      if (oldest === d1.getTime()) {
+        m1 = currentMonthYear;
+      } else if (oldest === d2.getTime()) {
+        m2 = currentMonthYear;
+      } else {
+        m3 = currentMonthYear;
+      }
+    }
+    await client.from('user_activity').upsert({
+      username: username,
+      month_1: m1,
+      month_2: m2,
+      month_3: m3,
+      updated_at: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Error tracking user activity:", err);
+  }
+}
+async function chemLoadVisitorStat() {
+  const labelEl = document.getElementById('settings-visitor-stat-label');
+  const valEl = document.getElementById('settings-visitor-stat-value');
+  if (!labelEl || !valEl) return;
+  const currentMonthYear = new Date().toLocaleString('en-US', {
+    month: 'long',
+    year: 'numeric'
+  });
+  const monthNameOnly = new Date().toLocaleString('en-US', {
+    month: 'long'
+  });
+  labelEl.textContent = `Total Unique Visitors in ${monthNameOnly}`;
+  try {
+    const client = getPublicSupabaseClient();
+    if (!client) {
+      valEl.textContent = 'Unavailable';
+      return;
+    }
+    const {
+      count,
+      error
+    } = await client.from('user_activity').select('*', {
+      count: 'exact',
+      head: true
+    }).or(`month_1.eq."${currentMonthYear}",month_2.eq."${currentMonthYear}",month_3.eq."${currentMonthYear}"`);
+    if (error) {
+      console.error("Error fetching visitor count:", error);
+      valEl.textContent = 'Error';
+    } else {
+      valEl.textContent = count !== null ? count : '0';
+    }
+  } catch (err) {
+    console.error("Error loading visitor count:", err);
+    valEl.textContent = 'Error';
+  }
+}
+function chemFallbackCompounds() {
+  return [{
+    name: "Ethanol",
+    smiles: "CCO",
+    tags: ["reagent"]
+  }, {
+    name: "Caffeine",
+    smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+    tags: ["organic"]
+  }, {
+    name: "Aspirin",
+    smiles: "CC(=O)Oc1ccccc1C(=O)O",
+    tags: ["acid", "aromatic"]
+  }, {
+    name: "Glucose",
+    smiles: "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O",
+    tags: ["organic"]
+  }, {
+    name: "Benzene",
+    smiles: "c1ccccc1",
+    tags: ["aromatic"]
+  }, {
+    name: "Acetic Acid",
+    smiles: "CC(=O)O",
+    tags: ["acid"]
+  }, {
+    name: "Acetone",
+    smiles: "CC(C)=O",
+    tags: ["reagent"]
+  }, {
+    name: "Methanol",
+    smiles: "CO",
+    tags: ["reagent"]
+  }, {
+    name: "Toluene",
+    smiles: "Cc1ccccc1",
+    tags: ["aromatic"]
+  }, {
+    name: "Phenol",
+    smiles: "Oc1ccccc1",
+    tags: ["acid", "aromatic"]
+  }];
+}
+async function chemInitApp() {
+  if (chemAppReady) {
+    chemUpdateDashboard();
+    chemLoadLeaderboard('today');
+    return;
+  }
+  chemEnsureDailyStats();
+  await chemEnsureSupabase();
+  try {
+    const options = {
+      width: 520,
+      height: 300,
+      bondThickness: 1.8,
+      fontSizeLarge: 14,
+      themes: {
+        dark: {
+          C: '#e8eaf6',
+          O: '#ef4444',
+          N: '#5f8dff',
+          S: '#f59e0b',
+          H: '#94a3b8',
+          P: '#22c55e',
+          F: '#22c55e',
+          Cl: '#22c55e',
+          Br: '#f59e0b',
+          I: '#8b5cf6',
+          BACKGROUND: '#121b31'
+        }
+      }
+    };
+    if (typeof SmiDrawer !== 'undefined') chemDrawer = new SmiDrawer(options);else if (typeof SmilesDrawer !== 'undefined') chemDrawer = new SmilesDrawer.SmiDrawer(options);
+  } catch (err) {
+    console.warn('Chem drawer init failed', err);
+  }
+  try {
+    const response = await fetch('compounds_smiles.json');
+    if (!response.ok) throw new Error('No compound JSON');
+    const loaded = await response.json();
+    chemAllCompounds = Array.isArray(loaded) && loaded.length ? loaded : chemFallbackCompounds();
+  } catch (_) {
+    chemAllCompounds = chemFallbackCompounds();
+  }
+  chemAppReady = true;
+  chemUpdateDashboard();
+  chemLoadLeaderboard('today');
+  chemDownloadProgress(false).then(loaded => {
+    if (loaded) {
+      chemUpdateDashboard();
+    }
+  });
+}
+function chemUpdateDashboard() {
+  var _chemMyData$dailyStat;
+  const total = chemAllCompounds.length;
+  const inList = chemMyData.myList.length;
+  const mastered = chemMyData.myList.filter(name => {
+    const s = chemMyData.stats[name];
+    return s && s.correct >= 5 && s.wrong === 0;
+  }).length;
+
+  // Calculate today's and 7-day attempts
+  const today = chemTodayKey();
+  const todayAttempts = ((_chemMyData$dailyStat = chemMyData.dailyStats[today]) === null || _chemMyData$dailyStat === void 0 ? void 0 : _chemMyData$dailyStat.attempted) || 0;
+  let sevenDayAttempts = 0;
+  const recentStart = chemRecentStartKey(7);
+  if (chemMyData.dailyStats && typeof chemMyData.dailyStats === 'object') {
+    for (const [date, stats] of Object.entries(chemMyData.dailyStats)) {
+      if (date >= recentStart && stats) {
+        sevenDayAttempts += stats.attempted || 0;
+      }
+    }
+  }
+  const list = document.getElementById('chem-stat-list');
+  const totalEl = document.getElementById('chem-stat-total');
+  const masteredEl = document.getElementById('chem-stat-mastered');
+  const todayAttemptsEl = document.getElementById('chem-stat-today-attempts');
+  const sevenDayAttemptsEl = document.getElementById('chem-stat-7day-attempts');
+  if (list) list.innerHTML = `List: <strong>${inList}</strong>`;
+  if (totalEl) totalEl.innerHTML = `Total: <strong>${total}</strong>`;
+  if (masteredEl) masteredEl.innerHTML = `Mastered: <strong>${mastered}</strong>`;
+  if (todayAttemptsEl) todayAttemptsEl.innerHTML = `Today: <strong>${todayAttempts}</strong>`;
+  if (sevenDayAttemptsEl) sevenDayAttemptsEl.innerHTML = `7-Day: <strong>${sevenDayAttempts}</strong>`;
+}
+function chemSave() {
+  chemEnsureDailyStats();
+  chemCombinedData.compounds = chemMyData;
+  chemCombinedData.reagents = reagentMyData;
+  chemCombinedData.pka = pkaMyData;
+  localStorage.setItem(getUserStorageKey(CHEM_DATA_KEY), JSON.stringify(chemCombinedData));
+  localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), new Date().toISOString());
+  localStorage.setItem(getUserStorageKey('reagent_v1_data'), JSON.stringify(reagentMyData));
+  chemUpdateDashboard();
+}
+function chemDrawStructure(smiles, canvasId) {
+  if (!smiles) return;
+  const renderer = localStorage.getItem(getUserStorageKey('chem_setting_renderer')) || 'smiles';
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (renderer === 'rdkit') {
+    canvas.classList.add('rdkit-canvas');
+    if (window.RDKitModule) {
+      try {
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const mol = window.RDKitModule.get_mol(smiles);
+        if (mol) {
+          const drawOpts = {
+            backgroundColour: [1, 1, 1, 1],
+            legendColour: [0, 0, 0, 1],
+            symbolColour: [0, 0, 0, 1]
+          };
+          mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(drawOpts));
+          mol.delete();
+        }
+      } catch (err) {
+        console.warn('RDKit draw failed', err);
+        drawWithSmilesDrawer(smiles, canvasId);
+      }
+    } else {
+      loadRDKitDynamic().then(() => {
+        chemDrawStructure(smiles, canvasId);
+      }).catch(() => {
+        drawWithSmilesDrawer(smiles, canvasId);
+      });
+    }
+  } else {
+    canvas.classList.remove('rdkit-canvas');
+    drawWithSmilesDrawer(smiles, canvasId);
+  }
+}
+function drawWithSmilesDrawer(smiles, canvasId) {
+  if (!chemDrawer) return;
+  try {
+    try {
+      chemDrawer.draw(smiles, '#' + canvasId, 'dark');
+    } catch (_) {
+      chemDrawer.draw(smiles, '#' + canvasId, 'light');
+    }
+  } catch (err) {
+    console.warn('Smiles drawer draw failed', err);
+  }
+}
+let rdkitLoadingPromise = null;
+function loadRDKitDynamic() {
+  if (window.RDKitModule) return Promise.resolve(window.RDKitModule);
+  if (rdkitLoadingPromise) return rdkitLoadingPromise;
+  rdkitLoadingPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js";
+    script.onload = () => {
+      if (typeof initRDKitModule !== 'undefined') {
+        initRDKitModule().then(instance => {
+          window.RDKitModule = instance;
+          console.log("RDKit loaded, version:", instance.version());
+          resolve(instance);
+        }).catch(err => {
+          console.error("RDKit init failed:", err);
+          reject(err);
+        });
+      } else {
+        reject(new Error("initRDKitModule not defined after script load"));
+      }
+    };
+    script.onerror = err => {
+      console.error("RDKit script load failed:", err);
+      reject(err);
+    };
+    document.head.appendChild(script);
+  });
+  return rdkitLoadingPromise;
+}
+function chemRefreshCurrentDrawing() {
+  const activeView = document.querySelector('.chem-view.active');
+  if (!activeView) return;
+  if (activeView.id === 'chem-view-learn') {
+    chemUpdateLearnCard();
+  } else if (activeView.id === 'chem-view-practice') {
+    const wizardMode = localStorage.getItem(getUserStorageKey('chem_setting_wizard_mode')) === 'true';
+    if (wizardMode) {
+      if (chemWizardQueue.length > 0 && chemWizardIdx < chemWizardQueue.length) {
+        const targetName = chemWizardQueue[chemWizardIdx];
+        const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+        if (canvasWrap && canvasWrap.style.display !== 'none') {
+          const targetObj = chemAllCompounds.find(c => c.name === targetName);
+          if (targetObj) chemDrawStructure(targetObj.smiles, 'chem-practice-canvas');
+        }
+      }
+    } else {
+      if (chemLastPracticeName) {
+        const targetObj = chemAllCompounds.find(c => c.name === chemLastPracticeName);
+        if (targetObj) {
+          const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+          if (canvasWrap && canvasWrap.style.display !== 'none') {
+            chemDrawStructure(targetObj.smiles, 'chem-practice-canvas');
+          } else {
+            const btns = document.querySelectorAll('.chem-opt-btn-structure');
+            btns.forEach((btn, i) => {
+              const optVal = btn.dataset.option;
+              const optObj = chemAllCompounds.find(c => c.name === optVal);
+              if (optObj) {
+                chemDrawStructure(optObj.smiles, `chem-opt-canvas-${i}`);
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+}
+function chemBuildLearnQueue() {
+  const names = [...chemMyData.myList];
+  const weighted = names.map(name => {
+    const s = chemMyData.stats[name] || {
+      correct: 0,
+      wrong: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+    const hrsSince = (Date.now() - (s.lastSeen || 0)) / 3600000;
+    const errorRatio = (s.wrong + 1) / (s.correct + 2);
+    const staleness = Math.min(hrsSince / 24, 3);
+    const streakPenalty = Math.max(0, 1 - s.streak * 0.1);
+    const weight = errorRatio * 4 + staleness * 2 + streakPenalty + Math.random() * 1.5;
+    return {
+      name,
+      weight
+    };
+  });
+  weighted.sort((a, b) => b.weight - a.weight);
+  return weighted.map(w => w.name);
+}
+function chemShowView(id) {
+  document.querySelectorAll('.chem-view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById('chem-view-' + id);
+  if (view) view.classList.add('active');
+}
+function chemGoHome() {
+  chemShowView('home');
+  chemSyncAll(false);
+}
+function chemLearnNew() {
+  if (!chemAppReady) return chemInitApp().then(chemLearnNew);
+  const remaining = chemAllCompounds.filter(c => !chemMyData.myList.includes(c.name));
+  if (!remaining.length) {
+    chemShowToast("All available compounds are already in your list.");
+    return;
+  }
+  const selected = remaining.sort(() => 0.5 - Math.random()).slice(0, Math.min(5, remaining.length));
+  selected.forEach(c => {
+    chemMyData.myList.push(c.name);
+    chemMyData.stats[c.name] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  });
+  chemSave();
+  chemSyncAll(false);
+  chemShowToast(`Added: ${selected.map(s => s.name).join(', ')}`);
+}
+async function chemInitLearn() {
+  if (!chemMyData.myList.length) {
+    chemShowToast("Add compounds first.");
+    return;
+  }
+  chemLearnQueue = chemBuildLearnQueue();
+  chemLearnIdx = 0;
+  chemShowView('learn');
+  chemUpdateLearnCard();
+}
+function chemChangeLearn(dir) {
+  if (!chemLearnQueue.length) return;
+  chemLearnIdx += dir;
+  if (chemLearnIdx >= chemLearnQueue.length) chemLearnIdx = 0;
+  if (chemLearnIdx < 0) chemLearnIdx = chemLearnQueue.length - 1;
+  chemUpdateLearnCard();
+}
+function chemUpdateLearnCard() {
+  const name = chemLearnQueue[chemLearnIdx];
+  const comp = chemAllCompounds.find(c => c.name === name);
+  const stat = chemMyData.stats[name] || {
+    correct: 0,
+    wrong: 0,
+    streak: 0
+  };
+  document.getElementById('chem-learn-name').textContent = name || '-';
+  document.getElementById('chem-learn-index-text').textContent = `${chemLearnIdx + 1} / ${chemLearnQueue.length}`;
+  document.getElementById('chem-learn-correct').textContent = stat.correct || 0;
+  document.getElementById('chem-learn-wrong').textContent = stat.wrong || 0;
+  document.getElementById('chem-learn-streak').textContent = stat.streak || 0;
+  document.getElementById('chem-learn-progress').style.width = `${((chemLearnIdx + 1) / chemLearnQueue.length * 100).toFixed(1)}%`;
+  if (comp) chemDrawStructure(comp.smiles, 'chem-learn-canvas');
+}
+const UnifiedQuestionEngine = {
+  // ── Recency buffer to prevent repetitive loops ──
+  _recentKeys: [],
+  _RECENCY_SIZE: 3,
+  // ── SM-2 inspired review intervals (milliseconds) ──
+  // streak → interval; intervals grow exponentially, compressed by error rate
+  _INTERVALS_MS: [0,
+  // streak 0: always eligible (new / struggling)
+  30 * 60000,
+  // streak 1: 30 minutes
+  2 * 3600000,
+  // streak 2: 2 hours
+  8 * 3600000,
+  // streak 3: 8 hours
+  24 * 3600000,
+  // streak 4: 1 day
+  72 * 3600000,
+  // streak 5: 3 days
+  168 * 3600000,
+  // streak 6: 7 days
+  336 * 3600000 // streak 7+: 14 days
+  ],
+  getReviewInterval(stats) {
+    const s = stats || {
+      wrong: 0,
+      correct: 0,
+      streak: 0
+    };
+    const streak = Math.min(s.streak || 0, this._INTERVALS_MS.length - 1);
+    const baseInterval = this._INTERVALS_MS[streak];
+
+    // Compress interval by error rate — high errors = review sooner
+    const total = (s.wrong || 0) + (s.correct || 0);
+    const errorRate = total > 0 ? (s.wrong || 0) / total : 0;
+    const compression = 1 - errorRate * 0.6; // 40% errors → interval halved
+
+    return Math.max(baseInterval * compression, 0);
+  },
+  calculateWeight(stats) {
+    const s = stats || {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+    const now = Date.now();
+    const timeSince = now - (s.lastSeen || 0);
+    const reviewInterval = this.getReviewInterval(s);
+
+    // ── Overdue ratio: how far past the review window are we? ──
+    // Items never seen (lastSeen=0) get maximum overdue urgency
+    let overdueRatio;
+    if (!s.lastSeen) {
+      overdueRatio = 10; // Never seen → very high urgency
+    } else if (reviewInterval <= 0) {
+      overdueRatio = Math.min(timeSince / 3600000, 10); // streak 0: scale by hours
+    } else {
+      overdueRatio = Math.max(0, (timeSince - reviewInterval) / reviewInterval);
+    }
+
+    // ── Error rate (ratio, not raw count) ──
+    const total = (s.wrong || 0) + (s.correct || 0);
+    const errorRate = total > 0 ? (s.wrong || 0) / total : 0.5; // Unknown items get 50%
+
+    // ── New item boost: items with streak 0 need immediate attention ──
+    const newItemBoost = (s.streak || 0) === 0 ? 5 : 0;
+
+    // ── Final urgency score ──
+    // Much less randomness than before (2 vs 8) — the engine should be smart, not lucky
+    const urgency = overdueRatio * 10 + errorRate * 8 + newItemBoost + Math.random() * 2;
+    return Math.max(urgency, 0.1);
+  },
+  selectTarget(keys, statsMap, lastKey) {
+    // Filter out recent items (anti-repeat window of last 3)
+    let pool = keys.filter(k => !this._recentKeys.includes(k));
+    if (pool.length === 0) pool = keys.filter(k => k !== lastKey);
+    if (pool.length === 0) pool = [...keys];
+    if (!pool.length) return null;
+    const scored = pool.map(key => {
+      const stats = statsMap[key];
+      const weight = this.calculateWeight(stats);
+      return {
+        key,
+        weight
+      };
+    });
+
+    // Weighted random selection (biased heavily toward highest urgency)
+    const totalWeight = scored.reduce((sum, s) => sum + s.weight, 0);
+    let rand = Math.random() * totalWeight;
+    for (const item of scored.sort((a, b) => b.weight - a.weight)) {
+      rand -= item.weight;
+      if (rand <= 0) {
+        // Update recency buffer
+        this._recentKeys.push(item.key);
+        if (this._recentKeys.length > this._RECENCY_SIZE) {
+          this._recentKeys.shift();
+        }
+        return item.key;
+      }
+    }
+    const fallback = pool[Math.floor(Math.random() * pool.length)];
+    this._recentKeys.push(fallback);
+    if (this._recentKeys.length > this._RECENCY_SIZE) this._recentKeys.shift();
+    return fallback;
+  },
+  // ── Mastery tier helper ──
+  _getMasteryTier(stats) {
+    const s = stats || {
+      wrong: 0,
+      correct: 0,
+      streak: 0
+    };
+    const total = (s.wrong || 0) + (s.correct || 0);
+    const errorRate = total > 0 ? (s.wrong || 0) / total : 1;
+    if ((s.streak || 0) >= 5 && errorRate < 0.15) return 'mastered';
+    if ((s.streak || 0) >= 3 && errorRate < 0.30) return 'reviewing';
+    if ((s.correct || 0) >= 3 && (s.streak || 0) >= 2) return 'learning';
+    return 'new';
+  },
+  decideFormat(mode, targetKey, statsMap) {
+    const s = statsMap[targetKey] || {
+      wrong: 0,
+      correct: 0,
+      streak: 0
+    };
+    const tier = this._getMasteryTier(s);
+    const roll = Math.random();
+    if (mode === 'common-names') {
+      const textModeOn = localStorage.getItem(getUserStorageKey('chem_setting_text_mode')) !== 'false';
+      const wizardModeOn = localStorage.getItem(getUserStorageKey('chem_setting_wizard_mode')) === 'true';
+      if (wizardModeOn) return 'wizard';
+      switch (tier) {
+        case 'new':
+          // New/struggling items: always normal MCQ (easiest)
+          return 'normal';
+        case 'learning':
+          // Learning items: mix of normal (40%) and reverse (60%)
+          return roll < 0.40 ? 'normal' : 'reverse';
+        case 'reviewing':
+          // Reviewing items: mix of reverse (50%) and text (50%)
+          if (textModeOn) return roll < 0.50 ? 'reverse' : 'text';
+          return roll < 0.40 ? 'normal' : 'reverse';
+        case 'mastered':
+          // Mastered items: primarily text (70%), some reverse (30%)
+          if (textModeOn) return roll < 0.70 ? 'text' : 'reverse';
+          return roll < 0.30 ? 'normal' : 'reverse';
+        default:
+          return 'normal';
+      }
+    }
+    if (mode === 'reagents') {
+      switch (tier) {
+        case 'new':
+          // New items: always product (easier direction)
+          return 'product';
+        case 'learning':
+          // Learning: mostly product (60%), some reactant (40%)
+          return roll < 0.60 ? 'product' : 'reactant';
+        case 'reviewing':
+          // Reviewing: mostly reactant (60%), some product (40%)
+          return roll < 0.60 ? 'reactant' : 'product';
+        case 'mastered':
+          // Mastered: primarily reactant (80%)
+          return roll < 0.80 ? 'reactant' : 'product';
+        default:
+          return 'product';
+      }
+    }
+    if (mode === 'pka') {
+      const textModeOn = localStorage.getItem(getUserStorageKey('chem_setting_text_mode')) !== 'false';
+      switch (tier) {
+        case 'new':
+          // New items: always type1 (comparison — easiest)
+          return 'type1';
+        case 'learning':
+          // Learning: mostly type1 (60%), some type3 (40%)
+          return roll < 0.60 ? 'type1' : 'type3';
+        case 'reviewing':
+          // Reviewing: mix of type1 (30%) and type3 (70%)
+          return roll < 0.30 ? 'type1' : 'type3';
+        case 'mastered':
+          // Mastered: type2 (50%), type3 (30%), type1 (20%)
+          if (textModeOn) {
+            if (roll < 0.50) return 'type2';
+            if (roll < 0.80) return 'type3';
+            return 'type1';
+          }
+          return roll < 0.30 ? 'type1' : 'type3';
+        default:
+          return 'type1';
+      }
+    }
+    return null;
+  }
+};
+function chemSampleWeighted(names) {
+  var _scored$;
+  const scored = names.map(name => {
+    const s = chemMyData.stats[name] || {
+      correct: 0,
+      wrong: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+    const hrsSince = (Date.now() - (s.lastSeen || 0)) / 3600000;
+    const weight = s.wrong * 4 + Math.min(hrsSince * 0.6, 12) - s.streak * 2 + Math.random() * 8;
+    return {
+      name,
+      weight
+    };
+  });
+  const totalWeight = scored.reduce((sum, s) => sum + Math.max(s.weight, 0.5), 0);
+  let rand = Math.random() * totalWeight;
+  for (const item of scored.sort((a, b) => b.weight - a.weight)) {
+    rand -= Math.max(item.weight, 0.5);
+    if (rand <= 0) return item.name;
+  }
+  return (_scored$ = scored[0]) === null || _scored$ === void 0 ? void 0 : _scored$.name;
+}
+async function chemInitPractice() {
+  const wizardMode = localStorage.getItem(getUserStorageKey('chem_setting_wizard_mode')) === 'true';
+  if (wizardMode) {
+    if (!chemMyData.myList || chemMyData.myList.length === 0) {
+      chemShowToast("Add compounds first.");
+      return;
+    }
+    chemPracticeSessionCount = 0;
+    chemPracticeCorrectCount = 0;
+    chemWizardQueue = [...chemMyData.myList].sort(() => 0.5 - Math.random());
+    chemWizardIdx = 0;
+    chemShowView('practice');
+    chemWizardNextQuestion();
+    return;
+  }
+  if (chemMyData.myList.length < 4) {
+    chemShowToast("Need at least 4 compounds in your list.");
+    return;
+  }
+  chemPracticeSessionCount = 0;
+  chemPracticeCorrectCount = 0;
+  chemLastPracticeName = null;
+  chemShowView('practice');
+  chemNextQuestion();
+}
+
+// ── Generous Spell Check Helper ──────────────────────────────────────────
+function levenshteinDistance(s1, s2) {
+  s1 = s1.toLowerCase().trim();
+  s2 = s2.toLowerCase().trim();
+  if (s1 === s2) return 0;
+  if (s1.length === 0) return s2.length;
+  if (s2.length === 0) return s1.length;
+  const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+  for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
+  for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
+  for (let j = 1; j <= s2.length; j += 1) {
+    for (let i = 1; i <= s1.length; i += 1) {
+      const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(track[j][i - 1] + 1,
+      // deletion
+      track[j - 1][i] + 1,
+      // insertion
+      track[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+  return track[s2.length][s1.length];
+}
+function isSpellCheckedCorrect(userVal, correctVal) {
+  // Strip hyphens, spaces, commas, brackets, and other non-alphanumeric chars
+  const cleanUser = userVal.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  const cleanCorrect = correctVal.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (cleanUser === cleanCorrect) return true;
+
+  // Ensure user typed at least half the characters of the correct answer
+  const minLen = Math.ceil(cleanCorrect.length / 2);
+  if (cleanUser.length < minLen) return false;
+  const dist = levenshteinDistance(cleanUser, cleanCorrect);
+  const len = cleanCorrect.length;
+
+  // Extremely generous spell checking edit distance thresholds:
+  if (len <= 4) return dist <= 2;
+  if (len <= 8) return dist <= 3;
+  if (len <= 12) return dist <= 4;
+  return dist <= 5;
+}
+
+// ── Tag-Weighted & Name-Similarity Distractor Sampler ──────────────────────
+function chemGetWeightedDistractors(targetObj, count) {
+  const pool = chemAllCompounds.filter(c => c.name !== targetObj.name);
+  const selected = [];
+  let candidates = pool.map(c => {
+    const targetTags = targetObj.tags || [];
+    const candidateTags = c.tags || [];
+    const sharedCount = candidateTags.filter(t => targetTags.includes(t)).length;
+    let weight = 1.0 + sharedCount * 6.0;
+
+    // Name similarity weight boost (e.g. Ethanol and Methanol, abcde and abbde)
+    const name1 = targetObj.name.toLowerCase().trim();
+    const name2 = c.name.toLowerCase().trim();
+    const dist = levenshteinDistance(name1, name2);
+    const maxLen = Math.max(name1.length, name2.length);
+    const similarity = maxLen > 0 ? (maxLen - dist) / maxLen : 0;
+
+    // Apply similarity boost for candidates with similar spelling (similarity >= 0.4)
+    if (similarity >= 0.4) {
+      weight += Math.pow(similarity, 2) * 15.0;
+    }
+    return {
+      item: c,
+      weight
+    };
+  });
+  for (let step = 0; step < count; step++) {
+    if (candidates.length === 0) break;
+    const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
+    let r = Math.random() * totalWeight;
+    let chosenIndex = 0;
+    for (let i = 0; i < candidates.length; i++) {
+      r -= candidates[i].weight;
+      if (r <= 0) {
+        chosenIndex = i;
+        break;
+      }
+    }
+    selected.push(candidates[chosenIndex].item);
+    candidates.splice(chosenIndex, 1);
+  }
+  return selected;
+}
+function chemNextQuestion() {
+  const targetName = UnifiedQuestionEngine.selectTarget(chemMyData.myList, chemMyData.stats, chemLastPracticeName);
+  if (!targetName) return;
+  chemLastPracticeName = targetName;
+  const targetObj = chemAllCompounds.find(c => c.name === targetName);
+  if (!targetObj) return;
+  const mode = UnifiedQuestionEngine.decideFormat('common-names', targetName, chemMyData.stats);
+  const optionsDiv = document.getElementById('chem-practice-options');
+  optionsDiv.innerHTML = '';
+
+  // Default class list and display resets
+  optionsDiv.className = 'chem-options-grid';
+  const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+  if (canvasWrap) canvasWrap.style.display = 'flex';
+  if (mode === 'text') {
+    // 1. Text input mode
+    chemDrawStructure(targetObj.smiles, 'chem-practice-canvas');
+    document.getElementById('chem-practice-hint').textContent = 'Type the name of this compound';
+    optionsDiv.innerHTML = `
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 10px; grid-column: span 2;">
+          <input type="text" id="chem-practice-text-input" placeholder="Type compound name..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s;" autocomplete="off" />
+          <button class="chem-btn chem-btn-primary" id="chem-practice-text-submit" style="width: 100%; height: 42px; font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer;">Submit</button>
+        </div>
+      `;
+    const txtInput = document.getElementById('chem-practice-text-input');
+    const submitBtn = document.getElementById('chem-practice-text-submit');
+    txtInput.onfocus = () => {
+      txtInput.style.borderColor = 'var(--accent)';
+    };
+    txtInput.onblur = () => {
+      txtInput.style.borderColor = 'var(--border)';
+    };
+    const handleSubmit = () => {
+      const val = txtInput.value;
+      chemHandleTextAnswer(val, targetName);
+    };
+    submitBtn.onclick = handleSubmit;
+    txtInput.onkeydown = e => {
+      if (e.key === 'Enter') handleSubmit();
+    };
+    setTimeout(() => txtInput.focus(), 100);
+  } else if (mode === 'reverse') {
+    // 2. Reverse MCQ: Name to structure
+    // Hide main structure canvas
+    if (canvasWrap) canvasWrap.style.display = 'none';
+    document.getElementById('chem-practice-hint').innerHTML = `Identify structure for: <strong style="color:var(--accent); font-weight:700;">${escapeHtml(targetName)}</strong>`;
+    const distractorArr = chemGetWeightedDistractors(targetObj, 1);
+    const distractorObj = distractorArr[0] || chemAllCompounds.find(c => c.name !== targetName);
+    const options = [targetObj, distractorObj].sort(() => 0.5 - Math.random());
+    const letters = ['A', 'B'];
+    optionsDiv.classList.add('chem-reverse-layout');
+    options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'chem-opt-btn-structure';
+      btn.dataset.option = opt.name;
+      btn.innerHTML = `
+          <span class="chem-opt-letter" style="position: absolute; top: 10px; left: 10px;">${letters[i]}</span>
+          <canvas id="chem-opt-canvas-${i}" style="width: 100%; height: 120px;"></canvas>
+        `;
+      btn.onclick = () => chemHandleAnswer(opt.name, targetName);
+      optionsDiv.appendChild(btn);
+
+      // Draw inside options canvases
+      setTimeout(() => {
+        chemDrawStructure(opt.smiles, `chem-opt-canvas-${i}`);
+      }, 0);
+    });
+  } else {
+    // 3. Normal MCQ: Structure to name
+    chemDrawStructure(targetObj.smiles, 'chem-practice-canvas');
+    document.getElementById('chem-practice-hint').textContent = 'Identify the compound';
+    const distractorObjs = chemGetWeightedDistractors(targetObj, 3);
+    const distractors = distractorObjs.map(c => c.name);
+    const options = [targetName, ...distractors].sort(() => 0.5 - Math.random());
+    const letters = ['A', 'B', 'C', 'D'];
+    options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'chem-opt-btn';
+      btn.dataset.option = opt;
+      btn.innerHTML = `<span class="chem-opt-letter">${letters[i]}</span><span>${escapeHtml(opt)}</span>`;
+      btn.onclick = () => chemHandleAnswer(opt, targetName);
+      optionsDiv.appendChild(btn);
+    });
+  }
+}
+function chemHandleAnswer(chosen, correct) {
+  const btns = document.querySelectorAll('.chem-opt-btn, .chem-opt-btn-structure');
+  btns.forEach(b => b.disabled = true);
+  chemEnsureDailyStats();
+  const today = chemTodayKey();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  if (!chemMyData.stats[correct]) {
+    chemMyData.stats[correct] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  }
+  chemPracticeSessionCount++;
+  const isCorrect = chosen === correct;
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+    chemPracticeCorrectCount++;
+    chemMyData.stats[correct].correct = (chemMyData.stats[correct].correct || 0) + 1;
+    chemMyData.stats[correct].streak = (chemMyData.stats[correct].streak || 0) + 1;
+    chemShowFlash('Correct', false);
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+    chemMyData.stats[correct].wrong = (chemMyData.stats[correct].wrong || 0) + 1;
+    chemMyData.stats[correct].streak = 0;
+    chemShowFlash('Wrong', true);
+  }
+  chemMyData.stats[correct].lastSeen = Date.now();
+  chemSave();
+  chemSyncAll(false);
+  btns.forEach(b => {
+    const optVal = b.dataset.option || b.innerText.replace(/^[A-D]/, '').trim();
+    if (optVal === correct) b.classList.add(isCorrect ? 'correct' : 'reveal');
+    if (optVal === chosen && !isCorrect) b.classList.add('wrong');
+  });
+  document.getElementById('chem-practice-hint').textContent = isCorrect ? "That's right" : `It was: ${correct}`;
+  setTimeout(chemNextQuestion, isCorrect ? 1200 : 1800);
+}
+function chemHandleTextAnswer(chosen, correct) {
+  const txtInput = document.getElementById('chem-practice-text-input');
+  const submitBtn = document.getElementById('chem-practice-text-submit');
+  if (txtInput) txtInput.disabled = true;
+  if (submitBtn) submitBtn.disabled = true;
+  chemEnsureDailyStats();
+  const today = chemTodayKey();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  if (!chemMyData.stats[correct]) {
+    chemMyData.stats[correct] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  }
+  chemPracticeSessionCount++;
+  const isCorrect = isSpellCheckedCorrect(chosen, correct);
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+    chemPracticeCorrectCount++;
+    chemMyData.stats[correct].correct = (chemMyData.stats[correct].correct || 0) + 1;
+    chemMyData.stats[correct].streak = (chemMyData.stats[correct].streak || 0) + 1;
+    const exactMatch = chosen.toLowerCase().trim().replace(/[^a-z0-9]/g, '') === correct.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    if (exactMatch) {
+      chemShowFlash('Correct', false);
+    } else {
+      chemShowFlash(`Correct (Spelled: ${correct})`, false);
+    }
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+    chemMyData.stats[correct].wrong = (chemMyData.stats[correct].wrong || 0) + 1;
+    chemMyData.stats[correct].streak = 0;
+    chemShowFlash('Wrong', true);
+  }
+  chemMyData.stats[correct].lastSeen = Date.now();
+  chemSave();
+  chemSyncAll(false);
+  if (txtInput) {
+    txtInput.style.borderColor = isCorrect ? '#22c55e' : '#ef4444';
+    txtInput.style.background = isCorrect ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+    txtInput.style.color = isCorrect ? '#22c55e' : '#ef4444';
+  }
+  document.getElementById('chem-practice-hint').textContent = isCorrect ? "That's right" : `It was: ${correct}`;
+  setTimeout(chemNextQuestion, isCorrect ? 1200 : 1800);
+}
+function chemWizardNextQuestion() {
+  if (chemWizardIdx >= chemWizardQueue.length) {
+    chemWizardShowCompleted();
+    return;
+  }
+  const targetName = chemWizardQueue[chemWizardIdx];
+  const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+  if (canvasWrap) canvasWrap.style.display = 'none';
+  document.getElementById('chem-practice-hint').innerHTML = `Draw structure for: <strong style="color:var(--accent); font-size:16px; font-weight:700;">${escapeHtml(targetName)}</strong>`;
+  const optionsDiv = document.getElementById('chem-practice-options');
+  optionsDiv.className = 'chem-options-grid';
+  optionsDiv.innerHTML = `
+      <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 10px; grid-column: span 2;">
+        <button class="chem-btn chem-btn-primary" id="chem-wizard-done-btn" style="width: 100%; height: 50px; font-size: 16px; font-weight: 700; border-radius: 10px; cursor: pointer;">Done</button>
+      </div>
+    `;
+  document.getElementById('chem-wizard-done-btn').onclick = () => {
+    chemWizardRevealStructure(targetName);
+  };
+}
+function chemWizardRevealStructure(targetName) {
+  const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+  if (canvasWrap) canvasWrap.style.display = 'flex';
+  const targetObj = chemAllCompounds.find(c => c.name === targetName);
+  if (targetObj) {
+    chemDrawStructure(targetObj.smiles, 'chem-practice-canvas');
+  }
+  document.getElementById('chem-practice-hint').innerHTML = `Structure for: <strong style="color:var(--accent); font-size:16px; font-weight:700;">${escapeHtml(targetName)}</strong>`;
+  const optionsDiv = document.getElementById('chem-practice-options');
+  optionsDiv.innerHTML = `
+      <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 10px; grid-column: span 2;">
+        <div style="font-size: 14px; font-weight: 500; color: var(--text2);">My structure was...</div>
+        <div style="display: flex; width: 100%; gap: 12px;">
+          <button class="chem-btn" id="chem-wizard-correct-btn" style="flex: 1; height: 50px; font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; background: rgba(34,197,94,0.15); border: 2px solid #22c55e; color: #22c55e;">Correct</button>
+          <button class="chem-btn" id="chem-wizard-wrong-btn" style="flex: 1; height: 50px; font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; background: rgba(239,68,68,0.15); border: 2px solid #ef4444; color: #ef4444;">Wrong</button>
+        </div>
+      </div>
+    `;
+  document.getElementById('chem-wizard-correct-btn').onclick = () => {
+    chemWizardSubmitAnswer(targetName, true);
+  };
+  document.getElementById('chem-wizard-wrong-btn').onclick = () => {
+    chemWizardSubmitAnswer(targetName, false);
+  };
+}
+function chemWizardSubmitAnswer(targetName, isCorrect) {
+  const correctBtn = document.getElementById('chem-wizard-correct-btn');
+  const wrongBtn = document.getElementById('chem-wizard-wrong-btn');
+  if (correctBtn) correctBtn.disabled = true;
+  if (wrongBtn) wrongBtn.disabled = true;
+  chemEnsureDailyStats();
+  const today = chemTodayKey();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  if (!chemMyData.stats[targetName]) {
+    chemMyData.stats[targetName] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  }
+  chemPracticeSessionCount++;
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+    chemPracticeCorrectCount++;
+    chemMyData.stats[targetName].correct = (chemMyData.stats[targetName].correct || 0) + 1;
+    chemMyData.stats[targetName].streak = (chemMyData.stats[targetName].streak || 0) + 1;
+    chemShowFlash('Correct', false);
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+    chemMyData.stats[targetName].wrong = (chemMyData.stats[targetName].wrong || 0) + 1;
+    chemMyData.stats[targetName].streak = 0;
+    chemShowFlash('Wrong', true);
+  }
+  chemMyData.stats[targetName].lastSeen = Date.now();
+  chemSave();
+  chemSyncAll(false);
+  chemWizardIdx++;
+  setTimeout(chemWizardNextQuestion, 1000);
+}
+function chemWizardShowCompleted() {
+  const canvasWrap = document.querySelector('#chem-view-practice .chem-canvas-wrap');
+  if (canvasWrap) canvasWrap.style.display = 'none';
+  document.getElementById('chem-practice-hint').innerHTML = `<span style="font-size: 20px; font-weight: 700; color: var(--accent);">Run Complete!</span>`;
+  const optionsDiv = document.getElementById('chem-practice-options');
+  const percent = chemPracticeSessionCount > 0 ? Math.round(chemPracticeCorrectCount / chemPracticeSessionCount * 100) : 0;
+  optionsDiv.innerHTML = `
+      <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 10px; grid-column: span 2; text-align: center;">
+        <div style="font-size: 48px; font-weight: 800; color: var(--accent); margin-bottom: 8px;">${percent}%</div>
+        <div style="font-size: 15px; font-weight: 500; color: var(--text2);">You got <strong>${chemPracticeCorrectCount}</strong> out of <strong>${chemPracticeSessionCount}</strong> compounds correct!</div>
+        <div style="font-size: 12px; color: var(--text3); max-width: 300px;">Every compound in your list was tested exactly once without repetition.</div>
+        <button class="chem-btn chem-btn-primary" onclick="chemGoHome()" style="width: 100%; max-width: 240px; height: 42px; font-size: 14px; font-weight: 700; border-radius: 8px; margin-top: 10px; cursor: pointer;">Back to Menu</button>
+      </div>
+    `;
+}
+async function chemSyncAll(showFeedback = false) {
+  if (hasPracticeAccessCache === false) return false;
+  if (!chemAppReady) return false;
+  chemSyncQueue = chemSyncQueue.catch(() => {}).then(async () => {
+    const client = await chemEnsureSupabase();
+    if (!client) {
+      if (showFeedback) chemShowToast("Leaderboard offline.");
+      return false;
+    }
+    const userId = chemCurrentUserName();
+    let failed = false;
+
+    // 1. Sync Progress (chem_user_progress)
+    try {
+      const {
+        data: existingRows,
+        error: lookupError
+      } = await client.from('chem_user_progress').select('*').eq('user_id', userId);
+      if (lookupError) {
+        console.error("Progress sync error:", lookupError);
+        failed = true;
+      } else {
+        let shouldUpload = true;
+        let duplicatesCleaned = false;
+        let existing = null;
+        if (existingRows && existingRows.length > 0) {
+          // Sort by updated_at descending to find the latest row
+          existingRows.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+          existing = existingRows[0];
+          if (existingRows.length > 1) {
+            console.warn(`Cleaning up ${existingRows.length - 1} duplicate progress entries for user ${userId}`);
+            const {
+              error: deleteError
+            } = await client.from('chem_user_progress').delete().eq('user_id', userId);
+            if (deleteError) {
+              console.error("Failed to delete duplicates:", deleteError);
+            } else {
+              duplicatesCleaned = true;
+            }
+          }
+        }
+        if (existing) {
+          const localProgress = chemCombinedData;
+          const cloudProgress = chemNormalizeProgressData({
+            myList: existing.my_list,
+            stats: existing.compound_stats,
+            dailyStats: existing.daily_stats
+          });
+          let isCloudNewer = false;
+          let isLocalNewer = false;
+          const localUpdatedAtStr = localStorage.getItem(getUserStorageKey('chem_progress_updated_at'));
+          const cloudUpdatedAtStr = existing.updated_at;
+          if (localUpdatedAtStr && cloudUpdatedAtStr) {
+            const localTime = new Date(localUpdatedAtStr).getTime();
+            const cloudTime = new Date(cloudUpdatedAtStr).getTime();
+            if (cloudTime > localTime) {
+              isCloudNewer = true;
+            } else if (localTime > cloudTime) {
+              isLocalNewer = true;
+            }
+          } else {
+            // Migration fallback
+            const localAttempted = chemProgressAttemptedTotal(localProgress);
+            const cloudAttempted = chemProgressAttemptedTotal(cloudProgress);
+            if (cloudAttempted > localAttempted) {
+              isCloudNewer = true;
+            } else if (localAttempted > cloudAttempted) {
+              isLocalNewer = true;
+            }
+          }
+          if (isCloudNewer) {
+            chemCombinedData = cloudProgress;
+            chemMyData = chemCombinedData.compounds;
+            reagentMyData = chemCombinedData.reagents;
+            pkaMyData = chemCombinedData.pka || {
+              myList: [],
+              stats: {}
+            };
+            chemEnsureDailyStats();
+            localStorage.setItem(getUserStorageKey(CHEM_DATA_KEY), JSON.stringify(chemCombinedData));
+            localStorage.setItem(getUserStorageKey('reagent_v1_data'), JSON.stringify(reagentMyData));
+            if (existing.updated_at) localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), existing.updated_at);
+            shouldUpload = duplicatesCleaned;
+          } else if (!isLocalNewer && !duplicatesCleaned) {
+            shouldUpload = false;
+          }
+        }
+        if (shouldUpload) {
+          const payload = chemBuildProgressPayload();
+          const {
+            error: uploadError
+          } = await client.from('chem_user_progress').upsert(payload, {
+            onConflict: 'user_id'
+          });
+          if (uploadError) {
+            console.error("Progress upload error:", uploadError);
+            failed = true;
+          } else if (payload.updated_at) {
+            localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), payload.updated_at);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Progress sync exception:", err);
+      failed = true;
+    }
+
+    // 2. Sync Leaderboard Stats (leaderboard_stats)
+    try {
+      const recentStart = chemRecentStartKey(7);
+      const dailyEntries = Object.entries(chemMyData.dailyStats || {}).filter(([date, stats]) => date >= recentStart && stats && Number(stats.attempted || 0) > 0).sort(([a], [b]) => a.localeCompare(b));
+      for (const [statDate, stats] of dailyEntries) {
+        const payload = chemBuildDailyPayload(statDate, stats);
+
+        // Deduplicate leaderboard entries
+        const {
+          data: existingDailyRows,
+          error: lookupDailyError
+        } = await client.from('leaderboard_stats').select('*').eq('user_id', userId).eq('stat_date', statDate);
+        if (!lookupDailyError && existingDailyRows && existingDailyRows.length > 1) {
+          console.warn(`Cleaning up ${existingDailyRows.length - 1} duplicate leaderboard entries for user ${userId} on date ${statDate}`);
+          await client.from('leaderboard_stats').delete().eq('user_id', userId).eq('stat_date', statDate);
+        }
+        const {
+          error: upsertError
+        } = await client.from('leaderboard_stats').upsert(payload, {
+          onConflict: 'user_id,stat_date'
+        });
+        if (upsertError) {
+          console.error("Leaderboard upsert error:", upsertError);
+          failed = true;
+        }
+      }
+    } catch (err) {
+      console.error("Leaderboard sync exception:", err);
+      failed = true;
+    }
+
+    // 3. UI Updates
+    if (showFeedback) {
+      if (failed) chemShowToast("Some cloud stats failed.");else chemShowToast("Stats uploaded.");
+    }
+    if (!failed) {
+      var _document$getElementB;
+      chemLoadLeaderboard((_document$getElementB = document.getElementById('chem-board-week')) !== null && _document$getElementB !== void 0 && _document$getElementB.classList.contains('active') ? 'week' : 'today');
+    }
+    return !failed;
+  });
+  return chemSyncQueue;
+}
+async function chemDownloadProgress(force = false) {
+  if (hasPracticeAccessCache === false) return false;
+  const client = await chemEnsureSupabase();
+  if (!client || !navigator.onLine) return false;
+  const userId = chemCurrentUserName();
+  const {
+    data: existingRows,
+    error
+  } = await client.from('chem_user_progress').select('*').eq('user_id', userId);
+  if (error) {
+    console.error(error);
+    return false;
+  }
+  if (!existingRows || existingRows.length === 0) return false;
+  existingRows.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+  const data = existingRows[0];
+  if (existingRows.length > 1) {
+    console.warn(`Cleaning up ${existingRows.length - 1} duplicate progress entries during download for user ${userId}`);
+    const {
+      error: deleteError
+    } = await client.from('chem_user_progress').delete().eq('user_id', userId);
+    if (!deleteError) {
+      const payload = {
+        user_id: userId,
+        username: data.username || (sessionStorage.getItem('fy_user_name') || 'Student').trim() || 'Student',
+        my_list: data.my_list,
+        compound_stats: data.compound_stats,
+        daily_stats: data.daily_stats,
+        updated_at: data.updated_at || new Date().toISOString()
+      };
+      await client.from('chem_user_progress').upsert(payload, {
+        onConflict: 'user_id'
+      });
+    }
+  }
+  const localProgress = chemCombinedData;
+  const cloudProgress = chemNormalizeProgressData({
+    myList: data.my_list,
+    stats: data.compound_stats,
+    dailyStats: data.daily_stats
+  });
+  let isCloudNewer = false;
+  const localUpdatedAtStr = localStorage.getItem(getUserStorageKey('chem_progress_updated_at'));
+  const cloudUpdatedAtStr = data.updated_at;
+  if (localUpdatedAtStr && cloudUpdatedAtStr) {
+    isCloudNewer = new Date(cloudUpdatedAtStr).getTime() > new Date(localUpdatedAtStr).getTime();
+  } else {
+    const localAttempted = chemProgressAttemptedTotal(localProgress);
+    const cloudAttempted = chemProgressAttemptedTotal(cloudProgress);
+    isCloudNewer = cloudAttempted > localAttempted;
+  }
+  if (isCloudNewer || force) {
+    chemCombinedData = cloudProgress;
+    chemMyData = chemCombinedData.compounds;
+    reagentMyData = chemCombinedData.reagents;
+    pkaMyData = chemCombinedData.pka || {
+      myList: [],
+      stats: {}
+    };
+    chemEnsureDailyStats();
+    localStorage.setItem(getUserStorageKey(CHEM_DATA_KEY), JSON.stringify(chemCombinedData));
+    localStorage.setItem(getUserStorageKey('reagent_v1_data'), JSON.stringify(reagentMyData));
+    if (data.updated_at) localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), data.updated_at);else localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), new Date().toISOString());
+    return true;
+  }
+  return false;
+}
+window.syncCloudProgress = async function syncCloudProgress() {
+  if (hasPracticeAccessCache === false) {
+    if (navigator.onLine) chemShowToast("Practice mode disabled.");
+    return;
+  }
+  setSyncPill(navigator.onLine ? 'live' : 'offline', navigator.onLine ? 'Syncing cloud...' : 'Offline');
+  if (!navigator.onLine) {
+    chemShowToast("You are offline.");
+    return;
+  }
+  chemEnsureDailyStats();
+  try {
+    const synced = await chemSyncAll(true);
+    if (!synced) throw new Error('Cloud sync failed');
+    chemUpdateDashboard();
+    reagentUpdateDashboard();
+    setSyncPill('live', 'Cloud synced');
+  } catch (err) {
+    console.error(err);
+    setSyncPill('offline', 'Cloud sync failed');
+  }
+};
+async function chemLoadLeaderboard(period = 'today') {
+  var _document$getElementB2, _document$getElementB3, _document$getElementB4, _document$getElementB5;
+  const client = await chemEnsureSupabase();
+  const list = document.getElementById('chem-board-today') ? document.getElementById('chem-leaderboard-list') : null;
+  const reagentList = document.getElementById('reagent-leaderboard-list');
+  if (!list && !reagentList) return;
+  (_document$getElementB2 = document.getElementById('chem-board-today')) === null || _document$getElementB2 === void 0 || _document$getElementB2.classList.toggle('active', period === 'today');
+  (_document$getElementB3 = document.getElementById('chem-board-week')) === null || _document$getElementB3 === void 0 || _document$getElementB3.classList.toggle('active', period === 'week');
+  (_document$getElementB4 = document.getElementById('reagent-board-today')) === null || _document$getElementB4 === void 0 || _document$getElementB4.classList.toggle('active', period === 'today');
+  (_document$getElementB5 = document.getElementById('reagent-board-week')) === null || _document$getElementB5 === void 0 || _document$getElementB5.classList.toggle('active', period === 'week');
+  if (list) list.innerHTML = '<div class="empty">Loading leaderboard...</div>';
+  if (reagentList) reagentList.innerHTML = '<div class="empty">Loading leaderboard...</div>';
+  if (!client) {
+    const offlineMsg = '<div class="empty">Leaderboard unavailable (offline or connection blocked).</div>';
+    if (list) list.innerHTML = offlineMsg;
+    if (reagentList) reagentList.innerHTML = offlineMsg;
+    return;
+  }
+  const startDate = period === 'week' ? chemRecentStartKey(7) : chemTodayKey();
+  let query = client.from('leaderboard_stats').select('user_id,username,stat_date,correct,wrong,attempted,time_spent,updated_at');
+  if (period === 'today') {
+    query = query.eq('stat_date', startDate);
+  } else {
+    query = query.gte('stat_date', startDate);
+  }
+  const {
+    data,
+    error
+  } = await query;
+  if (error) {
+    console.error(error);
+    const errMsg = '<div class="empty">Could not load leaderboard.</div>';
+    if (list) list.innerHTML = errMsg;
+    if (reagentList) reagentList.innerHTML = errMsg;
+    return;
+  }
+  const rows = Object.values((data || []).reduce((acc, row) => {
+    const key = row.user_id || row.username || 'unknown';
+    if (!acc[key]) {
+      acc[key] = {
+        user_id: key,
+        username: row.username || key,
+        correct: 0,
+        wrong: 0,
+        attempted: 0,
+        time_spent: 0
+      };
+    }
+    acc[key].correct += Number(row.correct || 0);
+    acc[key].wrong += Number(row.wrong || 0);
+    acc[key].attempted += Number(row.attempted || 0);
+    acc[key].time_spent += Number(row.time_spent || 0);
+    return acc;
+  }, {})).sort((a, b) => b.correct - a.correct || b.attempted - a.attempted).slice(0, 30);
+  if (!rows.length) {
+    const emptyMsg = `<div class="empty">No practice scores ${period === 'week' ? 'this week' : 'today'} yet.</div>`;
+    if (list) list.innerHTML = emptyMsg;
+    if (reagentList) reagentList.innerHTML = emptyMsg;
+    return;
+  }
+  const html = rows.map((row, i) => `
+      <div class="chem-board-row">
+        <div class="chem-board-rank">#${i + 1}</div>
+        <div class="chem-board-name">${escapeHtml(row.username || row.user_id || 'Student')}</div>
+        <div class="chem-board-score">${Number(row.correct || 0)} C / ${Number(row.attempted || 0)} A</div>
+      </div>
+    `).join('');
+  if (list) list.innerHTML = html;
+  if (reagentList) reagentList.innerHTML = html;
+}
+function chemShowFlash(msg, isWrong) {
+  const el = document.getElementById('chem-feedback-flash');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'chem-feedback-flash' + (isWrong ? ' wrong' : '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 900);
+}
+function chemShowToast(msg) {
+  chemShowFlash(msg, false);
+}
+function chemExportData() {
+  const blob = new Blob([JSON.stringify(chemCombinedData, null, 2)], {
+    type: "application/json"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "chemmaster_progress.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function chemImportData(event) {
+  var _event$target$files;
+  const file = (_event$target$files = event.target.files) === null || _event$target$files === void 0 ? void 0 : _event$target$files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported && imported.compounds && imported.reagents) {
+        chemCombinedData = imported;
+      } else {
+        chemCombinedData = chemMigrateOldData(imported);
+      }
+      chemMyData = chemCombinedData.compounds;
+      reagentMyData = chemCombinedData.reagents;
+      pkaMyData = chemCombinedData.pka || {
+        myList: [],
+        stats: {}
+      };
+      chemEnsureDailyStats();
+      chemSave();
+      chemSyncAll(false);
+      chemShowToast("Progress imported.");
+    } catch (_) {
+      chemShowToast("Invalid import file.");
+    }
+  };
+  reader.readAsText(file);
+}
+function chemShowStats(type) {
+  const isWeak = type === 'weak';
+  const sorted = [...chemMyData.myList].sort((a, b) => {
+    const sA = chemMyData.stats[a] || {
+      correct: 0,
+      wrong: 0
+    };
+    const sB = chemMyData.stats[b] || {
+      correct: 0,
+      wrong: 0
+    };
+    if (isWeak) return sB.wrong - sB.correct - (sA.wrong - sA.correct);
+    return sB.correct - sA.correct;
+  });
+  const top = sorted.slice(0, 5);
+  const sheet = document.getElementById('chem-stats-sheet');
+  const list = document.getElementById('chem-stats-list');
+  document.getElementById('chem-stats-title').textContent = isWeak ? 'Weakest Compounds' : 'Strongest Compounds';
+  list.innerHTML = top.length ? top.map((name, i) => {
+    const s = chemMyData.stats[name] || {
+      correct: 0,
+      wrong: 0,
+      streak: 0
+    };
+    return `<div class="chem-stat-row"><span class="chem-stat-name">${i + 1}. ${escapeHtml(name)}</span><span class="chem-stat-val">C ${s.correct || 0} / W ${s.wrong || 0} / S ${s.streak || 0}</span></div>`;
+  }).join('') : '<div class="chem-stat-row"><span class="chem-stat-name">No data yet</span></div>';
+  sheet.classList.add('open');
+}
+function chemCloseStats(event) {
+  if (event.target.id === 'chem-stats-sheet') {
+    document.getElementById('chem-stats-sheet').classList.remove('open');
+  }
+}
+
+/* --- PRACTICE MODE SELECTION --- */
+function showModeSelection() {
+  const selView = document.getElementById('chem-view-select-mode');
+  const chemContent = document.getElementById('chem-practice-content');
+  const reagentContent = document.getElementById('reagent-practice-content');
+  const pkaContent = document.getElementById('pka-practice-content');
+  if (selView) selView.style.display = 'block';
+  if (chemContent) chemContent.style.display = 'none';
+  if (reagentContent) reagentContent.style.display = 'none';
+  if (pkaContent) pkaContent.style.display = 'none';
+}
+function selectPracticeMode(mode) {
+  const selView = document.getElementById('chem-view-select-mode');
+  const chemContent = document.getElementById('chem-practice-content');
+  const reagentContent = document.getElementById('reagent-practice-content');
+  const pkaContent = document.getElementById('pka-practice-content');
+  if (selView) selView.style.display = 'none';
+  if (mode === 'common-names') {
+    if (chemContent) chemContent.style.display = 'block';
+    if (reagentContent) reagentContent.style.display = 'none';
+    if (pkaContent) pkaContent.style.display = 'none';
+    chemInitApp();
+  } else if (mode === 'reagents') {
+    if (chemContent) chemContent.style.display = 'none';
+    if (reagentContent) reagentContent.style.display = 'block';
+    if (pkaContent) pkaContent.style.display = 'none';
+    reagentInitApp();
+  } else if (mode === 'pka') {
+    if (chemContent) chemContent.style.display = 'none';
+    if (reagentContent) reagentContent.style.display = 'none';
+    if (pkaContent) pkaContent.style.display = 'block';
+    pkaInitApp();
+  }
+}
+
+/* --- REAGENTS LOGIC --- */
+let reagentAllReactions = [];
+let reagentAllReagents = [];
+let reagentAllReactants = [];
+let reagentAllProducts = [];
+let reagentMyData = chemCombinedData.reagents;
+
+// Learn State
+let reagentLearnQueue = [];
+let reagentLearnIdx = 0;
+
+// Practice State
+let reagentPracticeSessionCount = 0;
+let reagentPracticeCorrectCount = 0;
+let reagentLastPracticeKey = null;
+let reagentAppReady = false;
+function reagentReadSavedData() {
+  return reagentMyData;
+}
+async function reagentInitApp() {
+  if (reagentAppReady) {
+    var _document$getElementB6;
+    reagentUpdateDashboard();
+    chemLoadLeaderboard((_document$getElementB6 = document.getElementById('reagent-board-week')) !== null && _document$getElementB6 !== void 0 && _document$getElementB6.classList.contains('active') ? 'week' : 'today');
+    return;
+  }
+  try {
+    const response = await fetch('re.json');
+    reagentAllReactions = await response.json();
+  } catch (e) {
+    console.error("Failed to initialize chemical reactions data", e);
+    chemShowToast("Error loading chemistry database.");
+    return;
+  }
+
+  // Extract unique sets from database
+  reagentAllReagents = [...new Set(reagentAllReactions.map(r => r.Reagent))];
+  reagentAllReactants = [...new Set(reagentAllReactions.map(r => r.Reactant))];
+  reagentAllProducts = [...new Set(reagentAllReactions.map(r => r.Product))];
+
+  // If user has no reagents added, add one to get them started
+  if (reagentMyData.myList.length === 0 && reagentAllReagents.length > 0) {
+    const defaultReagent = "NaBH4"; // A nice common one to start
+    const startReagent = reagentAllReagents.includes(defaultReagent) ? defaultReagent : reagentAllReagents[0];
+    reagentMyData.myList.push(startReagent);
+
+    // Initialize stats
+    const startReactions = reagentAllReactions.filter(r => r.Reagent === startReagent);
+    startReactions.forEach(r => {
+      const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+      reagentMyData.stats[key] = {
+        wrong: 0,
+        correct: 0,
+        streak: 0,
+        lastSeen: 0
+      };
+    });
+    reagentSave();
+  }
+
+  // Sync database changes with local storage stats (in case JSON changed)
+  reagentAllReactions.forEach(r => {
+    const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+    if (reagentMyData.myList.includes(r.Reagent) && !reagentMyData.stats[key]) {
+      reagentMyData.stats[key] = {
+        wrong: 0,
+        correct: 0,
+        streak: 0,
+        lastSeen: 0
+      };
+    }
+  });
+  reagentAppReady = true;
+  reagentUpdateDashboard();
+  chemLoadLeaderboard('today');
+}
+function reagentUpdateDashboard() {
+  var _chemMyData$dailyStat2;
+  const totalReagents = reagentAllReagents.length;
+  const inList = reagentMyData.myList.length;
+  const activeReactions = reagentAllReactions.filter(r => reagentMyData.myList.includes(r.Reagent));
+  const totalActiveReactions = activeReactions.length;
+  const mastered = activeReactions.filter(r => {
+    const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+    const s = reagentMyData.stats[key];
+    return s && s.streak >= 5;
+  }).length;
+
+  // Daily and 7-day attempts from shared chemMyData.dailyStats
+  const today = chemTodayKey();
+  const todayAttempts = ((_chemMyData$dailyStat2 = chemMyData.dailyStats[today]) === null || _chemMyData$dailyStat2 === void 0 ? void 0 : _chemMyData$dailyStat2.attempted) || 0;
+  let sevenDayAttempts = 0;
+  const recentStart = chemRecentStartKey(7);
+  if (chemMyData.dailyStats && typeof chemMyData.dailyStats === 'object') {
+    for (const [date, stats] of Object.entries(chemMyData.dailyStats)) {
+      if (date >= recentStart && stats) {
+        sevenDayAttempts += stats.attempted || 0;
+      }
+    }
+  }
+  const list = document.getElementById('reagent-stat-list');
+  const totalEl = document.getElementById('reagent-stat-total');
+  const masteredEl = document.getElementById('reagent-stat-mastered');
+  const todayEl = document.getElementById('reagent-stat-today-attempts');
+  const sevenDayEl = document.getElementById('reagent-stat-7day-attempts');
+  if (list) list.innerHTML = `Reagents: <strong>${inList} / ${totalReagents}</strong>`;
+  if (totalEl) totalEl.innerHTML = `Reactions: <strong>${totalActiveReactions}</strong>`;
+  if (masteredEl) masteredEl.innerHTML = `Mastered: <strong>${mastered}</strong>`;
+  if (todayEl) todayEl.innerHTML = `Today: <strong>${todayAttempts}</strong>`;
+  if (sevenDayEl) sevenDayEl.innerHTML = `7-Day: <strong>${sevenDayAttempts}</strong>`;
+}
+function reagentSave() {
+  chemCombinedData.compounds = chemMyData;
+  chemCombinedData.reagents = reagentMyData;
+  chemCombinedData.pka = pkaMyData;
+  localStorage.setItem(getUserStorageKey(CHEM_DATA_KEY), JSON.stringify(chemCombinedData));
+  localStorage.setItem(getUserStorageKey('reagent_v1_data'), JSON.stringify(reagentMyData));
+  localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), new Date().toISOString());
+  reagentUpdateDashboard();
+}
+function reagentUpdateLearnEquation(reagent, reactant, product) {
+  const eqDiv = document.getElementById('reagent-learn-eq-container');
+  if (!eqDiv) return;
+  eqDiv.innerHTML = `
+      <div class="eq-row">
+        <div class="eq-block eq-reagent">${escapeHtml(reagent)}</div>
+        <div class="eq-operator">+</div>
+        <div class="eq-block eq-reactant">${escapeHtml(reactant)}</div>
+        <div class="eq-arrow">➔</div>
+        <div class="eq-block eq-product">${escapeHtml(product)}</div>
+      </div>
+    `;
+}
+function reagentUpdatePracticeEquation(reagent, reactant, product, hideReactant) {
+  const eqDiv = document.getElementById('reagent-practice-eq-container');
+  if (!eqDiv) return;
+  eqDiv.innerHTML = `
+      <div class="eq-row">
+        <div class="eq-block eq-reagent">${escapeHtml(reagent)}</div>
+        <div class="eq-operator">+</div>
+        <div class="eq-block ${hideReactant ? 'eq-hidden' : 'eq-reactant'}">${hideReactant ? '?' : escapeHtml(reactant)}</div>
+        <div class="eq-arrow">➔</div>
+        <div class="eq-block ${!hideReactant ? 'eq-hidden' : 'eq-product'}">${!hideReactant ? '?' : escapeHtml(product)}</div>
+      </div>
+    `;
+}
+function reagentBuildLearnQueue() {
+  const activeReactions = reagentAllReactions.filter(r => reagentMyData.myList.includes(r.Reagent));
+  const reactionKeys = activeReactions.map(r => `${r.Reactant} | ${r.Reagent} | ${r.Product}`);
+
+  // Compute priority weight for each reaction
+  const weighted = reactionKeys.map(key => {
+    const s = reagentMyData.stats[key] || {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+    const hrsSince = (Date.now() - (s.lastSeen || 0)) / 3600000;
+    const errorRatio = (s.wrong + 1) / (s.correct + 2);
+    const staleness = Math.min(hrsSince / 24, 3);
+    const streakPenalty = Math.max(0, 1 - s.streak * 0.1);
+    const weight = errorRatio * 4 + staleness * 2 + streakPenalty + Math.random() * 1.5;
+    return {
+      key,
+      weight
+    };
+  });
+  weighted.sort((a, b) => b.weight - a.weight);
+  return weighted.map(w => w.key);
+}
+function reagentInitLearn() {
+  if (reagentMyData.myList.length === 0) {
+    chemShowToast("Add reagents first!");
+    return;
+  }
+  reagentLearnQueue = reagentBuildLearnQueue();
+  if (reagentLearnQueue.length === 0) {
+    chemShowToast("No reactions found for active reagents.");
+    return;
+  }
+  reagentLearnIdx = 0;
+  reagentShowView('learn');
+  reagentUpdateLearnCard();
+}
+function reagentChangeLearn(dir) {
+  if (reagentLearnQueue.length === 0) return;
+  reagentLearnIdx += dir;
+  if (reagentLearnIdx >= reagentLearnQueue.length) reagentLearnIdx = 0;
+  if (reagentLearnIdx < 0) reagentLearnIdx = reagentLearnQueue.length - 1;
+  reagentUpdateLearnCard();
+}
+function reagentUpdateLearnCard() {
+  const key = reagentLearnQueue[reagentLearnIdx];
+  const [reactant, reagent, product] = key.split(' | ');
+  const stat = reagentMyData.stats[key] || {
+    correct: 0,
+    wrong: 0,
+    streak: 0
+  };
+  document.getElementById('reagent-learn-name').innerText = reagent;
+  document.getElementById('reagent-learn-index-text').innerText = `${reagentLearnIdx + 1} / ${reagentLearnQueue.length}`;
+  document.getElementById('reagent-learn-correct').innerText = stat.correct;
+  document.getElementById('reagent-learn-wrong').innerText = stat.wrong;
+  document.getElementById('reagent-learn-streak').innerText = stat.streak;
+  const pct = ((reagentLearnIdx + 1) / reagentLearnQueue.length * 100).toFixed(1);
+  document.getElementById('reagent-learn-progress').style.width = pct + '%';
+  reagentUpdateLearnEquation(reagent, reactant, product);
+}
+function reagentInitPractice() {
+  const activeReactions = reagentAllReactions.filter(r => reagentMyData.myList.includes(r.Reagent));
+  if (activeReactions.length === 0) {
+    chemShowToast("Add at least 1 reagent to practice.");
+    return;
+  }
+  reagentPracticeSessionCount = 0;
+  reagentPracticeCorrectCount = 0;
+  reagentLastPracticeKey = null;
+  reagentShowView('practice');
+  reagentNextQuestion();
+}
+function reagentNextQuestion() {
+  const activeReactions = reagentAllReactions.filter(r => reagentMyData.myList.includes(r.Reagent));
+  const activeKeys = activeReactions.map(r => `${r.Reactant} | ${r.Reagent} | ${r.Product}`);
+  const targetKey = UnifiedQuestionEngine.selectTarget(activeKeys, reagentMyData.stats, reagentLastPracticeKey);
+  if (!targetKey) return;
+  reagentLastPracticeKey = targetKey;
+  const [reactant, reagent, product] = targetKey.split(' | ');
+  const format = UnifiedQuestionEngine.decideFormat('reagents', targetKey, reagentMyData.stats);
+  const hideReactant = format === 'reactant';
+
+  // Render equation with visual placeholder
+  reagentUpdatePracticeEquation(reagent, reactant, product, hideReactant);
+  const correctAnswer = hideReactant ? reactant : product;
+  let distractors = [];
+  if (hideReactant) {
+    // Hiding Reactant: distractors are other reactants.
+    const validReactants = reagentAllReactants.filter(r => r !== reactant && !reagentAllReactions.some(x => x.Reagent === reagent && x.Reactant === r && x.Product === product));
+    distractors = validReactants.sort(() => 0.5 - Math.random()).slice(0, 3);
+  } else {
+    // Hiding Product: distractors are other products.
+    const validProducts = reagentAllProducts.filter(p => p !== product && !reagentAllReactions.some(x => x.Reagent === reagent && x.Reactant === reactant && x.Product === p));
+    distractors = validProducts.sort(() => 0.5 - Math.random()).slice(0, 3);
+  }
+
+  // Safety fallback padding if we don't have enough filtered distractors
+  if (distractors.length < 3) {
+    const fallbackPool = hideReactant ? reagentAllReactants : reagentAllProducts;
+    const remaining = fallbackPool.filter(x => x !== correctAnswer && !distractors.includes(x));
+    while (distractors.length < 3 && remaining.length > 0) {
+      distractors.push(remaining.pop());
+    }
+  }
+  const options = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
+  const letters = ['A', 'B', 'C', 'D'];
+  const optionsDiv = document.getElementById('reagent-practice-options');
+  if (!optionsDiv) return;
+  optionsDiv.innerHTML = '';
+  document.getElementById('reagent-practice-hint').innerText = hideReactant ? 'Identify the missing reactant ↓' : 'Identify the missing product ↓';
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'chem-opt-btn';
+    btn.innerHTML = `<span class="chem-opt-letter">${letters[i]}</span><span>${escapeHtml(opt)}</span>`;
+    btn.onclick = () => reagentHandleAnswer(opt, targetKey, correctAnswer, hideReactant);
+    optionsDiv.appendChild(btn);
+  });
+
+  // Update session progress bar (resets every 10)
+  const cycle = reagentPracticeSessionCount % 10;
+  document.getElementById('reagent-practice-progress').style.width = cycle * 10 + '%';
+}
+function reagentHandleAnswer(chosen, targetKey, correct, hideReactant) {
+  const btns = document.querySelectorAll('#reagent-practice-options .chem-opt-btn');
+  btns.forEach(b => b.disabled = true);
+  reagentPracticeSessionCount++;
+  const isCorrect = chosen === correct;
+  if (!reagentMyData.stats[targetKey]) {
+    reagentMyData.stats[targetKey] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  }
+  if (isCorrect) {
+    reagentPracticeCorrectCount++;
+    reagentMyData.stats[targetKey].correct++;
+    reagentMyData.stats[targetKey].streak++;
+    chemShowFlash('Correct', false);
+  } else {
+    reagentMyData.stats[targetKey].wrong++;
+    reagentMyData.stats[targetKey].streak = 0;
+    chemShowFlash('Wrong', true);
+  }
+  reagentMyData.stats[targetKey].lastSeen = Date.now();
+  reagentSave();
+
+  // ─── INTEGRATE INTO SHARED DAILY STATS ───
+  chemEnsureDailyStats();
+  const today = chemTodayKey();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+  }
+  chemSave(); // Save and update header counters
+  chemSyncAll(false); // Async cloud sync
+
+  // Highlight correct and wrong options
+  btns.forEach(b => {
+    const text = b.innerText.replace(/^[A-D]/, '').trim();
+    if (text === correct) b.classList.add(isCorrect ? 'correct' : 'reveal');
+    if (text === chosen && !isCorrect) b.classList.add('wrong');
+  });
+
+  // Update hint text
+  document.getElementById('reagent-practice-hint').innerText = isCorrect ? `That's right` : `It was: ${correct}`;
+
+  // Reveal the correct text in the hidden equation box
+  const hiddenBlock = document.querySelector('#reagent-practice-eq-container .eq-hidden');
+  if (hiddenBlock) {
+    hiddenBlock.innerText = correct;
+    hiddenBlock.classList.remove('eq-hidden');
+    hiddenBlock.style.borderColor = isCorrect ? '#22c55e' : '#ef4444';
+    hiddenBlock.style.color = isCorrect ? '#22c55e' : '#ef4444';
+    hiddenBlock.style.animation = 'none';
+  }
+  setTimeout(reagentNextQuestion, isCorrect ? 1200 : 1800);
+}
+function reagentLearnNew() {
+  if (!reagentAppReady) return reagentInitApp().then(reagentLearnNew);
+  const remaining = reagentAllReagents.filter(r => !reagentMyData.myList.includes(r));
+  if (remaining.length === 0) {
+    chemShowToast("All available reagents added!");
+    return;
+  }
+  const selected = remaining[Math.floor(Math.random() * remaining.length)];
+  reagentMyData.myList.push(selected);
+
+  // Initialize stats
+  const newReactions = reagentAllReactions.filter(r => r.Reagent === selected);
+  newReactions.forEach(r => {
+    const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+    if (!reagentMyData.stats[key]) {
+      reagentMyData.stats[key] = {
+        wrong: 0,
+        correct: 0,
+        streak: 0,
+        lastSeen: 0
+      };
+    }
+  });
+  reagentSave();
+  chemShowToast(`Added: ${selected} (${newReactions.length} reactions)`);
+}
+function reagentExportData() {
+  const blob = new Blob([JSON.stringify(chemCombinedData, null, 2)], {
+    type: "application/json"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "chemmaster_progress.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function reagentImportData(event) {
+  var _event$target$files2;
+  const file = (_event$target$files2 = event.target.files) === null || _event$target$files2 === void 0 ? void 0 : _event$target$files2[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported && imported.compounds && imported.reagents) {
+        chemCombinedData = imported;
+        chemMyData = chemCombinedData.compounds;
+        reagentMyData = chemCombinedData.reagents;
+        pkaMyData = chemCombinedData.pka || {
+          myList: [],
+          stats: {}
+        };
+        chemEnsureDailyStats();
+        reagentSave();
+        chemSave();
+        chemSyncAll(false);
+        chemShowToast("Progress imported.");
+      } else if (imported && imported.myList && imported.stats) {
+        reagentMyData.myList = imported.myList || [];
+        reagentMyData.stats = imported.stats || {};
+        reagentSave();
+        chemSave();
+        chemSyncAll(false);
+        chemShowToast("Progress imported.");
+      } else {
+        chemShowToast("Invalid file format.");
+      }
+    } catch {
+      chemShowToast("Invalid file format.");
+    }
+  };
+  reader.readAsText(file);
+}
+function reagentShowStats(type) {
+  const isWeak = type === 'weak';
+  const activeReactions = reagentAllReactions.filter(r => reagentMyData.myList.includes(r.Reagent));
+  if (activeReactions.length === 0) {
+    chemShowToast("Add reagents first!");
+    return;
+  }
+  const reactionStats = activeReactions.map(r => {
+    const key = `${r.Reactant} | ${r.Reagent} | ${r.Product}`;
+    const s = reagentMyData.stats[key] || {
+      wrong: 0,
+      correct: 0,
+      streak: 0
+    };
+    const score = s.correct - s.wrong * 1.5 + s.streak * 0.5;
+    return {
+      r,
+      key,
+      stats: s,
+      score
+    };
+  });
+
+  // Sort by performance score
+  if (isWeak) {
+    reactionStats.sort((a, b) => a.score - b.score);
+    document.getElementById('reagent-stats-title').innerText = 'Weakest Reactions';
+  } else {
+    reactionStats.sort((a, b) => b.score - a.score);
+    document.getElementById('reagent-stats-title').innerText = 'Strongest Reactions';
+  }
+  const top = reactionStats.slice(0, 5);
+  const listDiv = document.getElementById('reagent-stats-list');
+  listDiv.innerHTML = top.length ? top.map((item, i) => {
+    return `<div class="chem-stat-row">
+        <div class="chem-stat-name">
+          ${i + 1}. <span style="color:var(--accent); font-weight:600;">${escapeHtml(item.r.Reagent)}</span> + ${escapeHtml(item.r.Reactant)} ➔ <span style="color:#22c55e;">${escapeHtml(item.r.Product)}</span>
+        </div>
+        <div class="chem-stat-val">✓${item.stats.correct} ✗${item.stats.wrong} 🔥${item.stats.streak}</div>
+      </div>`;
+  }).join('') : '<div class="chem-stat-row"><span class="chem-stat-name">No data yet</span></div>';
+  document.getElementById('reagent-stats-sheet').classList.add('open');
+}
+function reagentCloseStats(event) {
+  if (event.target.id === 'reagent-stats-sheet') {
+    document.getElementById('reagent-stats-sheet').classList.remove('open');
+  }
+}
+function reagentShowView(id) {
+  document.querySelectorAll('#reagent-practice-content .chem-view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById('reagent-view-' + id);
+  if (view) view.classList.add('active');
+}
+function reagentGoHome() {
+  reagentShowView('home');
+  chemSyncAll(false);
+}
+
+/* --- pKa LOGIC --- */
+let pkaAllCompounds = [];
+let pkaAppReady = false;
+let pkaLearnQueue = [];
+let pkaLearnIdx = 0;
+let pkaPracticeSessionCount = 0;
+let pkaPracticeCorrectCount = 0;
+let pkaCurrentQuestion = null;
+let pkaSortingList = [];
+let pkaLastPracticeName = null;
+async function pkaInitApp() {
+  if (pkaAppReady) {
+    pkaUpdateDashboard();
+    return;
+  }
+  try {
+    const response = await fetch('pKa.json');
+    pkaAllCompounds = await response.json();
+    pkaAppReady = true;
+    pkaUpdateDashboard();
+  } catch (e) {
+    console.error("Failed to initialize pKa data", e);
+    chemShowFlash("Error loading pKa database.", true);
+  }
+}
+function pkaSave() {
+  chemCombinedData.compounds = chemMyData;
+  chemCombinedData.reagents = reagentMyData;
+  chemCombinedData.pka = pkaMyData;
+  localStorage.setItem(getUserStorageKey(CHEM_DATA_KEY), JSON.stringify(chemCombinedData));
+  localStorage.setItem(getUserStorageKey('chem_progress_updated_at'), new Date().toISOString());
+  pkaUpdateDashboard();
+}
+function pkaUpdateDashboard() {
+  var _chemMyData$dailyStat3;
+  const listEl = document.getElementById('pka-stat-list');
+  const totalEl = document.getElementById('pka-stat-total');
+  const masteredEl = document.getElementById('pka-stat-mastered');
+  const todayAttemptsEl = document.getElementById('pka-stat-today-attempts');
+  const sevenDayAttemptsEl = document.getElementById('pka-stat-7day-attempts');
+  const today = chemTodayKey();
+  chemEnsureDailyStats();
+  const todayAttempts = ((_chemMyData$dailyStat3 = chemMyData.dailyStats[today]) === null || _chemMyData$dailyStat3 === void 0 ? void 0 : _chemMyData$dailyStat3.attempted) || 0;
+  let sevenDayAttempts = 0;
+  const recentStart = chemRecentStartKey(7);
+  if (chemMyData.dailyStats && typeof chemMyData.dailyStats === 'object') {
+    for (const [date, stats] of Object.entries(chemMyData.dailyStats)) {
+      if (date >= recentStart && stats) {
+        sevenDayAttempts += stats.attempted || 0;
+      }
+    }
+  }
+
+  // Calculate mastered
+  let masteredCount = 0;
+  Object.values(pkaMyData.stats).forEach(s => {
+    if (s.streak >= 3) masteredCount++;
+  });
+  if (listEl) listEl.innerHTML = `Compounds: <strong>${pkaMyData.myList.length}</strong>`;
+  if (totalEl) totalEl.innerHTML = `Total: <strong>${pkaAllCompounds.length}</strong>`;
+  if (masteredEl) masteredEl.innerHTML = `Mastered: <strong>${masteredCount}</strong>`;
+  if (todayAttemptsEl) todayAttemptsEl.innerHTML = `Today: <strong>${todayAttempts}</strong>`;
+  if (sevenDayAttemptsEl) sevenDayAttemptsEl.innerHTML = `7-Day: <strong>${sevenDayAttempts}</strong>`;
+  pkaRenderTable();
+}
+function pkaRenderTable() {
+  const tbody = document.getElementById('pka-table-body');
+  if (!tbody) return;
+  if (!pkaMyData.myList.length) {
+    tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; text-align: center; color: var(--text3);">No compounds in your active list. Click "+ Add 5 Compounds" to start!</td></tr>`;
+    return;
+  }
+
+  // Sort the active compounds by pKa values
+  const activeCompounds = pkaMyData.myList.map(name => {
+    return pkaAllCompounds.find(c => c.name === name);
+  }).filter(Boolean).sort((a, b) => a.pka - b.pka);
+  tbody.innerHTML = activeCompounds.map(c => {
+    return `
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 10px 14px; font-weight: 500; color: var(--text);">${escapeHtml(c.name)}</td>
+        <td style="padding: 10px 14px; font-weight: 700; color: var(--accent);">${c.pka}</td>
+        <td style="padding: 10px 14px; text-align: center;">
+          <button class="chem-btn chem-btn-ghost" style="min-height: 24px; padding: 2px 8px; font-size: 11px; color: var(--red); border-color: transparent;" onclick="pkaRemoveCompound('${escapeHtml(c.name)}')">Remove</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+function pkaRemoveCompound(name) {
+  pkaMyData.myList = pkaMyData.myList.filter(n => n !== name);
+  pkaSave();
+  chemSyncAll(false);
+}
+function pkaLearnNew() {
+  if (!pkaAppReady) return pkaInitApp().then(pkaLearnNew);
+  const remaining = pkaAllCompounds.filter(c => !pkaMyData.myList.includes(c.name));
+  if (!remaining.length) {
+    chemShowFlash("All available compounds are already in your list.", false);
+    return;
+  }
+  const remainingImportant = remaining.filter(c => c.important === true).sort(() => 0.5 - Math.random());
+  const remainingUnimportant = remaining.filter(c => c.important !== true).sort(() => 0.5 - Math.random());
+  const sortedRemaining = remainingImportant.concat(remainingUnimportant);
+  const selected = sortedRemaining.slice(0, Math.min(5, sortedRemaining.length));
+  selected.forEach(c => {
+    pkaMyData.myList.push(c.name);
+    pkaMyData.stats[c.name] = {
+      wrong: 0,
+      correct: 0,
+      streak: 0,
+      lastSeen: 0
+    };
+  });
+  pkaSave();
+  chemSyncAll(false);
+  chemShowFlash(`Added: ${selected.map(s => s.name).join(', ')}`, false);
+}
+function pkaInitLearn() {
+  if (!pkaMyData.myList.length) {
+    chemShowFlash("Add compounds first.", false);
+    return;
+  }
+  pkaLearnQueue = [...pkaMyData.myList].sort(() => 0.5 - Math.random());
+  pkaLearnIdx = 0;
+  pkaShowView('learn');
+  pkaUpdateLearnCard();
+}
+function pkaShowView(id) {
+  document.querySelectorAll('#pka-practice-content .chem-view').forEach(v => v.style.display = 'none');
+  const view = document.getElementById('pka-view-' + id);
+  if (view) view.style.display = 'block';
+}
+function pkaGoHome() {
+  pkaShowView('home');
+  chemSyncAll(false);
+  pkaUpdateDashboard();
+}
+function pkaChangeLearn(dir) {
+  if (!pkaLearnQueue.length) return;
+  pkaLearnIdx += dir;
+  if (pkaLearnIdx >= pkaLearnQueue.length) pkaLearnIdx = 0;
+  if (pkaLearnIdx < 0) pkaLearnIdx = pkaLearnQueue.length - 1;
+  pkaUpdateLearnCard();
+}
+function pkaUpdateLearnCard() {
+  const name = pkaLearnQueue[pkaLearnIdx];
+  const comp = pkaAllCompounds.find(c => c.name === name);
+  if (!comp) return;
+  const stat = pkaMyData.stats[name] || {
+    correct: 0,
+    wrong: 0,
+    streak: 0
+  };
+  document.getElementById('pka-learn-progress').style.width = `${(pkaLearnIdx + 1) / pkaLearnQueue.length * 100}%`;
+  document.getElementById('pka-learn-name').textContent = comp.name;
+  document.getElementById('pka-learn-value').textContent = comp.pka;
+  document.getElementById('pka-learn-index-text').textContent = `${pkaLearnIdx + 1} / ${pkaLearnQueue.length}`;
+  document.getElementById('pka-learn-correct').textContent = stat.correct || 0;
+  document.getElementById('pka-learn-wrong').textContent = stat.wrong || 0;
+  document.getElementById('pka-learn-streak').textContent = stat.streak || 0;
+}
+function pkaInitPractice() {
+  if (pkaMyData.myList.length < 2) {
+    chemShowFlash("Please add at least 2 compounds to your list first!", false);
+    return;
+  }
+  pkaShowView('practice');
+  pkaPracticeSessionCount = 0;
+  pkaPracticeCorrectCount = 0;
+  pkaNextQuestion();
+}
+function pkaNextQuestion() {
+  pkaPracticeSessionCount++;
+  const progressPercent = Math.min(100, pkaPracticeSessionCount / 10 * 100);
+  document.getElementById('pka-practice-progress').style.width = `${progressPercent}%`;
+  const feedbackEl = document.getElementById('pka-practice-feedback');
+  feedbackEl.style.display = 'none';
+  document.getElementById('pka-next-question-btn').style.display = 'none';
+  const targetName = UnifiedQuestionEngine.selectTarget(pkaMyData.myList, pkaMyData.stats, pkaLastPracticeName);
+  if (!targetName) return;
+  pkaLastPracticeName = targetName;
+  const format = UnifiedQuestionEngine.decideFormat('pka', targetName, pkaMyData.stats);
+  document.getElementById('pka-question-container').innerHTML = '';
+  document.getElementById('pka-answer-container').innerHTML = '';
+  if (format === 'type1') {
+    pkaGenerateType1Question(targetName);
+  } else if (format === 'type2') {
+    pkaGenerateType2Question(targetName);
+  } else {
+    pkaGenerateType3Question(targetName);
+  }
+}
+function pkaGenerateType1Question(targetName) {
+  const compA = pkaAllCompounds.find(c => c.name === targetName);
+  if (!compA) return;
+  const sortedAll = [...pkaAllCompounds].sort((x, y) => x.pka - y.pka);
+  const idxA = sortedAll.findIndex(c => c.name === targetName);
+  const candidates = [];
+  for (let offset = -4; offset <= 4; offset++) {
+    if (offset === 0) continue;
+    const targetIdx = idxA + offset;
+    if (targetIdx >= 0 && targetIdx < sortedAll.length) {
+      const candidate = sortedAll[targetIdx];
+      if (candidate.pka !== compA.pka) {
+        candidates.push(candidate);
+      }
+    }
+  }
+  let compB;
+  if (candidates.length > 0) {
+    compB = candidates[Math.floor(Math.random() * candidates.length)];
+  } else {
+    const otherCompounds = pkaAllCompounds.filter(c => c.name !== targetName && c.pka !== compA.pka);
+    compB = otherCompounds[Math.floor(Math.random() * otherCompounds.length)];
+  }
+  pkaCurrentQuestion = {
+    type: 1,
+    target: compA,
+    other: compB,
+    correctName: compA.pka < compB.pka ? compA.name : compB.name,
+    incorrectName: compA.pka < compB.pka ? compB.name : compA.name,
+    pkaA: compA.pka,
+    pkaB: compB.pka
+  };
+  document.getElementById('pka-question-container').innerHTML = `
+    <div style="text-align: center; margin-bottom: 8px; font-weight: 700; font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;">Question Type: Relative Acidity</div>
+    <h3 style="font-size: 18px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.4; margin: 10px 0;">
+      Which of the following compounds is <strong>more acidic</strong>?
+    </h3>
+  `;
+  const options = [compA, compB].sort(() => 0.5 - Math.random());
+  document.getElementById('pka-answer-container').innerHTML = `
+    <div class="chem-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+      ${options.map(opt => `
+        <button class="chem-btn chem-btn-secondary" style="padding: 16px; font-size: 14px; font-weight: 600; min-height: 70px; display: flex; align-items: center; justify-content: center; text-align: center;" onclick="pkaSubmitType1Answer('${escapeHtml(opt.name)}')">
+          ${escapeHtml(opt.name)}
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+function pkaSubmitType1Answer(selectedName) {
+  const q = pkaCurrentQuestion;
+  if (!q) return;
+  const isCorrect = selectedName === q.correctName;
+  const msg = `Incorrect. <strong>${escapeHtml(q.correctName)}</strong> (pKa = ${q.correctName === q.target.name ? q.pkaA : q.pkaB}) is more acidic than <strong>${escapeHtml(q.incorrectName)}</strong> (pKa = ${q.incorrectName === q.target.name ? q.pkaA : q.pkaB}). (Remember: lower pKa means higher acidity!)`;
+  pkaHandleAnswerResult(isCorrect, q.target.name, msg);
+}
+function pkaGenerateType2Question(targetName) {
+  const compA = pkaAllCompounds.find(c => c.name === targetName);
+  if (!compA) return;
+  pkaCurrentQuestion = {
+    type: 2,
+    target: compA,
+    correctPka: compA.pka
+  };
+  document.getElementById('pka-question-container').innerHTML = `
+    <div style="text-align: center; margin-bottom: 8px; font-weight: 700; font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;">Question Type: Value Estimation</div>
+    <h3 style="font-size: 18px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.4; margin: 10px 0;">
+      What is the pKa value of:<br/>
+      <span style="color: var(--accent); font-size: 22px; display: inline-block; margin-top: 8px;">${escapeHtml(compA.name)}</span>
+    </h3>
+  `;
+  document.getElementById('pka-answer-container').innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+      <input type="number" id="pka-typed-input" step="any" placeholder="Enter pKa value (e.g. 4.7)" 
+        style="width: 100%; max-width: 300px; text-align: center; padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; outline: none; transition: border-color 0.2s;" />
+      <button class="chem-btn chem-btn-primary" style="width: 100%; max-width: 300px; margin: 0;" onclick="pkaSubmitType2Answer()">
+        Submit Answer
+      </button>
+    </div>
+  `;
+  setTimeout(() => {
+    var _document$getElementB7;
+    (_document$getElementB7 = document.getElementById('pka-typed-input')) === null || _document$getElementB7 === void 0 || _document$getElementB7.focus();
+  }, 100);
+}
+function pkaSubmitType2Answer() {
+  const q = pkaCurrentQuestion;
+  if (!q) return;
+  const inputEl = document.getElementById('pka-typed-input');
+  if (!inputEl || inputEl.value.trim() === '') {
+    chemShowFlash("Please enter a value.", false);
+    return;
+  }
+  const typedVal = parseFloat(inputEl.value);
+  const correctVal = q.correctPka;
+  const isCorrect = Math.abs(typedVal - correctVal) <= 2.0;
+  const msg = `Incorrect. The correct pKa of <strong>${escapeHtml(q.target.name)}</strong> is <strong>${correctVal}</strong>. You typed: ${typedVal}.`;
+  pkaHandleAnswerResult(isCorrect, q.target.name, msg);
+}
+function pkaGenerateType3Question(targetName) {
+  const activeList = pkaMyData.myList.filter(n => n !== targetName);
+  let chosen = [targetName];
+  if (activeList.length < 4) {
+    const remaining = pkaAllCompounds.filter(c => !chosen.includes(c.name) && !activeList.includes(c.name));
+    const pool = activeList.concat(remaining.map(c => c.name));
+    const filled = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
+    chosen = chosen.concat(filled);
+  } else {
+    const filled = activeList.sort(() => 0.5 - Math.random()).slice(0, 4);
+    chosen = chosen.concat(filled);
+  }
+  const compoundsObj = chosen.map(name => {
+    return pkaAllCompounds.find(c => c.name === name);
+  }).filter(Boolean);
+  let shuffled = [...compoundsObj].sort(() => 0.5 - Math.random());
+  let isSorted = true;
+  for (let i = 0; i < shuffled.length - 1; i++) {
+    if (shuffled[i].pka > shuffled[i + 1].pka) {
+      isSorted = false;
+      break;
+    }
+  }
+  if (isSorted) {
+    shuffled.reverse();
+  }
+  pkaSortingList = shuffled;
+  pkaCurrentQuestion = {
+    type: 3,
+    compounds: compoundsObj
+  };
+  document.getElementById('pka-question-container').innerHTML = `
+    <div style="text-align: center; margin-bottom: 8px; font-weight: 700; font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;">Question Type: Acidity Ordering</div>
+    <h3 style="font-size: 16px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.4; margin: 10px 0;">
+      Arrange the compounds in order of <strong>decreasing acidity</strong>:<br/>
+      <span style="font-size: 12px; font-weight: 500; color: var(--text3);">(Most acidic / lowest pKa at the top, least acidic at the bottom)</span>
+    </h3>
+  `;
+  pkaRenderSortingList();
+}
+function pkaRenderSortingList() {
+  const container = document.getElementById('pka-answer-container');
+  if (!container) return;
+  container.innerHTML = `
+    <div id="pka-sortable-list" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+      ${pkaSortingList.map((comp, idx) => `
+        <div class="pka-sortable-item" draggable="true" data-index="${idx}"
+          style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; cursor: grab; user-select: none; transition: all 0.2s;"
+          ondragstart="pkaDragStart(event)" ondragover="pkaDragOver(event)" ondrop="pkaDrop(event)" ondragend="pkaDragEnd(event)">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--text3); font-weight: bold; cursor: grab; font-size: 16px;">☰</span>
+            <span style="font-size: 13px; font-weight: 600; color: var(--text);">${escapeHtml(comp.name)}</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button class="chem-btn chem-btn-ghost" style="min-height: 24px; width: 24px; padding: 0; font-size: 9px; margin: 0; display: flex; align-items: center; justify-content: center;" onclick="pkaMoveItem(${idx}, -1)">▲</button>
+            <button class="chem-btn chem-btn-ghost" style="min-height: 24px; width: 24px; padding: 0; font-size: 9px; margin: 0; display: flex; align-items: center; justify-content: center;" onclick="pkaMoveItem(${idx}, 1)">▼</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="chem-btn chem-btn-primary" style="width: 100%; margin-top: 8px;" onclick="pkaSubmitType3Answer()">
+      Submit Ordering
+    </button>
+  `;
+}
+
+// Drag & Drop handlers
+let pkaDraggedIndex = null;
+function pkaDragStart(e) {
+  pkaDraggedIndex = parseInt(e.currentTarget.getAttribute('data-index'));
+  e.currentTarget.style.opacity = '0.5';
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', pkaDraggedIndex);
+}
+function pkaDragOver(e) {
+  e.preventDefault();
+}
+function pkaDrop(e) {
+  e.preventDefault();
+  const targetIndex = parseInt(e.currentTarget.getAttribute('data-index'));
+  if (pkaDraggedIndex !== null && pkaDraggedIndex !== targetIndex) {
+    const item = pkaSortingList.splice(pkaDraggedIndex, 1)[0];
+    pkaSortingList.splice(targetIndex, 0, item);
+    pkaRenderSortingList();
+  }
+}
+function pkaDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+  pkaDraggedIndex = null;
+}
+function pkaMoveItem(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex >= 0 && newIndex < pkaSortingList.length) {
+    const temp = pkaSortingList[index];
+    pkaSortingList[index] = pkaSortingList[newIndex];
+    pkaSortingList[newIndex] = temp;
+    pkaRenderSortingList();
+  }
+}
+function pkaSubmitType3Answer() {
+  const q = pkaCurrentQuestion;
+  if (!q) return;
+  let isCorrect = true;
+  for (let i = 0; i < pkaSortingList.length - 1; i++) {
+    if (pkaSortingList[i].pka > pkaSortingList[i + 1].pka) {
+      isCorrect = false;
+      break;
+    }
+  }
+  const correctSorted = [...pkaSortingList].sort((a, b) => a.pka - b.pka);
+  const explanation = `
+    <strong>Correct Ordering (most acidic to least acidic):</strong><br/>
+    <ol style="margin: 8px 0 0 20px; padding: 0; text-align: left; font-size: 13px; line-height: 1.5;">
+      ${correctSorted.map(c => `<li><strong>${escapeHtml(c.name)}</strong> (pKa = ${c.pka})</li>`).join('')}
+    </ol>
+  `;
+  const activeCompoundNames = q.compounds.filter(c => pkaMyData.myList.includes(c.name)).map(c => c.name);
+  pkaHandleAnswerResultMulti(isCorrect, activeCompoundNames, isCorrect ? "Correct!" : "Incorrect order. " + explanation);
+}
+function pkaHandleAnswerResult(isCorrect, targetCompoundName, messageText) {
+  if (pkaMyData.stats[targetCompoundName]) {
+    const s = pkaMyData.stats[targetCompoundName];
+    if (isCorrect) {
+      s.correct = (s.correct || 0) + 1;
+      s.streak = (s.streak || 0) + 1;
+      pkaPracticeCorrectCount++;
+    } else {
+      s.wrong = (s.wrong || 0) + 1;
+      s.streak = 0;
+    }
+    s.lastSeen = Date.now();
+  }
+  const today = chemTodayKey();
+  chemEnsureDailyStats();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+  }
+  pkaSave();
+  chemSyncAll(false);
+  const feedbackEl = document.getElementById('pka-practice-feedback');
+  feedbackEl.style.display = 'block';
+  feedbackEl.style.background = isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+  feedbackEl.style.color = isCorrect ? 'var(--green)' : 'var(--red)';
+  feedbackEl.style.border = `1px solid ${isCorrect ? 'var(--green)' : 'var(--red)'}`;
+  feedbackEl.innerHTML = isCorrect ? 'Correct!' : messageText;
+  document.getElementById('pka-next-question-btn').style.display = 'block';
+  chemShowFlash(isCorrect ? 'Correct' : 'Incorrect', !isCorrect);
+}
+function pkaHandleAnswerResultMulti(isCorrect, compoundNames, messageText) {
+  compoundNames.forEach(name => {
+    if (pkaMyData.stats[name]) {
+      const s = pkaMyData.stats[name];
+      if (isCorrect) {
+        s.correct = (s.correct || 0) + 1;
+        s.streak = (s.streak || 0) + 1;
+      } else {
+        s.wrong = (s.wrong || 0) + 1;
+        s.streak = 0;
+      }
+      s.lastSeen = Date.now();
+    }
+  });
+  if (isCorrect) {
+    pkaPracticeCorrectCount++;
+  }
+  const today = chemTodayKey();
+  chemEnsureDailyStats();
+  if (!chemMyData.dailyStats[today]) {
+    chemMyData.dailyStats[today] = {
+      correct: 0,
+      wrong: 0,
+      attempted: 0,
+      timeSpent: 0
+    };
+  }
+  chemMyData.dailyStats[today].attempted = (chemMyData.dailyStats[today].attempted || 0) + 1;
+  if (isCorrect) {
+    chemMyData.dailyStats[today].correct = (chemMyData.dailyStats[today].correct || 0) + 1;
+  } else {
+    chemMyData.dailyStats[today].wrong = (chemMyData.dailyStats[today].wrong || 0) + 1;
+  }
+  pkaSave();
+  chemSyncAll(false);
+  const feedbackEl = document.getElementById('pka-practice-feedback');
+  feedbackEl.style.display = 'block';
+  feedbackEl.style.background = isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+  feedbackEl.style.color = isCorrect ? 'var(--green)' : 'var(--red)';
+  feedbackEl.style.border = `1px solid ${isCorrect ? 'var(--green)' : 'var(--red)'}`;
+  feedbackEl.innerHTML = messageText;
+  document.getElementById('pka-next-question-btn').style.display = 'block';
+  chemShowFlash(isCorrect ? 'Correct' : 'Incorrect', !isCorrect);
+}
+function pkaShowStats(type) {
+  const isWeak = type === 'weak';
+  if (pkaMyData.myList.length === 0) {
+    chemShowFlash("Add compounds first!", false);
+    return;
+  }
+  const compStats = pkaMyData.myList.map(name => {
+    const s = pkaMyData.stats[name] || {
+      wrong: 0,
+      correct: 0,
+      streak: 0
+    };
+    const score = s.correct - s.wrong * 1.5 + s.streak * 0.5;
+    const comp = pkaAllCompounds.find(c => c.name === name);
+    return {
+      name,
+      stats: s,
+      score,
+      pka: comp ? comp.pka : 0
+    };
+  });
+  if (isWeak) {
+    compStats.sort((a, b) => a.score - b.score);
+    document.getElementById('pka-stats-title').innerText = 'Weakest pKa Compounds';
+  } else {
+    compStats.sort((a, b) => b.score - a.score);
+    document.getElementById('pka-stats-title').innerText = 'Strongest pKa Compounds';
+  }
+  const top = compStats.slice(0, 5);
+  const listDiv = document.getElementById('pka-stats-list');
+  listDiv.innerHTML = top.length ? top.map((item, i) => {
+    return `<div class="chem-stat-row">
+        <div class="chem-stat-name">
+          ${i + 1}. <span style="color:var(--accent); font-weight:600;">${escapeHtml(item.name)}</span> (pKa: ${item.pka})
+        </div>
+        <div class="chem-stat-val">✓${item.stats.correct} ✗${item.stats.wrong} 🔥${item.stats.streak}</div>
+      </div>`;
+  }).join('') : '<div class="chem-stat-row"><span class="chem-stat-name">No data yet</span></div>';
+  document.getElementById('pka-stats-sheet').classList.add('open');
+}
+function pkaCloseStats(event) {
+  if (event.target.id === 'pka-stats-sheet') {
+    document.getElementById('pka-stats-sheet').classList.remove('open');
+  }
+}
+function toggleListEditor() {
+  const root = document.getElementById('list-editor-root');
+  const chevron = document.getElementById('list-editor-chevron');
+  if (!root) return;
+  const isHidden = root.style.display === 'none' || root.style.display === '';
+  if (isHidden) {
+    root.style.display = 'block';
+    if (chevron) chevron.textContent = '▲';
+    if (!listEditorLoaded) {
+      renderListEditor();
+      listEditorLoaded = true;
+    }
+  } else {
+    root.style.display = 'none';
+    if (chevron) chevron.textContent = '▼';
+  }
+}
+window.toggleListEditor = toggleListEditor;
+window.chemInitApp = chemInitApp;
+window.pkaInitApp = pkaInitApp;
+window.pkaLearnNew = pkaLearnNew;
+window.pkaInitLearn = pkaInitLearn;
+window.pkaChangeLearn = pkaChangeLearn;
+window.pkaInitPractice = pkaInitPractice;
+window.pkaGoHome = pkaGoHome;
+window.pkaShowStats = pkaShowStats;
+window.pkaCloseStats = pkaCloseStats;
+window.pkaRemoveCompound = pkaRemoveCompound;
+window.pkaSubmitType2Answer = pkaSubmitType2Answer;
+window.pkaSubmitType3Answer = pkaSubmitType3Answer;
+window.pkaNextQuestion = pkaNextQuestion;
+window.pkaDragStart = pkaDragStart;
+window.pkaDragOver = pkaDragOver;
+window.pkaDrop = pkaDrop;
+window.pkaDragEnd = pkaDragEnd;
+window.pkaMoveItem = pkaMoveItem;
+window.chemLearnNew = chemLearnNew;
+window.chemInitLearn = chemInitLearn;
+window.chemChangeLearn = chemChangeLearn;
+window.chemInitPractice = chemInitPractice;
+window.chemGoHome = chemGoHome;
+window.chemUploadStats = chemSyncAll;
+window.chemLoadLeaderboard = chemLoadLeaderboard;
+window.chemUploadProgress = chemSyncAll;
+window.chemDownloadProgress = chemDownloadProgress;
+window.chemSyncAll = chemSyncAll;
+window.chemExportData = chemExportData;
+window.chemImportData = chemImportData;
+window.chemShowStats = chemShowStats;
+window.chemCloseStats = chemCloseStats;
+window.showModeSelection = showModeSelection;
+window.selectPracticeMode = selectPracticeMode;
+window.reagentInitApp = reagentInitApp;
+window.reagentLearnNew = reagentLearnNew;
+window.reagentInitLearn = reagentInitLearn;
+window.reagentChangeLearn = reagentChangeLearn;
+window.reagentInitPractice = reagentInitPractice;
+window.reagentGoHome = reagentGoHome;
+window.reagentExportData = reagentExportData;
+window.reagentImportData = reagentImportData;
+window.reagentShowStats = reagentShowStats;
+window.reagentCloseStats = reagentCloseStats;
+setInterval(() => {
+  if (document.visibilityState === 'visible') {
+    chemSyncAll(false);
+  }
+}, 2 * 60 * 1000);
+window.addEventListener('beforeunload', () => {
+  chemSyncAll(false);
+});
+window.addEventListener('pagehide', () => {
+  chemSyncAll(false);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') chemSyncAll(false);
+});
+
+// Auto Login Boot Check with Server Token Verification
+async function checkTokenAndLoad() {
+  const u = getCookie('fy_u');
+  const p = getCookie('fy_p');
+
+  if (!API_CONFIG.token) {
+    API_CONFIG.token = sessionStorage.getItem('fy_token') || localStorage.getItem('fy_token') || '';
+  }
+
+  const submitBtn = document.getElementById('login-submit');
+  const loginScreen = document.getElementById('login-screen');
+
+  let serverVerified = false;
+
+  // 1. If we have an auth token in storage, verify it directly with the server
+  if (API_CONFIG.token) {
+    if (submitBtn) {
+      submitBtn.textContent = 'Verifying session...';
+      submitBtn.disabled = true;
+    }
+    serverVerified = await verifyServerToken(API_CONFIG.token);
+  }
+
+  // 2. If the server rejected the token (or no token existed), and credentials are saved, re-login
+  if (!serverVerified && u && p) {
+    try {
+      if (loginScreen) loginScreen.style.display = 'flex';
+      if (submitBtn) {
+        submitBtn.textContent = 'Re-authenticating...';
+        submitBtn.disabled = true;
+      }
+      await attemptLogin(u, p);
+      serverVerified = true;
+    } catch (e) {
+      eraseCookie('fy_u');
+      eraseCookie('fy_p');
+      if (submitBtn) {
+        submitBtn.textContent = 'Login';
+        submitBtn.disabled = false;
+      }
+      if (loginScreen) loginScreen.style.display = 'flex';
+      return; // Stop and force manual login
+    }
+  }
+
+  // 3. If verified by server, load portal data immediately
+  if (serverVerified && API_CONFIG.token) {
+    if (!sessionStorage.getItem('fy_logged_in_user')) {
+      const savedUser = localStorage.getItem('fy_logged_in_user') || getCookie('fy_u');
+      if (savedUser) sessionStorage.setItem('fy_logged_in_user', savedUser);
+    }
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.textContent = 'Login';
+      submitBtn.disabled = false;
+    }
+    try {
+      await loadPortalData();
+    } catch (e) {
+      const isAuth = typeof isAuthError === 'function' ? isAuthError(e) : false;
+      if (isAuth && u && p) {
+        console.warn('Auth token rejected during load. Re-authenticating with server...');
+        API_CONFIG.token = '';
+        sessionStorage.removeItem('fy_token');
+        localStorage.removeItem('fy_token');
+        checkTokenAndLoad(); // Retry login once
+      } else if (!readPortalCache()) {
+        if (loginScreen) loginScreen.style.display = 'flex';
+      }
+    }
+  } else {
+    // Stored token was invalid and no credentials to re-login -> Show login screen
+    if (loginScreen) loginScreen.style.display = 'flex';
+    if (submitBtn) {
+      submitBtn.textContent = 'Login';
+      submitBtn.disabled = false;
+    }
+  }
+}
+
+// Start app on load
+checkTokenAndLoad();
+window.showPrivacyPolicy = function showPrivacyPolicy(event) {
+  if (event) event.preventDefault();
+  if (document.getElementById('privacy-modal-backdrop')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'privacy-modal-backdrop';
+  wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px';
+  wrapper.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;max-width:450px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow: 0 10px 30px rgba(0,0,0,0.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:15px;font-weight:600;color:var(--text)">Privacy Policy</div>
+        <button onclick="document.getElementById('privacy-modal-backdrop').remove()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer">Close</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;font-size:13.5px;line-height:1.6;color:var(--text2)">
+        <div>
+          <strong style="color:var(--text);font-size:14.5px">We do not collect any data by default.</strong>
+          <p style="margin-top:6px">Your usage of the portal is completely local and private, except for the optional features listed below:</p>
+        </div>
+        
+        <div>
+          <strong style="color:var(--text)">1. Chemistry Practice Tool</strong>
+          <p style="margin-top:4px">If you use the Chemistry Practice feature, your progress (saved compound lists, compound practice history, and daily stats) is synced to a Supabase database to back up your progress and show your statistics on the chemistry leaderboard, associated only with your username.</p>
+        </div>
+
+        <div>
+          <strong style="color:var(--text)">2. Anonymized Performance Sharing</strong>
+          <p style="margin-top:4px">If you choose to share your performance, this portal scrapes and posts only anonymized exam metrics (scores, test names, percentiles, average marks, and ranks). We do not collect any exam data until you say.</p>
+        </div>
+
+        <div>
+          <strong style="color:var(--text)">3. Active User Statistics</strong>
+          <p style="margin-top:4px">We log your display name/username and a rolling 3-month list of visited months (e.g., "June 2026") in a Supabase table on every login to estimate unique monthly active users (MAU).</p>
+        </div>
+
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;color:var(--text)">
+          <strong style="color:var(--red)">We NEVER collect your password, phone number, or any other private credentials.</strong> All authentication happens locally and securely in memory with Narayana servers.
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <strong style="color:var(--text)">Disclaimer / Affiliation</strong>
+          <p style="margin-top:4px;font-size:12.5px">This website is <strong>not associated, affiliated, or officially connected</strong> with NTSC Narayana, Narayana Talent, or any of their subsidiaries or affiliates.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  wrapper.addEventListener('click', e => {
+    if (e.target === wrapper) {
+      wrapper.remove();
+    }
+  });
+  document.body.appendChild(wrapper);
+};
+
+function toggleSettingsFunctions(btn) {
+  const card = document.getElementById('settings-functions-card');
+  const button = btn || document.getElementById('settings-functions-btn');
+  if (!card) return;
+  const isHidden = card.style.display === 'none' || !card.style.display;
+  if (isHidden) {
+    card.style.display = 'block';
+    if (button) button.classList.add('active');
+    renderSettingsRecentRecordings();
+    setTimeout(() => {
+      card.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }, 60);
+  } else {
+    card.style.display = 'none';
+    if (button) button.classList.remove('active');
+  }
+}
+window.toggleSettingsFunctions = toggleSettingsFunctions;
+
+function openAttemptTestFeature(testId) {
+  if (sessionStorage.getItem('fy_reattempt_unlocked') !== 'true') {
+    const pass = prompt('Attempt Test (Reattempt Mode) is currently locked.\nEnter passcode to unlock:');
+    if (pass !== 'ntscx') {
+      if (pass !== null) alert('Incorrect passcode. Access denied.');
+      return;
+    }
+    sessionStorage.setItem('fy_reattempt_unlocked', 'true');
+  }
+  const url = testId ? `functions/attempt-test.html?id=${encodeURIComponent(testId)}` : 'functions/attempt-test.html';
+  window.open(url, '_blank');
+}
+window.openAttemptTestFeature = openAttemptTestFeature;
+
+function submitSettingsAttemptTest() {
+  const input = document.getElementById('settings-attempt-test-id-input');
+  const statusEl = document.getElementById('settings-attempt-test-status');
+  if (!input) return;
+
+  const testId = input.value.trim();
+  if (!testId || isNaN(testId)) {
+    if (statusEl) {
+      statusEl.textContent = 'Please enter a valid numeric Test ID.';
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(239, 68, 68, 0.15)';
+      statusEl.style.color = '#ef4444';
+      statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    }
+    return;
+  }
+
+  if (statusEl) statusEl.style.display = 'none';
+  openAttemptTestFeature(testId);
+}
+window.submitSettingsAttemptTest = submitSettingsAttemptTest;
+
+// ==========================================
+// WATCH RECORDING FUNCTION & PLAYER MODAL
+// ==========================================
+let currentPlayingVideoId = null;
+let currentPlayingVideoUrl = null;
+
+function getRecordingHistory() {
+  try {
+    const raw = localStorage.getItem('fy_recent_recordings');
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveRecordingToHistory(id) {
+  if (!id) return;
+  try {
+    const cleanId = String(id).trim();
+    let history = getRecordingHistory();
+    history = [cleanId, ...history.filter(item => String(item) !== cleanId)].slice(0, 8);
+    localStorage.setItem('fy_recent_recordings', JSON.stringify(history));
+    renderSettingsRecentRecordings();
+  } catch (_) {}
+}
+
+function renderSettingsRecentRecordings() {
+  const row = document.getElementById('settings-recent-recordings-row');
+  const list = document.getElementById('settings-recent-recordings-list');
+  if (!row || !list) return;
+
+  const history = getRecordingHistory();
+  if (!history || history.length === 0) {
+    row.style.display = 'none';
+    return;
+  }
+
+  row.style.display = 'flex';
+  list.innerHTML = history.map(id => `
+    <button class="recent-id-chip" type="button" onclick="startWatchRecording('${escapeHtml(id)}')">
+      #${escapeHtml(id)}
+    </button>
+  `).join('');
+}
+
+function submitSettingsWatchRecording() {
+  const input = document.getElementById('settings-recording-id-input');
+  const statusEl = document.getElementById('settings-recording-status');
+  const id = input ? input.value.trim() : '';
+
+  if (!id) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(239, 68, 68, 0.15)';
+      statusEl.style.color = 'var(--red)';
+      statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      statusEl.textContent = 'Please enter a valid Video / Class ID.';
+      setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+    }
+    return;
+  }
+
+  if (statusEl) statusEl.style.display = 'none';
+  startWatchRecording(id);
+}
+
+function openWatchRecordingModal(initialId) {
+  const modal = document.getElementById('recording-player-modal');
+  if (!modal) return;
+
+  modal.style.display = 'flex';
+  modal.style.opacity = '0';
+  requestAnimationFrame(() => {
+    modal.style.opacity = '1';
+  });
+
+  const targetId = initialId || (document.getElementById('settings-recording-id-input')?.value || '').trim();
+  if (targetId) {
+    startWatchRecording(targetId);
+  } else {
+    const video = document.getElementById('portal-recording-video');
+    const spinner = document.getElementById('player-loading-spinner');
+    const errState = document.getElementById('player-error-state');
+    const idBadge = document.getElementById('player-modal-id-badge');
+    const subTitle = document.getElementById('player-modal-subtitle');
+    const jumpInput = document.getElementById('player-quick-jump-input');
+
+    if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+    if (spinner) spinner.style.display = 'none';
+    if (errState) errState.style.display = 'none';
+    if (idBadge) idBadge.textContent = 'Enter ID';
+    if (subTitle) subTitle.textContent = 'Enter a Video / Class ID below to start playback';
+    if (jumpInput) {
+      jumpInput.focus();
+    }
+  }
+}
+
+async function startWatchRecording(videoId) {
+  const cleanId = String(videoId || '').trim();
+  if (!cleanId) return;
+
+  currentPlayingVideoId = cleanId;
+  const modal = document.getElementById('recording-player-modal');
+  const video = document.getElementById('portal-recording-video');
+  const spinner = document.getElementById('player-loading-spinner');
+  const spinnerText = document.getElementById('player-loading-text');
+  const errState = document.getElementById('player-error-state');
+  const errMsg = document.getElementById('player-error-message');
+  const idBadge = document.getElementById('player-modal-id-badge');
+  const subTitle = document.getElementById('player-modal-subtitle');
+  const copyBtn = document.getElementById('player-modal-copy-btn');
+  const newTabBtn = document.getElementById('player-modal-open-tab');
+  const downloadBtn = document.getElementById('player-modal-download-btn');
+  const settingsInput = document.getElementById('settings-recording-id-input');
+
+  if (settingsInput) settingsInput.value = cleanId;
+  if (idBadge) idBadge.textContent = `#${cleanId}`;
+  if (subTitle) subTitle.textContent = 'Connecting to Narayana LiveClass stream...';
+
+  if (copyBtn) copyBtn.style.display = 'none';
+  if (newTabBtn) newTabBtn.style.display = 'none';
+  if (downloadBtn) downloadBtn.style.display = 'none';
+
+  // Open modal if not open
+  if (modal && (modal.style.display === 'none' || !modal.style.display)) {
+    modal.style.display = 'flex';
+    modal.style.opacity = '0';
+    requestAnimationFrame(() => { modal.style.opacity = '1'; });
+  }
+
+  // Show loading, hide error
+  if (spinner) {
+    spinner.style.display = 'flex';
+    if (spinnerText) spinnerText.textContent = `Fetching recording URL for #${cleanId}...`;
+  }
+  if (errState) errState.style.display = 'none';
+  if (video) {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+
+  const token = API_CONFIG.token || sessionStorage.getItem('fy_token') || '';
+  if (!token) {
+    if (spinner) spinner.style.display = 'none';
+    if (errState) {
+      errState.style.display = 'flex';
+      if (errMsg) errMsg.textContent = 'Authentication token not found. Please log in to the portal first.';
+    }
+    return;
+  }
+
+  try {
+    const endpoint = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.recordingUrl)
+      ? API_ENDPOINTS.recordingUrl(cleanId)
+      : `https://ntsc.narayanatalent.com/classes-service/api/LiveClass/GetRecordingUrl/${encodeURIComponent(cleanId)}`;
+
+    const res = await loginProxyFetch(endpoint, {
+      method: 'GET',
+      headers: authHeaders(token)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server returned HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const json = await res.json();
+    let videoUrl = json?.data;
+    if (typeof videoUrl === 'object' && videoUrl !== null) {
+      videoUrl = videoUrl.url || videoUrl.recordingUrl || videoUrl.data;
+    }
+
+    if (!videoUrl || typeof videoUrl !== 'string' || !videoUrl.startsWith('http')) {
+      throw new Error(json?.message || 'No recording stream URL was found for this Video ID.');
+    }
+
+    currentPlayingVideoUrl = videoUrl;
+    saveRecordingToHistory(cleanId);
+
+    if (downloadBtn) {
+      downloadBtn.href = videoUrl;
+      downloadBtn.setAttribute('download', `Recording_${cleanId}.mp4`);
+      downloadBtn.style.display = 'inline-flex';
+    }
+    if (newTabBtn) {
+      newTabBtn.href = videoUrl;
+      newTabBtn.style.display = 'inline-flex';
+    }
+    if (copyBtn) {
+      copyBtn.style.display = 'inline-flex';
+    }
+
+    if (subTitle) {
+      subTitle.textContent = 'Streaming via AWS CloudFront CDN';
+    }
+
+    if (video) {
+      video.src = videoUrl;
+      video.load();
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.warn('Auto-play was prevented by browser policy:', e);
+        });
+      }
+    }
+
+    if (spinner) spinner.style.display = 'none';
+  } catch (err) {
+    console.error('Error fetching recording:', err);
+    if (spinner) spinner.style.display = 'none';
+    if (errState) {
+      errState.style.display = 'flex';
+      if (errMsg) {
+        errMsg.textContent = err.message || 'Failed to load video recording. Please verify the Video ID and try again.';
+      }
+    }
+    if (subTitle) {
+      subTitle.textContent = 'Stream unavailable';
+    }
+  }
+}
+
+function retryCurrentRecording() {
+  if (currentPlayingVideoId) {
+    startWatchRecording(currentPlayingVideoId);
+  }
+}
+
+function closeRecordingPlayerModal() {
+  const modal = document.getElementById('recording-player-modal');
+  const video = document.getElementById('portal-recording-video');
+  if (video) {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+  if (modal) {
+    modal.style.opacity = '0';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 220);
+  }
+}
+
+function copyCurrentRecordingUrl() {
+  if (!currentPlayingVideoUrl) return;
+  const copyBtn = document.getElementById('player-modal-copy-btn');
+  navigator.clipboard.writeText(currentPlayingVideoUrl).then(() => {
+    if (copyBtn) {
+      const orig = copyBtn.innerHTML;
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.innerHTML = orig; }, 2000);
+    }
+  }).catch(() => {
+    prompt('Direct Video URL:', currentPlayingVideoUrl);
+  });
+}
+
+function setRecordingPlaybackSpeed(speed, btnEl) {
+  const video = document.getElementById('portal-recording-video');
+  if (video) {
+    video.playbackRate = Number(speed) || 1;
+  }
+  document.querySelectorAll('.player-speed-btn').forEach(btn => btn.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+}
+
+function jumpToRecordingFromPlayer() {
+  const input = document.getElementById('player-quick-jump-input');
+  if (!input) return;
+  const id = input.value.trim();
+  if (id) {
+    input.value = '';
+    startWatchRecording(id);
+  }
+}
+
+function toggleRecordingPiP() {
+  const video = document.getElementById('portal-recording-video');
+  if (!video) return;
+  if (document.pictureInPictureElement) {
+    document.exitPictureInPicture().catch(() => {});
+  } else if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+    video.requestPictureInPicture().catch(() => {});
+  }
+}
+
+function toggleRecordingFullscreen() {
+  const video = document.getElementById('portal-recording-video');
+  if (!video) return;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else if (video.requestFullscreen) {
+    video.requestFullscreen().catch(() => {});
+  } else if (video.webkitRequestFullscreen) {
+    video.webkitRequestFullscreen();
+  }
+}
+
+// Global modal keyboard controls
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('recording-player-modal');
+  if (!modal || modal.style.display === 'none') return;
+
+  const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+
+  if (e.key === 'Escape') {
+    closeRecordingPlayerModal();
+    return;
+  }
+
+  if (isTyping) return;
+
+  const video = document.getElementById('portal-recording-video');
+  if (!video) return;
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    video.currentTime = Math.max(0, video.currentTime - 5);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+  } else if (e.key === 'f' || e.key === 'F') {
+    e.preventDefault();
+    toggleRecordingFullscreen();
+  }
+});
+
+window.openWatchRecordingModal = openWatchRecordingModal;
+window.closeRecordingPlayerModal = closeRecordingPlayerModal;
+window.startWatchRecording = startWatchRecording;
+window.submitSettingsWatchRecording = submitSettingsWatchRecording;
+window.retryCurrentRecording = retryCurrentRecording;
+window.copyCurrentRecordingUrl = copyCurrentRecordingUrl;
+window.setRecordingPlaybackSpeed = setRecordingPlaybackSpeed;
+window.jumpToRecordingFromPlayer = jumpToRecordingFromPlayer;
+window.toggleRecordingPiP = toggleRecordingPiP;
+window.toggleRecordingFullscreen = toggleRecordingFullscreen;
+window.renderSettingsRecentRecordings = renderSettingsRecentRecordings;
+

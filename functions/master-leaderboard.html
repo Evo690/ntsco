@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Master Leaderboard - Portal Functions</title>
+    <!-- Fonts from portal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Link portal's styles.css directly -->
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        html {
+            height: auto;
+            min-height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            height: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            font-family: var(--font, 'Outfit', -apple-system, sans-serif);
+        }
+
+        .topbar {
+            padding: 0 20px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .container {
+            max-width: 860px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 16px 60px 16px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .lookup-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .lookup-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .lookup-input {
+            flex: 1;
+            height: 44px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0 14px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .lookup-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: var(--bg4);
+        }
+
+        .recent-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .chip-label {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .test-chip {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .test-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .test-chip.active {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .rank-medal {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .rank-1 {
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            color: #1a1001;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+            color: #0f172a;
+            box-shadow: 0 0 8px rgba(148, 163, 184, 0.3);
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #fed7aa, #c2410c);
+            color: #2a0b02;
+            box-shadow: 0 0 8px rgba(194, 65, 12, 0.3);
+        }
+
+        .rank-other {
+            background: var(--bg4);
+            color: var(--text2);
+            border: 1px solid var(--border);
+        }
+
+        .lb-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            gap: 14px;
+        }
+
+        .lb-row:hover {
+            border-color: var(--border2);
+            background: var(--bg3);
+            transform: translateX(2px);
+        }
+
+        .lb-row.my-row {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.07);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        .lb-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lb-info {
+            min-width: 0;
+        }
+
+        .lb-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lb-user {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .lb-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .score-badge {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .percentile-badge {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .sub-tag {
+            font-size: 10px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text2);
+        }
+
+        .toast-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg2);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+
+        .toast-popup.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media(max-width:600px) {
+            .container {
+                padding: 14px 10px;
+            }
+            .lookup-card {
+                padding: 16px 14px;
+            }
+            .lookup-form {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .lookup-form button {
+                width: 100%;
+                height: 42px;
+            }
+            .lb-row {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+            .lb-right {
+                gap: 8px;
+            }
+            .topbar {
+                padding: 0 14px;
+            }
+        }
+    </style>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Topbar Navigation -->
+    <div class="topbar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="logo-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent); width: 32px; height: 32px; font-size: 14px;">🏆</div>
+            <div class="topbar-title">Master Leaderboard</div>
+        </div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="sync-pill" id="sync-pill">Database</div>
+            <button class="theme-mode-btn" onclick="window.close()"
+                style="margin: 0; padding: 6px 12px; font-size: 12px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- BYO Test ID Lookup Section -->
+        <div class="lookup-card">
+            <div style="font-size: 15px; font-weight: 700; color: var(--text);">
+                Bring Your Own Test ID
+            </div>
+            <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">
+                Enter any Test ID to view the full candidate leaderboard, ranks, scores, and percentiles.
+            </div>
+
+            <form class="lookup-form" id="lookup-form" onsubmit="handleLookupSubmit(event)">
+                <input type="text" id="test-id-input" class="lookup-input"
+                    placeholder="Enter Test ID (e.g. 104235)..." inputmode="numeric" required autofocus>
+                <button type="submit" class="start-btn" style="margin: 0; padding: 0 20px; font-size: 13px; height: 44px; white-space: nowrap;">
+                    View Leaderboard
+                </button>
+            </form>
+
+            <!-- Recent Test IDs Chips -->
+            <div class="recent-chips" id="recent-chips-wrap" style="display: none;">
+                <span class="chip-label">Recent IDs:</span>
+                <div id="recent-chips-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Output Section -->
+        <div id="leaderboard-section" style="display: none;">
+            <!-- Leaderboard Card -->
+            <div class="full-card">
+                <div class="card-header" style="justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <h2 class="card-title" id="lb-test-title" style="font-size: 15px;">Test Leaderboard</h2>
+                        <div id="lb-test-meta" style="font-size: 12px; color: var(--text3); margin-top: 4px;">-</div>
+                    </div>
+                    <div>
+                        <input type="text" id="candidate-filter" class="topbar-search" style="width: 170px; margin: 0;"
+                            placeholder="Filter candidates..." oninput="filterCandidateList()">
+                    </div>
+                </div>
+
+                <!-- Rows List -->
+                <div id="leaderboard-rows-list"></div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="lb-loading" style="display: none; text-align: center; color: var(--text3); font-size: 13px; padding: 50px 20px;">
+            Loading leaderboard data for Test ID...
+        </div>
+
+        <!-- Empty / Initial Placeholder -->
+        <div id="lb-initial-placeholder" class="empty" style="padding: 50px 20px;">
+            Enter any Test ID above to view its live master leaderboard.
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-popup" id="toast">Copied to clipboard!</div>
+
+    <script src="master-leaderboard.js"></script>
+</body>
+
+</html>

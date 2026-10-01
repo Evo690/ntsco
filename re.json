@@ -1,0 +1,387 @@
+[
+  {
+    "Reagent": "NaBH4",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "NaBH4",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "NaBH4",
+    "Reactant": "Acid Chloride",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "NaBH4",
+    "Reactant": "Alkene",
+    "Product": "Conjugated Ketone(5 or less Cyclic) -> Alcohol"
+  },
+  {
+    "Reagent": "NaBH4",
+    "Reactant": "Alkyl Halide",
+    "Product": "Alkanes (2°, 3°)"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Ester",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Acid Chloride",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Cyanide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Nitro Comp.",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Acid Amide",
+    "Product": "Amine (at low T -> aldehyde)"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Alkene",
+    "Product": "Alcohol (cinnamyl systems)"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Alkyne",
+    "Product": "Alcohol (cinnamyl systems)"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Alcohol",
+    "Product": "1.oxime->amine, 2.azide->amine, 3.alcohol give H2"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Carboxylic Acid",
+    "Product": "1° Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Epoxide",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LAH",
+    "Reactant": "Alkyl Halide",
+    "Product": "Alkanes (1°, 2°), Alkene (3°)"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Cyanide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Acid Amide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Alkene",
+    "Product": "Trialkyl borane"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Carboxylic Acid",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "B2H6, THF",
+    "Reactant": "Epoxide",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "B2H6, AcOH",
+    "Reactant": "Alkene",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "B2H6, AcOH",
+    "Reactant": "Alkyne",
+    "Product": "Cis-alkene"
+  },
+  {
+    "Reagent": "(n-Bu)3SnH",
+    "Reactant": "Acid Chloride",
+    "Product": "Aldehyde"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Ester",
+    "Product": "Aldehyde"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Acid Chloride",
+    "Product": "Aldehyde"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Cyanide",
+    "Product": "Aldehyde"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Acid Amide",
+    "Product": "Amine; Aldehyde at low T"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Alkyne",
+    "Product": "cis-Alkene / Alkane"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Carboxylic Acid",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "DIBAL-H",
+    "Reactant": "Epoxide",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "Wolf - K",
+    "Reactant": "Aldehyde",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Wolf - K",
+    "Reactant": "Ketone",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "CLEMMENSEN",
+    "Reactant": "Aldehyde",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "CLEMMENSEN",
+    "Reactant": "Ketone",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Ester",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Acid Chloride",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Cyanide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Nitro Comp.",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Acid Amide",
+    "Product": "Amine @High T"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Alkene",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Alkyne",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "H2/Pd",
+    "Reactant": "Epoxide",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "LINDLAR",
+    "Reactant": "Acid Chloride",
+    "Product": "Aldehyde"
+  },
+  {
+    "Reagent": "LINDLAR",
+    "Reactant": "Cyanide",
+    "Product": "Imine (100% Cis)"
+  },
+  {
+    "Reagent": "LINDLAR",
+    "Reactant": "Alkyne",
+    "Product": "Cis-Alkene"
+  },
+  {
+    "Reagent": "Na in liq NH3 Birch reduction",
+    "Reactant": "Alkyne",
+    "Product": "trans-alkene"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Aldehyde",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Ketone",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Ester",
+    "Product": "Alcohol Bouveault-Blanc"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Acid Chloride",
+    "Product": "Alcohol"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Cyanide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Acid Amide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "Na/EtOH",
+    "Reactant": "Alkyl Halide",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Aldehyde",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Ketone",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Ester",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Acid Chloride",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Cyanide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Nitro Comp.",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Acid Amide",
+    "Product": "Amine"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Alkene",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Alkyne",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Alcohol",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Carboxylic Acid",
+    "Product": "X(<1%)"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Epoxide",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Red P/HI",
+    "Reactant": "Alkyl Halide",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Wilkinson",
+    "Reactant": "Alkene",
+    "Product": "Alkane"
+  },
+  {
+    "Reagent": "Wilkinson",
+    "Reactant": "Alkyne",
+    "Product": "Alkane"
+  }
+]

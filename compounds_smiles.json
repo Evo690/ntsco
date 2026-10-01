@@ -1,0 +1,1499 @@
+[
+  {
+    "name": "Toluene",
+    "smiles": "CC1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "o-Xylene",
+    "smiles": "CC1=CC=CC=C1C",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "m-Xylene",
+    "smiles": "CC1=CC(=CC=C1)C",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "p-Xylene",
+    "smiles": "CC1=CC=C(C=C1)C",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Styrene",
+    "smiles": "C=CC1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Cumene",
+    "smiles": "CC(C)C1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Mesitylene",
+    "smiles": "CC1=CC(=CC(=C1)C)C",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Naphthalene",
+    "smiles": "C1=CC=C2C=CC=CC2=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Anthracene",
+    "smiles": "C1=CC=C2C=C3C=CC=CC3=CC2=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phenanthrene",
+    "smiles": "C1=CC=C2C(=C1)C=CC3=CC=CC=C32",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Pyrene",
+    "smiles": "C1=CC2=C3C(=C1)C=CC4=CC=CC(=C43)C=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Carbolic acid (Phenol)",
+    "smiles": "C1=CC=C(C=C1)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "o-Cresol",
+    "smiles": "CC1=CC=CC=C1O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "m-Cresol",
+    "smiles": "CC1=CC(=CC=C1)O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "p-Cresol",
+    "smiles": "CC1=CC=C(C=C1)O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Catechol",
+    "smiles": "C1=CC=C(C(=C1)O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Resorcinol",
+    "smiles": "C1=CC(=CC(=C1)O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Quinol (Hydroquinone)",
+    "smiles": "C1=CC(=CC=C1O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "α-Naphthol",
+    "smiles": "C1=CC=C2C(=C1)C=CC=C2O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "β-Naphthol",
+    "smiles": "C1=CC=C2C=C(C=CC2=C1)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzaldehyde (Oil of bitter almonds)",
+    "smiles": "C1=CC=C(C=C1)C=O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Salicylaldehyde",
+    "smiles": "C1=CC=C(C(=C1)C=O)O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Acetophenone",
+    "smiles": "CC(=O)C1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzophenone",
+    "smiles": "C1=CC=C(C=C1)C(=O)C2=CC=CC=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Aceto acetic ester (AAE)",
+    "smiles": "CCOC(=O)CC(=O)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Cinnamic acid",
+    "smiles": "C1=CC=C(C=C1)/C=C/C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Aspirin",
+    "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phthalic acid",
+    "smiles": "C1=CC=C(C(=C1)C(=O)O)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Terephthalic acid",
+    "smiles": "C1=CC(=CC=C1C(=O)O)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Salicylic acid",
+    "smiles": "C1=CC=C(C(=C1)C(=O)O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Anisole",
+    "smiles": "COC1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phenetole",
+    "smiles": "CCOC1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Nitrobenzene (Oil of mirbane)",
+    "smiles": "C1=CC=C(C=C1)[N+](=O)[O-]",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Picric acid",
+    "smiles": "C1=C(C=C(C(=C1[N+](=O)[O-])O)[N+](=O)[O-])[N+](=O)[O-]",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "TNT",
+    "smiles": "CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Aniline",
+    "smiles": "C1=CC=C(C=C1)N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "o-Toluidine",
+    "smiles": "CC1=CC=CC=C1N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "m-Toluidine",
+    "smiles": "CC1=CC(=CC=C1)N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "p-Toluidine",
+    "smiles": "CC1=CC=C(C=C1)N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzylamine",
+    "smiles": "C1=CC=C(C=C1)CN",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Acetanilide",
+    "smiles": "CC(=O)NC1=CC=CC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Methyl salicylate (Oil of wintergreen)",
+    "smiles": "COC(=O)C1=CC=CC=C1O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Diazobenzene",
+    "smiles": "C1=CC=C(C=C1)[N+]#N.[Cl-]",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Glycol (Ethylene Glycol)",
+    "smiles": "C(CO)O",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Glycerol",
+    "smiles": "C(C(CO)O)O",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Acrolein",
+    "smiles": "C=CC=O",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Crotonaldehyde",
+    "smiles": "C/C=C/C=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Oxalic acid",
+    "smiles": "C(=O)(C(=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Malonic acid",
+    "smiles": "C(C(=O)O)C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Succinic acid",
+    "smiles": "C(CC(=O)O)C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Glutaric acid",
+    "smiles": "C(CC(=O)O)CC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Adipic acid",
+    "smiles": "C(CCC(=O)O)CC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Pimelic acid",
+    "smiles": "C(CCC(=O)O)CCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Suberic acid",
+    "smiles": "C(CCCC(=O)O)CCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Lactic acid",
+    "smiles": "CC(C(=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Tartaric acid",
+    "smiles": "[C@@H]([C@H](C(=O)O)O)(C(=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Pyruvic acid",
+    "smiles": "CC(=O)C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Citric acid",
+    "smiles": "C(C(=O)O)C(CC(=O)O)(C(=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Malic acid",
+    "smiles": "C(C(C(=O)O)O)C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Maleic acid",
+    "smiles": "C(=C\\C(=O)O)\\C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Fumaric acid",
+    "smiles": "C(=C/C(=O)O)\\C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Pivaldehyde",
+    "smiles": "CC(C)(C)C=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Westron",
+    "smiles": "C(C(Cl)Cl)(Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Westrosol (Triclean)",
+    "smiles": "C(=C(Cl)Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Lewisite",
+    "smiles": "C(=C[As](Cl)Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Mustard gas",
+    "smiles": "C(CCl)SCCCl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Gammexane / Lindane",
+    "smiles": "C1(C(C(C(C(C1Cl)Cl)Cl)Cl)Cl)Cl",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Phosgene",
+    "smiles": "C(=O)(Cl)Cl",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Semicarbazide",
+    "smiles": "C(=O)(N)NN",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Pyrogallol",
+    "smiles": "C1=CC(=C(C(=C1)O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Methyl Isocyanate (MIC)",
+    "smiles": "CN=C=O",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Chloretone",
+    "smiles": "CC(C)(C(Cl)(Cl)Cl)O",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Salol",
+    "smiles": "C1=CC=C(C=C1)OC(=O)C2=CC=CC=C2O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Isophthalic acid",
+    "smiles": "C1=CC(=CC(=C1)C(=O)O)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Quinoline",
+    "smiles": "C1=CC=C2C(=C1)C=CC=N2",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Isoquinoline",
+    "smiles": "C1=CC=C2C=NC=CC2=C1",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Pyrrole",
+    "smiles": "C1=CNC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Pyridine",
+    "smiles": "C1=CC=NC=C1",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Imidazole",
+    "smiles": "C1=CN=CN1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "p-Benzoquinone",
+    "smiles": "C1=CC(=O)C=CC1=O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Squaric acid",
+    "smiles": "C1(=C(C(=O)C1=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Furan",
+    "smiles": "C1=COC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Tetrahydrofuran (THF)",
+    "smiles": "C1CCOC1",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Thiophene",
+    "smiles": "C1=CSC=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Chloroform",
+    "smiles": "C(Cl)(Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Vanillin",
+    "smiles": "COC1=C(C=CC(=C1)C=O)O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Hinsberg's reagent",
+    "smiles": "C1=CC=C(C=C1)S(=O)(=O)Cl",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Gluconic acid",
+    "smiles": "C([C@H]([C@H]([C@@H]([C@H](C(=O)O)O)O)O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Saccharic acid",
+    "smiles": "[C@H]([C@@H]([C@@H](C(=O)O)O)O)([C@H](C(=O)O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Glycine",
+    "smiles": "C(C(=O)O)N",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Alanine",
+    "smiles": "C[C@@H](C(=O)O)N",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Ascorbic acid (Vitamin C)",
+    "smiles": "C([C@@H]([C@@H]1C(=C(C(=O)O1)O)O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Brady's reagent (2,4-DNP)",
+    "smiles": "C1=CC(=C(C=C1[N+](=O)[O-])[N+](=O)[O-])NN",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Azulene",
+    "smiles": "C1=CC=C2C=CC=C2C=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Truxillic acid",
+    "smiles": "C1=CC=C(C=C1)C2C(C(C2C(=O)O)C3=CC=CC=C3)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Truxinic acid",
+    "smiles": "C1=CC=C(C=C1)C2C(C(C2C(=O)O)C(=O)O)C3=CC=CC=C3",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Isopentane",
+    "smiles": "CCC(C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Isooctane",
+    "smiles": "CC(C)CC(C)(C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Neopentane",
+    "smiles": "CC(C)(C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Allene",
+    "smiles": "C=C=C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Ethylidene Chloride",
+    "smiles": "CC(Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Ethylene Dichloride",
+    "smiles": "C(CCl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Allyl alcohol",
+    "smiles": "C=CCO",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Vinyl alcohol",
+    "smiles": "C=CO",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Glyoxal",
+    "smiles": "C(=O)C=O",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Glyceraldehyde",
+    "smiles": "C(C(C=O)O)O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Acetone",
+    "smiles": "CC(=O)C",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Glycolic acid",
+    "smiles": "C(C(=O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Urea",
+    "smiles": "C(=O)(N)N",
+    "tags": [
+      "amine"
+    ]
+  },
+  {
+    "name": "Acrylonitrile (Vinyl Cyanide)",
+    "smiles": "C=CC#N",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Guanidine",
+    "smiles": "C(=N)(N)N",
+    "tags": [
+      "amine"
+    ]
+  },
+  {
+    "name": "Indole",
+    "smiles": "C1=CC=C2C(=C1)C=CN2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Sulphanilic acid",
+    "smiles": "C1=CC(=CC=C1N)S(=O)(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Orthanilic acid",
+    "smiles": "C1=CC=C(C(=C1)N)S(=O)(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Perbenzoic acid",
+    "smiles": "C1=CC=C(C=C1)C(=O)OO",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "o-Toluic acid",
+    "smiles": "CC1=CC=CC=C1C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "m-Toluic acid",
+    "smiles": "CC1=CC(=CC=C1)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "p-Toluic acid",
+    "smiles": "CC1=CC=C(C=C1)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Anthranilic acid",
+    "smiles": "C1=CC=C(C(=C1)C(=O)O)N",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Pyrrolidine",
+    "smiles": "C1CCNC1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Piperidine",
+    "smiles": "C1CCNCC1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Oxirane / Ethylene Oxide",
+    "smiles": "C1CO1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Quinuclidine",
+    "smiles": "C1CN2CCC1CC2",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Phthalimide",
+    "smiles": "C1=CC=C2C(=C1)C(=O)NC2=O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Cinnamaldehyde",
+    "smiles": "C1=CC=C(C=C1)/C=C/C=O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phthalic anhydride",
+    "smiles": "C1=CC=C2C(=C1)C(=O)OC2=O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "N-Bromosuccinimide (NBS)",
+    "smiles": "C1CC(=O)N(C1=O)Br",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Dimethyl sulphide",
+    "smiles": "CSC",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "DMSO",
+    "smiles": "CS(=O)C",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "HMPA",
+    "smiles": "CN(C)P(=O)(N(C)C)N(C)C",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "DMF",
+    "smiles": "CN(C)C=O",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "18-Crown-6",
+    "smiles": "C1COCCOCCOCCOCCOCCO1",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Triptane",
+    "smiles": "CC(C)C(C)(C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "α-Butylene (1-butene)",
+    "smiles": "CCC=C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "β-Butylene (2-butene)",
+    "smiles": "C/C=C/C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Isobutylene",
+    "smiles": "CC(=C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Isoprene",
+    "smiles": "CC(=C)C=C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Vinyl acetylene",
+    "smiles": "C=CC#C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Allylene (Propyne)",
+    "smiles": "CC#C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Chloropicrin",
+    "smiles": "C([N+](=O)[O-])(Cl)(Cl)Cl",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Chloroprene",
+    "smiles": "C=CC(=C)Cl",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Propargyl Alcohol",
+    "smiles": "C#CCO",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Pinacol",
+    "smiles": "CC(C)(C(C)(C)O)O",
+    "tags": [
+      "alcohol"
+    ]
+  },
+  {
+    "name": "Methylal",
+    "smiles": "COCOC",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Glyoxylic acid",
+    "smiles": "C(=O)C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Isobutyraldehyde",
+    "smiles": "CC(C)C=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Diacetyl (Dimethyl glyoxal)",
+    "smiles": "CC(=O)C(=O)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Pyruvaldehyde (Methyl glyoxal)",
+    "smiles": "CC(=O)C=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Phorone",
+    "smiles": "CC(=CC(=O)C=C(C)C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Mesityl oxide",
+    "smiles": "CC(=CC(=O)C)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Ketene",
+    "smiles": "C=C=O",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Valeric acid",
+    "smiles": "CCCCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Caproic acid",
+    "smiles": "CCCCCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Acrylic acid",
+    "smiles": "C=CC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Carbonic acid",
+    "smiles": "C(=O)(O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Crotonic acid",
+    "smiles": "C/C=C/C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Mandelic acid",
+    "smiles": "C1=CC=C(C=C1)C(C(=O)O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Carbamic acid",
+    "smiles": "C(=O)(N)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Oxalyl chloride",
+    "smiles": "C(=O)(C(=O)Cl)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Formonitrile (HCN)",
+    "smiles": "C#N",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Acetonitrile",
+    "smiles": "CC#N",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Furfural",
+    "smiles": "C1=COC(=C1)C=O",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Coumarin",
+    "smiles": "C1=CC=C2C(=C1)C=CC(=O)O2",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Michler's Ketone",
+    "smiles": "CN(C)C1=CC=C(C=C1)C(=O)C2=CC=C(C=C2)N(C)C",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phenolphthalein",
+    "smiles": "C1=CC=C2C(=C1)C(=O)OC2(C3=CC=C(C=C3)O)C4=CC=C(C=C4)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Tropone",
+    "smiles": "C1=CC=CC(=O)C=C1",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Tropolone",
+    "smiles": "C1=CC=C(C(=O)C=C1)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "DDT",
+    "smiles": "C1=CC(=CC=C1C(C2=CC=C(C=C2)Cl)C(Cl)(Cl)Cl)Cl",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzidine",
+    "smiles": "C1=CC(=CC=C1C2=CC=C(C=C2)N)N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Hydrazobenzene",
+    "smiles": "C1=CC=C(C=C1)NNC2=CC=CC=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Phloroglucinol",
+    "smiles": "C1=C(C=C(C=C1O)O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Benzamide",
+    "smiles": "C1=CC=C(C=C1)C(=O)N",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzoic anhydride",
+    "smiles": "C1=CC=C(C=C1)C(=O)OC(=O)C2=CC=CC=C2",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzoyl peroxide",
+    "smiles": "C1=CC=C(C=C1)C(=O)OOC(=O)C2=CC=CC=C2",
+    "tags": [
+      "acid",
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Saccharin",
+    "smiles": "C1=CC=C2C(=C1)C(=O)NS2(=O)=O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Stilbene",
+    "smiles": "C1=CC=C(C=C1)C=CC2=CC=CC=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzoin",
+    "smiles": "C1=CC=C(C=C1)C(C(=O)C2=CC=CC=C2)O",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzil",
+    "smiles": "C1=CC=C(C=C1)C(=O)C(=O)C2=CC=CC=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Benzilic acid",
+    "smiles": "C1=CC=C(C=C1)C(C2=CC=CC=C2)(C(=O)O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Morpholine",
+    "smiles": "C1COCCN1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Aziridine",
+    "smiles": "C1CN1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Hexamethylenetetramine (Urotropine)",
+    "smiles": "C1N2CN3CN1CN(C2)C3",
+    "tags": [
+      "amine"
+    ]
+  },
+  {
+    "name": "LAH (LiAlH4)",
+    "smiles": "[Li+].[AlH4-]",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "NaBH4 (Sodium Borohydride)",
+    "smiles": "[BH4-].[Na+]",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Baeyer's reagent (KMnO4)",
+    "smiles": "[O-][Mn](=O)(=O)=O.[K+]",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Tosylate (Ts)",
+    "smiles": "CC1=CC=C(C=C1)S(=O)(=O)Cl",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Mesylate (Ms)",
+    "smiles": "CS(=O)(=O)Cl",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Triflate (Tf)",
+    "smiles": "C(F)(F)(F)S(=O)(=O)OS(=O)(=O)C(F)(F)F",
+    "tags": [
+      "acid",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Benzene diazonium chloride",
+    "smiles": "C1=CC=C(C=C1)[N+]#N.[Cl-]",
+    "tags": [
+      "aromatic",
+      "reagent"
+    ]
+  },
+  {
+    "name": "Azobenzene",
+    "smiles": "C1=CC=C(C=C1)N=NC2=CC=CC=C2",
+    "tags": [
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Oxetane",
+    "smiles": "C1COC1",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Acetic acid",
+    "smiles": "CC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Formic acid",
+    "smiles": "C(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Benzoic acid",
+    "smiles": "C1=CC=C(C=C1)C(=O)O",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Acetaldehyde",
+    "smiles": "CC=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Formaldehyde",
+    "smiles": "C=O",
+    "tags": [
+      "carbonyl"
+    ]
+  },
+  {
+    "name": "Diethyl ether",
+    "smiles": "CCOCC",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Grignard reagent (RMgBr)",
+    "smiles": "[CH3-].[Mg+2].[Br-]",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Orange II",
+    "smiles": "C1=CC=C2C(=C1)C=CC(=C2N=NC3=CC=C(C=C3)S(=O)(=O)[O-])O.[Na+]",
+    "tags": [
+      "acid",
+      "aromatic"
+    ]
+  },
+  {
+    "name": "Gilman's reagent",
+    "smiles": "[Li+].[CH3-].[CH3-].[Cu+]",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Tetraethyl lead (TEL)",
+    "smiles": "CC[Pb](CC)(CC)CC",
+    "tags": [
+      "reagent"
+    ]
+  },
+  {
+    "name": "Ammonium carbamate",
+    "smiles": "C(=O)(N)[O-].[NH4+]",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Dimethylglyoxime",
+    "smiles": "CC(=NO)C(=NO)C",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Propionic acid",
+    "smiles": "CCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Butyric acid",
+    "smiles": "CCCC(=O)O",
+    "tags": [
+      "acid"
+    ]
+  },
+  {
+    "name": "Acetamide",
+    "smiles": "CC(=O)N",
+    "tags": [
+      "organic"
+    ]
+  },
+  {
+    "name": "Dimethylamine",
+    "smiles": "CNC",
+    "tags": [
+      "amine"
+    ]
+  },
+  {
+    "name": "Ethylamine",
+    "smiles": "CCN",
+    "tags": [
+      "amine"
+    ]
+  }
+]
