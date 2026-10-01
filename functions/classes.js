@@ -52,7 +52,7 @@ function applyUserTheme() {
   const presetKey = cleanId ? `fy_theme_preset_${cleanId}` : 'fy_theme_preset';
   const mode = localStorage.getItem(modeKey);
   const preset = localStorage.getItem(presetKey);
-  if (mode === 'light') {
+  if (mode !== 'dark') {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');
@@ -268,7 +268,7 @@ function renderBatchesList(batches) {
     const count = b.classes.length;
     const yearLabel = b.academicYear ? `Year ${b.academicYear}` : '';
     return `
-      <button class="batch-item-btn ${isSelected ? 'active' : ''}" id="batch-btn-${escapeHtml(b.name)}" onclick="selectBatch('${escapeHtml(b.name)}')">
+      <button class="batch-item-btn ${isSelected ? 'active' : ''}" id="batch-btn-${escapeHtml(b.name)}" onclick="selectBatch(${escapeHtml(JSON.stringify(b.name))})">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div style="font-weight:600; color:var(--text); font-size:13px;">${escapeHtml(b.name)}</div>
           <span style="font-size:11px; font-weight:700; color:var(--accent);">${count}</span>
@@ -391,57 +391,7 @@ function renderClassesGrid(classes) {
     const timingFormatted = formatClassTiming(c.startDateTime, c.duration);
     const badgeHtml = getSubjectBadgeHtml(c.subject);
 
-    return `
-      <div class="class-card">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          ${badgeHtml}
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <button class="theme-mode-btn" onclick="watchRecording(${c.id})" title="Watch lecture recording" style="margin: 0; padding: 2px 8px; font-size: 11px; height: 24px; display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.12); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              Watch
-            </button>
-            <span class="id-badge" onclick="copyClassId(${c.id})" title="Click to copy Class ID">
-              ID: ${c.id}
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </span>
-          </div>
-        </div>
-
-        <div style="font-weight: 600; color: var(--text); font-size: 13.5px; line-height: 1.4;">
-          ${escapeHtml(c.courseName || c.name || 'Recorded Class')}
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text2); margin-top: 2px; border-top: 1px solid var(--border); padding-top: 8px;">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text3); flex-shrink: 0;">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span style="font-weight: 500;">${dateFormatted}</span>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text3); flex-shrink: 0;">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <span>${timingFormatted}</span>
-          </div>
-
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--text3);">
-            <span>Type: ${escapeHtml(c.liveClassType || 'Regular')}</span>
-            <span>Batch: <strong style="color: var(--text);">${escapeHtml(c.name || c.batchCode)}</strong></span>
-          </div>
-        </div>
-      </div>
-    `;
+    return `<article class="class-card recording-card"><div class="recording-cover"><span>${escapeHtml(c.subject || 'Class recording')}</span><i aria-hidden="true">▷</i>${Number(c.duration)>0 ? `<small>${escapeHtml(c.duration)} min</small>`:''}</div><div class="recording-card-body"><h3>${escapeHtml(c.courseName || c.name || 'Recorded class')}</h3><p>${escapeHtml(dateFormatted)}<br>${escapeHtml(timingFormatted)}</p><div class="recording-card-meta"><span>${escapeHtml(c.liveClassType || 'Regular')}</span><span>${escapeHtml(c.name || c.batchCode || '')}</span></div><footer><button class="theme-mode-btn active" onclick="watchRecording(${Number(c.id)})">Watch ↗</button><button class="recording-copy" onclick="copyClassId(${Number(c.id)})" title="Copy class ID">ID ${escapeHtml(c.id)} ⧉</button></footer></div></article>`;
   }).join('');
 }
 

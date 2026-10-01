@@ -47,7 +47,7 @@ function applyUserTheme() {
   const presetKey = cleanId ? `fy_theme_preset_${cleanId}` : 'fy_theme_preset';
   const mode = localStorage.getItem(modeKey);
   const preset = localStorage.getItem(presetKey);
-  if (mode === 'light') {
+  if (mode !== 'dark') {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');

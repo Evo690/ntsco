@@ -79,7 +79,7 @@ function applyUserTheme() {
   const mode = localStorage.getItem(modeKey);
   const preset = localStorage.getItem(presetKey);
 
-  if (mode === 'light') {
+  if (mode !== 'dark') {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');
@@ -676,18 +676,9 @@ function renderSchedulesList(schedules) {
     const isOff = mode.toLowerCase().includes('off');
     const dateFormatted = formatDateOnly(s.dateTime);
 
-    return `
-      <div class="sched-item-btn ${isSelected ? 'active' : ''}" id="sched-card-${s.id}" onclick="selectSchedule('${s.id}')">
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-          <div class="sched-item-name">${escapeHtml(s.name)}</div>
-          <span class="mode-pill ${isOff ? 'offline' : 'online'}">${escapeHtml(mode.toUpperCase())}</span>
-        </div>
-        <div class="sched-item-sub">
-          <span>📅 ${escapeHtml(dateFormatted)}</span>
-          <span style="font-family:'Space Mono',monospace;">#${s.id}</span>
-        </div>
-      </div>
-    `;
+    const date = new Date(s.dateTime);
+    const validDate = !Number.isNaN(date.getTime());
+    return `<button type="button" class="sched-item-btn exam-schedule-card ${isSelected ? 'active' : ''}" id="sched-card-${escapeHtml(s.id)}" onclick="selectSchedule(${escapeHtml(JSON.stringify(String(s.id)))})"><span class="exam-schedule-date"><small>${validDate ? date.toLocaleDateString('en',{month:'short'}) : 'Date'}</small><strong>${validDate ? date.getDate() : '—'}</strong><small>${validDate ? date.toLocaleDateString('en',{weekday:'short'}) : 'TBA'}</small></span><span class="exam-schedule-copy"><strong class="sched-item-name">${escapeHtml(s.name)}</strong><span>${escapeHtml(dateFormatted)} · ${escapeHtml(mode)}</span><small>ID ${escapeHtml(s.id)}</small></span><span aria-hidden="true">↗</span></button>`;
   }).join('');
 }
 
@@ -740,9 +731,9 @@ function selectSchedule(schedId) {
   const durationEl = document.getElementById('detail-duration');
 
   if (dateEl) dateEl.textContent = formatFullDateTime(schedule.dateTime);
-  if (venueEl) venueEl.textContent = schedule.venue || 'Campus Examination Hall';
-  if (coursesEl) coursesEl.textContent = schedule.courses || 'Target Batches & Enrolled Students';
-  if (durationEl) durationEl.textContent = `${schedule.duration || '3 Hours (180 mins)'} · ${mode}`;
+  if (venueEl) venueEl.textContent = schedule.venue || 'Venue not provided';
+  if (coursesEl) coursesEl.textContent = schedule.courses || 'Batches not provided';
+  if (durationEl) durationEl.textContent = `${schedule.duration || 'Duration not provided'} · ${mode}`;
 
   renderSyllabus(schedule);
 }
@@ -788,7 +779,7 @@ function renderSyllabus(schedule) {
   if (!hasContent) {
     html = `
       <div style="background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; text-align: center; color: var(--text3); font-size: 13px;">
-        Standard full course curriculum applies for this examination.
+        No syllabus has been provided for this examination.
       </div>
     `;
   }
