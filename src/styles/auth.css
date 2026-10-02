@@ -147,6 +147,7 @@ body #login-screen {
   z-index: 0;
 }
 body #login-screen .login-card {
+  margin: 0;
   position: relative;
   z-index: 1;
   border: 1px solid #e7e1dd;

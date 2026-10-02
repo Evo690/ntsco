@@ -27,7 +27,8 @@ test('source manifest is unique, ordered and exactly reproduces deployable bundl
 test('complete stylesheet is bundled in order, without fragile nested imports', async () => {
   const css = await text('styles.css');
   const paths = JSON.parse(await text('src/styles/manifest.json'));
-  assert.equal(paths.length, 8);
+  assert.equal(paths.length, 9);
+  assert.equal(paths.at(-1), "mobile.css");
   assert.equal(paths.length, new Set(paths).size);
   assert.equal(css, await bundleStyles());
   assert.doesNotMatch(css, /@import\b/);

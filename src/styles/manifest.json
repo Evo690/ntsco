@@ -6,5 +6,6 @@
   "auth.css",
   "modules.css",
   "priority-pages.css",
-  "detail-pages.css"
+  "detail-pages.css",
+  "mobile.css"
 ]

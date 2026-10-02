@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#f6f3ef" />
     <meta
       name="description"
@@ -105,7 +105,7 @@
 })();</script>
 <!-- appearance-boot:end -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-    <link rel="stylesheet" href="styles.css?v=6440e9bd3a2e" />
+    <link rel="stylesheet" href="styles.css?v=269195d00019" />
   </head>
 
   <body class="portal-workspace studio-ui light-mode">
@@ -127,8 +127,7 @@
       <div class="auth-layout">
         <section class="auth-intro">
           <span class="eyebrow">A PLACE FOR YOUR STUDY DAY</span>
-          <h1>Classes, notes,<br /> and everything<br /> <em>in between.</em></h1>
-          <p>Your usual account. A more comfortable place for it.</p>
+          <h1><span class="auth-desktop-title">Classes, notes,<br /> and everything<br /> <em>in between.</em></span></h1>
           <div class="auth-paper-stack" aria-hidden="true">
             <div class="paper-sheet paper-back">
               <span>THE WEEK AHEAD</span>
@@ -154,6 +153,12 @@
               <span class="eyebrow">RIGHT WHERE YOU LEFT OFF</span>
               <h2 class="login-title">Welcome back.</h2>
               <p>Sign in with your student account.</p>
+              <svg class="auth-pocket-mark" viewBox="0 0 52 52" fill="none" aria-hidden="true" focusable="false">
+                <rect x="7" y="9" width="30" height="36" rx="6" transform="rotate(-12 7 9)" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-opacity=".5"/>
+                <rect x="16" y="9" width="30" height="36" rx="6" transform="rotate(9 16 9)" class="auth-mark-paper" stroke="currentColor"/>
+                <path d="m29 16-2 17m-7-10 16 3m-13-8 9 13m-12-1 15-10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="m22 38 10 2" stroke="currentColor" stroke-opacity=".5" stroke-linecap="round"/>
+              </svg>
             </div>
             <div
               class="login-error"
@@ -169,6 +174,9 @@
                 placeholder="Your mobile number or username"
                 required=""
                 autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                enterkeyhint="next"
               />
             </div>
             <div class="auth-field">
@@ -181,6 +189,7 @@
                   placeholder="Your password"
                   required=""
                   autocomplete="current-password"
+                  enterkeyhint="go"
                 /><button
                   type="button"
                   id="password-toggle"
@@ -188,7 +197,7 @@
                   aria-label="Show password"
                   aria-pressed="false"
                 >
-                  ◉
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="password-eye-slash" d="m4 4 16 16"/></svg>
                 </button>
               </div>
             </div>

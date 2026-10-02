@@ -55,7 +55,7 @@ The standalone **Master Leaderboard has been removed**. Ordinary result leaderbo
 
 This is a feature-organized source architecture, **not an ES-module runtime rewrite**. Classic-script scope and initialization order intentionally preserve the globals used by the portal, dynamically generated markup, standalone functions, and scraper. Edit `src/`, not the generated `main.js` or `styles.css`. The checked-in bundle supports static hosting without a deployment build service.
 
-Legacy feature styles load first. The shared design system owns new presentation: `tokens.css`, `workspace.css`, `auth.css`, `modules.css`, `priority-pages.css`, `detail-pages.css`, and `workbench.css`. Function-specific structural compatibility styles live in `src/styles/tools/`. Local Space Grotesk and DM Sans are the primary UI fonts.
+Legacy feature styles load first. The shared design system owns new presentation: `tokens.css`, `workspace.css`, `auth.css`, `modules.css`, `priority-pages.css`, `detail-pages.css`, `mobile.css`, and `workbench.css`. Function-specific structural compatibility styles live in `src/styles/tools/`. Local Space Grotesk and DM Sans are the primary UI fonts.
 
 `src/app/workspace.js` handles password visibility, session/date presentation, drawer focus/inert state, utility filtering, and deep links. `src/app/workbench.js` handles shared function navigation, accessible controls, theme switching, the detail sheet, and download-step presentation. Neither introduces new API calls.
 
@@ -100,3 +100,9 @@ Run `npm run build` and deploy the static repository, including `src/styles/`, `
 The login sun/moon control uses the same appearance controller as Settings and works while the main app is still loading. Existing per-account preferences take precedence, with appearance-only `fy_appearance_mode` / `fy_appearance_preset` keys retaining the last explicit choice on the signed-out screen. Light remains the default. Storage access failures fall back safely within this small bootstrap. The login has dedicated night surfaces, inputs, focus/error/autofill states, and mobile layouts; sign-in and server verification are unchanged.
 
 Regression coverage includes a stalled app bundle with first-frame sampling, theme persistence/account precedence, keyboard activation, unchanged input values, and dark login error/privacy flows at phone and desktop widths.
+
+### Phone layout refinements
+
+`src/styles/mobile.css` is the final shared stylesheet layer (nine sources total). The login goes directly from the header to a centered form on phones with the sign-in action above the fold on small phones, larger input text, a password-visibility icon, and keyboard hints. The mobile shell includes larger touch targets, safe-area padding, readable schedule/calendar/result text, and native bottom-sheet details with a sticky close header. Desktop layout and authentication flows are preserved. The viewport supports safe-area insets and content resizing for the on-screen keyboard where supported.
+
+The phone login adds a pocket-notebook treatment (paper-edge shadow, ruled separators and a small decorative card motif) in both themes. All decoration is CSS/inline SVG, hidden from assistive technology and non-interactive. The existing one-step form, autofill attributes and full-width submit target remain; short-height layouts leave room below Sign in without an entrance animation or added screen.
