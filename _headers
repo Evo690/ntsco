@@ -1,0 +1,4 @@
+# Revalidate HTML and ES-module dependencies across UI deployments.
+# CSS/classic-script entry URLs are also content-versioned by the build.
+/*
+  Cache-Control: no-cache
