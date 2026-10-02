@@ -1,0 +1,75 @@
+@media (max-width: 1150px) {
+  .tool-tabs { padding: 0 20px; }.tool-tabs a { padding: 0 12px; font-size: 9px; }
+  .tool-io { display: none; }
+  body.tool-page .app-full.tool-workbench { grid-template-columns: minmax(0,1fr) 255px; }
+  body.tool-page .sidebar.tool-inspector { width: 255px; }
+  body.tool-page .content.tool-output-content { padding: 18px; }
+  body.tool-classes .classes-grid { grid-template-columns: minmax(0,1fr); }
+  body.tool-download-tests .container.export-workbench { padding: 20px; }
+  body.tool-download-tests .grid-layout.export-grid { grid-template-columns: minmax(0,1fr) 330px; gap: 16px; }
+  body.tool-download-tests .format-list { grid-template-columns: 1fr; }.tool-download-tests .format-card { border-right: 0; border-bottom: 1px solid var(--border); }
+  body.tool-attempt-test .palette-section { width: 242px; min-width: 242px; }
+  body.tool-attempt-test .palette-grid { gap: 6px; }.tool-attempt-test .palette-q-btn { width: 32px; height: 32px; }
+  body.tool-attempt-test .exam-candidate { display: none; }.tool-attempt-test .question-footer { padding: 12px; }.tool-attempt-test .exam-btn { padding: 8px; font-size: 9px; }
+}
+@media (max-width: 900px) {
+  body.tool-download-tests .grid-layout.export-grid { grid-template-columns: minmax(0,1fr); }.tool-download-tests .job-monitor { position: static !important; }
+  body.tool-page .tool-heading { padding: 20px 24px; }.tool-heading h1 { font-size: 25px; }
+}
+@media (max-width: 768px) {
+  body.tool-page .tool-chrome { min-height: 54px; height: 54px; padding: 0 15px; gap: 12px; }
+  .tool-chrome .build-badge, .tool-breadcrumb { display: none; }.tool-chrome .kit-brand-mark { width: 26px; height: 26px; font-size: 15px; }.tool-chrome .kit-brand strong { font-size: 19px; }
+  .workspace-link { font-size: 9px; }.tool-chrome-actions { gap: 12px; }
+  .tool-tabs { padding: 0 15px; height: 39px; min-height: 39px; scrollbar-width: none; }.tool-tabs a { height: 39px; padding: 0 15px; font-size: 9px; }
+  body.tool-page .tool-heading { padding: 20px 18px; gap: 10px; }.tool-heading h1 { font-size: 26px; }.tool-heading p { font-size: 10px; }.tool-heading .module-path { font-size: 8px; margin-bottom: 9px; }.tool-heading .module-path > span { display: none; }
+  body.tool-page .app-full.tool-workbench { display: flex; flex-direction: column; }
+  body.tool-page .sidebar.tool-inspector { position: fixed; inset: 0 0 0 auto; width: min(320px,90vw); height: 100dvh; transform: translateX(100%); z-index: 200; border-left: 1px solid var(--border2); transition: transform .18s; padding-bottom: env(safe-area-inset-bottom); }
+  body.tool-page .sidebar.tool-inspector.open { transform: translateX(0); }.inspector-close { display: grid; place-items: center; }
+  body.tool-page .tool-output-bar { padding: 0 18px; height: 44px; min-height: 44px; }.tool-output-bar .sync-pill { display: none; }
+  body.tool-page .tool-output-bar .hamburger { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 10px; margin-left: auto; order: 2; border: 1px solid var(--border2); border-radius: 3px; background: var(--bg3); color: var(--text); font: 10px var(--font-mono); width: auto; min-height: 32px; }
+  body.tool-page .tool-output-bar .topbar-title { font-size: 8px; letter-spacing: 0; overflow: hidden; }
+  body.tool-page .content.tool-output-content { padding: 17px 14px 25px; }
+  body.tool-page .full-card { padding: 16px; }
+  body.tool-page :is(input[type="text"],input[type="number"],input[type="password"],select,.topbar-search,.lookup-input,.tt-select) { font-size: 16px !important; min-height: 42px; }
+  body.tool-page input::placeholder { font-size: 11px; }
+  body.tool-page :is(.start-btn,.theme-mode-btn,.filter-chip,.utility-button) { min-height: 38px; }
+  body.tool-page .terminal-empty { min-height: 265px; padding: 30px 15px !important; }.terminal-empty p { font-size: 10px; }.terminal-empty .empty-glyph { width: 44px; height: 44px; font-size: 22px; }
+  body.tool-page .stat-box { padding: 15px 10px; }.tool-page .stat-box .stat-val { font-size: 22px; }.tool-page .stat-lbl { font-size: 8px; line-height: 1.6; }
+  body.tool-page .card-header { flex-wrap: wrap; gap: 12px; }.tool-page .card-title { font-size: 13px !important; }
+  body.tool-test-ids #test-details-view { padding: 16px; }.tool-test-ids #test-placeholder { margin: 14px; }
+  body.tool-test-schedule .sched-meta-grid { grid-template-columns: minmax(0,1fr); }
+  body.tool-watch-recording #video-placeholder { min-height: 260px; aspect-ratio: auto; }.tool-watch-recording #video-loading { min-height: 230px; aspect-ratio: auto; }
+  body.tool-watch-recording .tool-output-content { padding: 17px 14px 25px; }
+  body.tool-download-tests .container.export-workbench { padding: 18px 14px 30px; }.tool-download-tests .export-config { padding: 17px !important; }.tool-download-tests .job-monitor { padding: 17px !important; }
+  body.tool-download-tests .toggle-item { padding: 14px 12px; }.tool-download-tests .toggle-label { font-size: 11px; }.tool-download-tests .toggle-description { font-size: 9px; }
+  body.tool-download-tests .format-card { padding: 13px; }.tool-download-tests .console-container { height: 250px; }.tool-download-tests .auth-warning { padding: 13px; font-size: 9px; }
+  /* Keep original mobile palette behavior while restyling the runner. */
+  body.tool-attempt-test .exam-header { min-height: 53px; height: 53px; padding: 0 12px; gap: 10px; }
+  body.tool-attempt-test .portal-brand-logo,body.tool-attempt-test .exam-badge,body.tool-attempt-test .topbar-back-btn { display: none; }
+  body.tool-attempt-test .exam-name { font-size: 11px; max-width: 160px; }.tool-attempt-test .exam-timer-box { font-size: 10px; padding: 7px; }
+  body.tool-attempt-test .subject-strip { padding: 0 12px; }.tool-attempt-test .subject-tab { padding: 11px 15px; font-size: 9px; }
+  body.tool-attempt-test .question-header { padding: 12px 14px; gap: 10px; }.tool-attempt-test .question-content-scroll { padding: 15px; }
+  body.tool-attempt-test .question-info-left { flex-wrap: wrap; gap: 8px; }.tool-attempt-test .question-controls { gap: 5px; }
+  body.tool-attempt-test .question-img-card { padding: 12px; }.tool-attempt-test .answer-options-card { padding: 16px; }
+  body.tool-attempt-test .question-footer { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); gap: 8px; flex-wrap: wrap; }
+  body.tool-attempt-test .footer-btn-group { flex: 1 0 100%; display: flex; }.tool-attempt-test .footer-btn-group button { flex: 1; min-height: 40px; }
+  body.tool-attempt-test .palette-section { width: 280px; min-width: 280px; border-left: 1px solid var(--border2); }
+  body.tool-attempt-test .modal-card { padding: 22px; max-height: 88dvh; }.gate-titlebar { margin: -22px -22px 23px; padding: 13px 18px; font-size: 8px; }
+  body.tool-attempt-test #gate-passcode-input,body.tool-attempt-test #launcher-test-id { font-size: 16px !important; }
+  body.tool-attempt-test .exam-overlay-modal { padding: 16px; }
+}
+@media (max-width: 768px) {
+  body.tool-page .stat-grid { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+  body.tool-test-ids .full-card > .card-header { padding: 16px 14px; }
+}
+@media (max-width: 768px) {
+  body.tool-attempt-test .exam-title-box { flex: 1; min-width: 0; }
+  body.tool-attempt-test .exam-name { display: block; font-size: 10px; max-width: 135px; }
+  body.tool-attempt-test .question-header { height: auto; min-height: 80px; display: flex; flex-direction: column; align-items: stretch; gap: 9px; padding: 11px 14px; }
+  body.tool-attempt-test .question-info-left { flex-wrap: nowrap; gap: 9px; }
+  body.tool-attempt-test .question-controls { justify-content: flex-start; }
+  body.tool-attempt-test .question-footer { display: grid; grid-template-columns: minmax(0,1fr); height: auto; gap: 8px; }
+  body.tool-attempt-test .footer-btn-group { width: 100%; flex: none; min-width: 0; }
+  body.tool-attempt-test .footer-btn-group .exam-btn { flex: 1; height: 40px; min-height: 40px; font-size: 9px; white-space: normal; padding: 7px; }
+  body.tool-attempt-test #q-image-element { border-radius: 0; box-shadow: none; }
+}

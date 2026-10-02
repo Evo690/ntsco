@@ -260,30 +260,14 @@ async function selectBatch(batchId, batchName) {
     document.getElementById('timetable-range').textContent = `${formatDateLabel(dates[0])} - ${formatDateLabel(dates[dates.length - 1])} · Batch ID: ${batchId}`;
     placeholder.style.display = 'none';
     grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
-    grid.style.gap = '12px';
-    grid.style.background = 'transparent';
-    grid.style.minWidth = 'unset';
+    grid.className = 'batch-agenda';
+    grid.style.minWidth = '0';
     grid.innerHTML = dates.map(dateKey => {
-      const dayItems = clean.filter(c => c.classDateKey === dateKey).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-      const dayLabel = new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-IN', {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short'
-      });
-      const rows = dayItems.length ? dayItems.map(c => `
-            <div style="padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-top:8px">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${escapeHtml(formatTimeLabel(c.startTime))}</div>
-              <div class="tt-class ${getSubjectClass(c.subjects)}">${escapeHtml(c.subjects || 'Class')}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:5px">${escapeHtml(c.classType || 'Live Class')}</div>
-            </div>
-          `).join('') : '<div style="font-size:11px;color:var(--text3);margin-top:8px">No classes scheduled</div>';
-      return `
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px">
-          <div style="font-size:12px;font-weight:600;color:var(--text2)">${escapeHtml(dayLabel)}</div>
-          ${rows}
-        </div>
-      `;
+      const dayItems = clean.filter(c => c.classDateKey === dateKey).sort((a,b)=>timeToMinutes(a.startTime)-timeToMinutes(b.startTime));
+      const today = dateKey === new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+      return `<section class="batch-agenda-column ${today ? 'is-today' : ''}">${buildScheduleDayHeader(dateKey,dayItems.length)}<div class="batch-session-list">${dayItems.map(c=>`
+        <article class="batch-session ${getSubjectClass(c.subjects)}"><time>${escapeHtml(formatTimeLabel(c.startTime))}</time><div><h3>${escapeHtml(c.subjects || 'Class')}</h3><p>${escapeHtml(c.classType || 'Class session')}</p></div></article>
+      `).join('')}</div></section>`;
     }).join('');
   } catch (err) {
     placeholder.style.display = 'block';

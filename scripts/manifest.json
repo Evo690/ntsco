@@ -1,0 +1,57 @@
+{
+  "scripts": [
+    "src/shared/schedule.js",
+    "src/shared/detail-views.js",
+    "src/features/console-views.js",
+    "src/features/renderers.js",
+    "src/features/portal-data.js",
+    "src/features/neural.js",
+    "src/features/practice-access.js",
+    "src/features/navigation.js",
+    "src/features/messages.js",
+    "src/features/attendance.js",
+    "src/features/exams.js",
+    "src/features/resources.js",
+    "src/features/bootstrap.js",
+    "src/features/auth.js",
+    "src/features/storage.js",
+    "src/features/chemistry.js",
+    "src/features/reagents.js",
+    "src/features/pka.js",
+    "src/features/session.js",
+    "src/features/recordings.js"
+  ],
+  "styles": [
+    "src/styles/legacy/foundation.css",
+    "src/styles/legacy/chemistry.css",
+    "src/styles/legacy/rank-predictor.css",
+    "src/styles/legacy/practice.css",
+    "src/styles/legacy/solutions.css",
+    "src/styles/legacy/results.css",
+    "src/styles/legacy/utilities.css",
+    "src/styles/legacy/leaderboard.css",
+    "src/styles/tokens.css",
+    "src/styles/login.css",
+    "src/styles/workspace.css",
+    "src/styles/responsive.css",
+    "src/styles/pages.css",
+    "src/styles/console-pages.css",
+    "src/styles/schedule.css",
+    "src/styles/settings.css",
+    "src/styles/inspectors.css",
+    "src/styles/neural-console.css"
+  ],
+  "core": [
+    "src/core/config.js",
+    "src/core/session.js",
+    "src/core/formatters.js",
+    "src/core/api.js"
+  ],
+  "toolStyles": [
+    "src/styles/tools/shell.css",
+    "src/styles/tools/workbenches.css",
+    "src/styles/tools/exam-runner.css",
+    "src/styles/tools/responsive.css",
+    "src/styles/tools/records.css"
+  ]
+}

@@ -1,0 +1,269 @@
+/* Feature surfaces. Kept separate from shell layout and the compatibility CSS.
+   Dynamic renderers use these records too; styling is not limited to empty pages. */
+
+/* The daily schedule is the primary dashboard content. */
+body.portal #dash-streams { grid-template-columns: minmax(0, 1.5fr) minmax(250px, 1fr); margin-top: 20px; }
+body.portal #dash-streams > .card { min-width: 0; }
+body.portal .dashboard-priority-card { border-top: 2px solid var(--accent); }
+body.portal .dashboard-priority-card .card-title { font: 11px var(--font-mono); }
+body.portal .class-item { min-width: 0; }
+body.portal .class-time { flex: 0 0 70px; font: 11px var(--font-mono); color: var(--text2); }
+body.portal .class-info { min-width: 0; }
+body.portal .class-name { font-size: 13px; overflow-wrap: anywhere; }
+body.portal .class-teacher { margin-top: 5px; color: var(--text3); }
+body.portal .workspace-footer .text-button { color: var(--text2); }
+
+/* Course records deliberately do not reuse .course-card: the old mobile card
+   contained important gradients, oversized images and a fabricated progress bar. */
+body.portal #courses-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.enrollment-card { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; align-items: center; gap: 22px; padding: 22px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; }
+.enrollment-card:hover { border-color: var(--border2); }
+.enrollment-cover { width: 68px; height: 84px; position: relative; background: var(--bg); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text3); font: 20px var(--font-mono); overflow: hidden; }
+.enrollment-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg); }
+.enrollment-record { min-width: 0; }
+.record-kicker { display: flex; flex-wrap: wrap; gap: 12px; color: var(--text3); font: 9px var(--font-mono); margin-bottom: 10px; }
+.record-kicker > span + span { border-left: 1px solid var(--border2); padding-left: 12px; }
+.enrollment-record h2 { font-size: 15px; line-height: 1.65; font-weight: 500; overflow-wrap: anywhere; }
+.record-dates { display: flex; gap: 25px; flex-wrap: wrap; margin-top: 15px; }
+.record-dates > div { display: flex; gap: 9px; font: 10px/1.6 var(--font-mono); }
+.record-dates dt { color: var(--text3); }.record-dates dd { margin: 0; color: var(--text2); }
+.record-open { padding: 10px 13px; min-height: 38px; border: 1px solid var(--border2); border-radius: 3px; color: var(--text); background: var(--bg); font: 10px var(--font-mono); white-space: nowrap; cursor: pointer; }
+.record-open span { margin-left: 12px; color: var(--accent); }.record-open:hover { border-color: var(--accent); }
+.record-open:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Timetables, exams, resources and messages are record lists, not hero cards. */
+.schedule-day { padding: 17px; background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; min-width: 0; }
+.schedule-day h3 { font: 11px var(--font-mono); color: var(--text2); padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.schedule-session { padding: 15px 0 15px 12px; margin-top: 15px; border-left: 2px solid var(--border2); }
+body.portal .schedule-session .tt-class { background: transparent; border: 0; padding: 0; margin-top: 6px; font-size: 13px; color: var(--text); }
+body.portal :is(.tt-select,.exam-select,.era-select) { border: 1px solid var(--border2); min-height: 36px; font: 11px var(--font-mono); }
+body.portal .exam-hall-item { background: var(--bg2) !important; border: 1px solid var(--border) !important; border-radius: 3px; box-shadow: none; transform: none; gap: 16px; min-width: 0; }
+body.portal .exam-hall-icon { width: 34px; height: 34px; min-width: 34px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg) !important; color: var(--text2) !important; }
+body.portal .exam-hall-info { min-width: 0; }
+body.portal .exam-hall-name { font-size: 13px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+body.portal .exam-hall-meta { font: 10px/1.8 var(--font-mono); color: var(--text3); overflow-wrap: anywhere; }
+body.portal .exam-hall-header-row { gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+body.portal .exam-hall-right { flex-shrink: 0; }
+body.portal .exam-hall-score { font: 16px var(--font-mono); }
+body.portal .exam-hall-rank { font: 10px var(--font-mono); color: var(--text3); margin-top: 8px; }
+body.portal .exam-hall-actions { margin-top: 13px; gap: 7px; }
+body.portal :is(.exam-badge,.exam-calendar-chip,.result-chip,.subject-pill) { border-radius: 2px !important; box-shadow: none; font: 9px/1.6 var(--font-mono); padding: 3px 7px; }
+body.portal .exam-calendar-card { background: var(--bg2); border: 1px solid var(--border); box-shadow: none; border-radius: 3px; }
+body.portal :is(.notice-title,.msg-group-item) { font-weight: 500; }
+body.portal .notice-item { border-left: 1px solid var(--border); border-radius: 3px; }
+body.portal .notice-time { font: 10px/1.7 var(--font-mono); }
+body.portal :is(.msg-group-icon,.msg-group-icon-fallback) { width: 32px; height: 32px; border-radius: 3px; background: var(--bg); color: var(--text2); }
+body.portal .msg-group-item { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 15px; }
+body.portal .msg-group-item.active { background: var(--accent-glow); box-shadow: inset 2px 0 var(--accent); }
+body.portal .msg-bubble { padding: 16px; line-height: 1.7; max-width: 100%; overflow-wrap: anywhere; }
+body.portal .msg-bubble img { max-width: 100%; height: auto; }
+
+/* Consistent, quiet controls; primary accent is reserved for selected states. */
+body.portal :is(.start-btn,.course-btn,.class-btn,.report-btn,.result-link,.sol-action-btn,.sol-toggle-btn) { border-radius: 3px !important; border: 1px solid var(--border2); padding: 9px 12px; min-height: 35px; font: 10px/1.5 var(--font-mono); background: var(--bg3); color: var(--text); box-shadow: none; text-decoration: none; }
+body.portal :is(.start-btn:not(.gray),.class-btn:not(.gray),.report-btn.primary) { background: var(--bg3); border-color: var(--border2); color: var(--accent); }
+body.portal :is(.start-btn,.class-btn,.report-btn,.result-link,.sol-toggle-btn):hover { background: var(--accent-glow); border-color: var(--accent); transform: none; }
+body.portal .manual-tool-row { gap: 12px; }
+body.portal :is(.manual-tool-input,.rank-input,.pl-input) { min-width: 0; }
+body.portal .detail-workspace { padding: 0; background: transparent; border: 0; }
+body.portal .detail-workspace > .card-header { padding: 0 0 16px; border-bottom: 1px solid var(--border); }
+body.portal .detail-workspace > .card-header .card-title { font: 10px var(--font-mono); color: var(--text3); }
+
+/* Result analysis: left summary, right subject records, secondary tools folded. */
+.result-workbench { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.6fr); gap: 20px; align-items: start; margin-top: 24px; }
+.result-overview,.result-subjects { min-width: 0; }
+body.portal .result-title { font: 500 19px/1.5 var(--font-body); overflow-wrap: anywhere; margin: 0 0 8px; }
+body.portal .result-sub { font: 10px/1.9 var(--font-mono); color: var(--text3); overflow-wrap: anywhere; }
+body.portal .result-chip-row { gap: 5px; margin: 12px 0 0; }
+body.portal .result-chip { background: transparent; border: 1px solid var(--border); color: var(--text3); }
+body.portal .result-section-title { font: 10px var(--font-mono); text-transform: uppercase; letter-spacing: .6px; margin: 0 0 16px; color: var(--text2); }
+body.portal .result-hero { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); background: var(--bg2); border-radius: 3px; padding: 0; box-shadow: none; margin: 0; }
+body.portal .result-hero-score { grid-column: 1/-1; border: 0; border-bottom: 1px solid var(--border); padding: 22px; background: transparent; }
+body.portal .result-hero-label { font: 10px var(--font-mono); color: var(--text2); }
+body.portal .result-hero-value { font: 27px/1.5 var(--font-mono); color: var(--accent); margin: 12px 0; overflow-wrap: anywhere; }
+body.portal .result-hero-sub { font: 9px/1.8 var(--font-mono); color: var(--text3); }
+body.portal .result-hero-stat { border: 0; border-right: 1px solid var(--border); background: transparent; border-radius: 0; padding: 15px 10px; }
+body.portal .result-hero-stat:last-child { border-right: 0; }
+body.portal .result-label,body.portal .mini-label { color: var(--text3); font: 9px/1.6 var(--font-mono); text-transform: none; letter-spacing: 0; }
+body.portal .result-value { font: 17px/1.7 var(--font-mono); margin-top: 5px; overflow-wrap: anywhere; }
+body.portal .result-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); border-radius: 3px; margin: 12px 0 0; }
+body.portal .result-metric { min-width: 0; border: 0; border-radius: 0; padding: 15px 10px; background: var(--bg2); }
+body.portal .result-metric .result-value { font-size: 13px; }
+body.portal .subject-result-card { border: 1px solid var(--border); border-radius: 3px; background: var(--bg2); padding: 18px; box-shadow: none; margin: 0 0 12px; }
+body.portal .subject-result-head { gap: 12px; margin-bottom: 16px; align-items: flex-start; }
+body.portal .subject-result-name { font-size: 14px; font-weight: 500; }
+body.portal .subject-result-score { font: 16px/1.7 var(--font-mono); color: var(--text); white-space: nowrap; }
+body.portal .subject-highlight-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); }
+body.portal .mini-metric,body.portal .mini-metric.major { border: 0; border-radius: 0; padding: 10px; background: transparent; min-width: 0; }
+body.portal .mini-value { font: 12px/1.7 var(--font-mono); color: var(--text2); overflow-wrap: anywhere; }
+body.portal .subject-result-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; }
+.subject-details { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; }
+.subject-details summary,.secondary-actions summary { cursor: pointer; font: 10px/1.8 var(--font-mono); color: var(--text2); }
+.subject-details[open] summary { margin-bottom: 12px; }
+body.portal .result-links { padding-top: 20px; border-top: 1px solid var(--border); gap: 8px; margin-top: 20px; }
+.secondary-actions { position: relative; margin-top: 12px; padding: 12px 0; }
+.secondary-actions-body { padding-top: 15px; }
+.secondary-actions > button { margin-top: 12px !important; }
+body.portal pre { background: var(--bg) !important; border-radius: 3px !important; max-width: 100%; }
+
+/* Published leaderboard and answer review. */
+body.portal :is(.leaderboard-wrap,.leaderboard-card,.sol-card) { border-radius: 3px; background: var(--bg2); border-color: var(--border); box-shadow: none; }
+body.portal .leaderboard-wrap { margin-top: 20px; overflow: auto; }
+body.portal .leaderboard-table { width: 100%; font-size: 12px; }
+body.portal .leaderboard-table th { font: 9px var(--font-mono); color: var(--text3); background: var(--bg); padding: 14px; border-bottom: 1px solid var(--border); }
+body.portal .leaderboard-table td { padding: 16px 14px; border-bottom: 1px solid var(--border); }
+body.portal :is(.leaderboard-score,.leaderboard-rank) { font: 12px var(--font-mono); color: var(--text); }
+body.portal :is(.leaderboard-subject,.leaderboard-rank-pill) { border-radius: 2px; background: transparent; color: var(--text2); font: 9px/1.8 var(--font-mono); border: 1px solid var(--border); padding: 3px 7px; }
+body.portal .sol-tabs { gap: 0; border-bottom: 1px solid var(--border); }
+body.portal .sol-tab-btn { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 12px; font: 10px var(--font-mono); }
+body.portal .sol-tab-btn.active { border-bottom-color: var(--accent); color: var(--accent); }
+body.portal .sol-card { transform: none; padding: 18px; border-left-width: 2px; }
+body.portal .sol-card-title { font-size: 13px; font-weight: 500; }
+body.portal .sol-card-badges { flex-wrap: wrap; }
+body.portal .sol-badge { border-radius: 2px; font: 9px/1.8 var(--font-mono); }
+body.portal .sol-ans-box { border-radius: 3px; background: var(--bg); border: 1px solid var(--border); }
+body.portal .sol-img-wrapper { border-radius: 3px; }
+
+/* Detail dialogs retain their dismiss/print/download behavior. */
+body.portal :is(.course-detail-modal-card,.result-modal-card) { background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px; box-shadow: 0 24px 90px #0005; width: min(850px,100%); max-width: 850px; max-height: 90dvh; }
+body.portal :is(#att-modal-backdrop,#course-detail-modal-backdrop,#result-modal-backdrop,#test-syllabus-modal-backdrop) { background: #06090dbb !important; backdrop-filter: blur(3px); }
+body.portal #att-modal-backdrop > div { border-radius: 4px !important; max-width: 600px !important; }
+body.portal :is(#att-modal-backdrop,#course-detail-modal-backdrop,#result-modal-backdrop) button { border-radius: 3px !important; font-family: var(--font-mono); font-size: 10px; }
+.course-detail-summary { display: flex; gap: 22px; align-items: flex-start; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.course-detail-cover { width: 120px; height: 120px; flex-shrink: 0; background: var(--bg); border: 1px solid var(--border); }
+.course-detail-cover img { width: 100%; height: 100%; object-fit: contain; }
+.course-detail-metadata { display: grid; grid-template-columns: 1fr; gap: 12px; font: 11px/1.8 var(--font-mono); color: var(--text2); overflow-wrap: anywhere; min-width: 0; }
+body.portal .course-detail-prose { border-radius: 3px !important; color: var(--text2); font-size: 13px; line-height: 1.9; }
+body.portal .calendar-detail-body { max-width: 1200px; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 20px; padding: 30px 24px; align-items: start; }
+body.portal .calendar-detail-card { padding: 22px; border-radius: 3px; background: var(--bg2); border: 1px solid var(--border); box-shadow: none; }
+body.portal .calendar-detail-grid { grid-template-columns: 1fr; gap: 18px; }
+body.portal .calendar-detail-meta-icon { border-radius: 3px; color: var(--text3); background: var(--bg); border: 1px solid var(--border); }
+body.portal .calendar-detail-meta-label { font: 9px var(--font-mono); }
+body.portal .calendar-detail-meta-val { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+body.portal .calendar-detail-syllabus-item { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; font-size: 12px; box-shadow: none; }
+
+/* Chemistry subviews and neural output use the same restrained surfaces. */
+body.portal :is(.chem-panel,.chem-stats-panel,.chem-stats-card,.chem-draw-card,.chem-option,.chem-structure-card,.reagent-option,.pka-option,.pl-card-mode-wrap,.pl-slider-container,.pl-meta-banner,.pl-calibration-console,.rank-explainer,.rank-stat) { background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; box-shadow: none; }
+body.portal :is(.chem-btn,.chem-tab-btn,.chem-option-btn,.reagent-option-btn,.pka-option-btn,.pl-btn,.pl-card-mode-chip,.rank-btn) { border-radius: 3px; box-shadow: none; font: 11px/1.6 var(--font-mono); }
+body.portal :is(.chem-btn-primary,.chem-btn-secondary,.chem-btn-ghost) { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); }
+body.portal .chem-btn-primary { color: var(--accent); }
+body.portal :is(.chem-btn,.pl-btn,.rank-btn):hover { transform: none; box-shadow: none; border-color: var(--accent); }
+body.portal .chem-section-label { font: 10px var(--font-mono); color: var(--text3); text-transform: uppercase; letter-spacing: .6px; }
+body.portal :is(.chem-board-row,.chem-stat-row,.rank-pipe,.pl-calibration-guide) { border-radius: 3px; background: var(--bg); border-color: var(--border); }
+body.portal :is(.pl-title,.pl-calibration-title) { font: 13px var(--font-mono); }
+body.portal .pl-meta-banner { background-image: none; }
+body.portal .pl-calib-icon { background: var(--bg); color: var(--accent); border-radius: 3px; }
+body.portal .pl-badge-topper { border-radius: 2px; box-shadow: none; font: 9px var(--font-mono); }
+body.portal :is(.rank-hero,.pl-results-card) { background-image: none; border-radius: 3px; box-shadow: none; }
+
+@media (max-width: 1050px) {
+  .enrollment-card { grid-template-columns: 56px minmax(0,1fr); gap: 16px; }
+  .enrollment-cover { width: 56px; height: 72px; }
+  .enrollment-card .record-open { grid-column: 2; justify-self: start; }
+  .result-workbench { grid-template-columns: minmax(0,1fr); }
+  body.portal .result-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  body.portal .result-overview > .result-section-title { grid-column: 1/-1; margin: 0; }
+  body.portal .result-grid { margin: 0; }
+}
+@media (max-width: 768px) {
+  /* Reserve physical space for the dock, rather than covering the scroll pane. */
+  body.portal .app { height: calc(100dvh - 62px - env(safe-area-inset-bottom)); }
+  body.portal .content { padding-bottom: 24px; }
+  body.portal .mobile-dock { align-items: stretch; padding: 7px 8px calc(7px + env(safe-area-inset-bottom)); }
+  body.portal .dock-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; flex: 1; padding: 4px; }
+  body.portal .dock-btn svg { display: block; flex: 0 0 17px; }
+  body.portal #dash-streams { grid-template-columns: 1fr; margin-top: 18px; gap: 12px; }
+  .enrollment-card { padding: 16px; gap: 14px; }
+  .enrollment-record h2 { font-size: 13px; line-height: 1.7; }
+  .record-dates { gap: 6px; flex-direction: column; margin-top: 10px; }
+  .record-dates > div { font-size: 9px; }
+  .record-kicker { font-size: 8px; gap: 7px; }
+  body.portal .record-open { min-height: 40px; }
+  body.portal #timetable-grid { grid-template-columns: minmax(0,1fr) !important; }
+  body.portal .exam-hall-item { padding: 15px; gap: 10px; flex-wrap: wrap; }
+  body.portal .exam-hall-icon { width: 28px; height: 28px; min-width: 28px; }
+  body.portal .exam-hall-info { flex: 1; }
+  body.portal .exam-hall-right { margin-left: 38px; }
+  body.portal .result-overview { display: block; }
+  body.portal .result-overview > .result-section-title { margin-bottom: 16px; }
+  body.portal .result-grid { margin-top: 12px; }
+  body.portal .result-hero-value { font-size: 30px; }
+  body.portal .subject-result-head { flex-direction: column; gap: 8px; }
+  body.portal .subject-result-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  body.portal .result-title { font-size: 17px; }
+  body.portal .result-links { display: grid; grid-template-columns: 1fr 1fr; }
+  body.portal .result-links > * { justify-content: center; text-align: center; }
+  body.portal :is(.start-btn,.class-btn,.report-btn,.sol-toggle-btn) { min-height: 38px; }
+  body.portal .calendar-detail-header { flex-wrap: wrap; gap: 12px; padding: 14px; }
+  body.portal .calendar-detail-header > div { order: -1; flex-basis: 100%; }
+  body.portal .calendar-detail-body { display: flex; flex-direction: column; padding: 18px 14px; }
+  body.portal .calendar-detail-card { width: 100%; padding: 18px; }
+  .course-detail-summary { flex-direction: column; }
+  body.portal :is(.chem-btn,.pl-btn,.rank-btn) { min-height: 40px; }
+}
+/* Override the old !important button skin, not the feature-controlled visibility. */
+body.portal :is(.start-btn,.class-btn,.report-btn,.exam-view-btn) { background: var(--bg3) !important; color: var(--text2) !important; border: 1px solid var(--border2) !important; box-shadow: none !important; border-radius: 3px !important; font: 10px/1.6 var(--font-mono); }
+body.portal :is(.start-btn,.class-btn,.report-btn,.exam-view-btn):hover { color: var(--accent) !important; background: var(--accent-glow) !important; border-color: var(--accent) !important; }
+body.portal .exam-view-btn { min-height: 35px; padding: 8px 12px; }
+body.portal .result-hero-score { border-radius: 0; }
+body.portal .calendar-detail-backdrop { animation: none; }
+body.portal .calendar-detail-syllabus-header > span { display: none; }
+body.portal :is(.syllabus-modal-card,.syllabus-modal-subject-card,.syllabus-modal-topic,.syllabus-modal-close-btn) { border-radius: 3px; background: var(--bg2); border-color: var(--border); box-shadow: none; }
+body.portal .syllabus-modal-card { width: min(850px, 100%); }
+body.portal .syllabus-modal-header { background: var(--bg); }
+body.portal .syllabus-modal-title { font-size: 15px; font-weight: 500; line-height: 1.7; }
+body.portal .syllabus-modal-meta { font: 10px/1.8 var(--font-mono); }
+body.portal .syllabus-modal-body { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 14px; }
+body.portal .syllabus-modal-topic { font-size: 12px; border-left-width: 1px; }
+body.portal .syllabus-modal-title-wrap > span,body.portal .syllabus-modal-subject-header > span:first-child { display: none; }
+body.portal .syllabus-modal-subject-header { font: 11px var(--font-mono); }
+body.portal .chem-stat-bar { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+body.portal .chem-stat-pill { background: var(--bg2); border: 0; border-right: 1px solid var(--border); border-radius: 0; font: 10px/1.8 var(--font-mono); padding: 13px; }
+body.portal .chem-stat-pill strong { display: block; color: var(--text); font-size: 18px; font-weight: 400; }
+body.portal .chem-header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px; }
+body.portal .chem-title { font-size: 22px; font-weight: 500; }
+body.portal .chem-opt-btn { border-radius: 3px; background: var(--bg); border: 1px solid var(--border2); font-size: 13px; box-shadow: none; }
+body.portal .chem-opt-letter { border-radius: 2px; background: var(--bg3); color: var(--text2); font: 11px var(--font-mono); }
+body.portal .chem-canvas-wrap { border-radius: 3px; background: var(--bg); border: 1px solid var(--border); }
+body.portal .chem-stats-panel { border-radius: 4px; }
+body.portal #pka-table-body button { min-height: 32px; }
+body.portal :is(.ak-panel,.ak-cell,.sol-response-box) { border-radius: 3px; box-shadow: none; }
+body.portal .ak-subject-label { font: 10px var(--font-mono); }
+body.portal .ak-cell { font: 10px var(--font-mono); }
+/* Windowed rows must match renderVirtualList's measured contract. */
+body.portal #study-list.virtual-list .exam-hall-item { height: 82px; margin: 0; box-sizing: border-box; flex-wrap: nowrap; }
+body.portal #notice-list.virtual-list .notice-item { height: 72px; margin: 0; box-sizing: border-box; }
+body.portal #study-list .exam-hall-name { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+@media (max-width: 768px) {
+  body.portal :is(#examhall-list,#era-list) .exam-hall-item { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: start; }
+  body.portal :is(#examhall-list,#era-list) .exam-hall-info { grid-column: 2; }
+  body.portal :is(#examhall-list,#era-list) .exam-hall-right { grid-column: 2; margin: 0; display: flex; gap: 12px; align-items: center; text-align: left; padding-top: 10px; border-top: 1px solid var(--border); }
+  body.portal .exam-hall-rank { margin-top: 0; }
+  body.portal #study-list .exam-hall-item { display: flex; flex-wrap: nowrap; }
+  body.portal #study-list .exam-hall-right { margin: 0; }
+  body.portal .chem-stat-bar { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  body.portal .chem-stat-pill { font-size: 8px; padding: 10px; }
+  body.portal .chem-stat-pill strong { font-size: 16px; }
+  body.portal .syllabus-modal-body { grid-template-columns: minmax(0,1fr); padding: 15px; }
+  body.portal .syllabus-modal-header { gap: 12px; flex-wrap: wrap; }
+}
+.dataset-table-scroll { max-width: 100%; overflow-x: auto; }
+.dataset-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.dataset-table th { font: 9px var(--font-mono); color: var(--text3); padding: 14px; border-bottom: 1px solid var(--border); }
+.dataset-table td { font-size: 12px; line-height: 1.8; }
+.dataset-table td:last-child { width: 85px; }
+.practice-home-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; align-items: start; }
+.practice-home-grid > .chem-panel { margin: 0; }
+#pka-view-home .practice-home-grid { grid-template-columns: minmax(240px,.75fr) minmax(0,1.25fr); }
+#pka-view-home .practice-home-grid > section { grid-column: 2; grid-row: 1 / span 2; }
+body.portal .chem-btn-primary { color: var(--accent) !important; background: var(--bg3) !important; border: 1px solid var(--border2) !important; }
+body.portal .chem-feedback-flash { top: 72px; right: 22px; left: auto; max-width: min(440px,calc(100vw - 36px)); background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-left: 2px solid var(--accent); border-radius: 3px; padding: 13px 16px; font: 11px/1.8 var(--font-mono); visibility: hidden; opacity: 0; transform: translateY(-8px); transition: opacity .15s, transform .15s; }
+body.portal .chem-feedback-flash.show { visibility: visible; opacity: 1; transform: none; }
+body.portal .chem-feedback-flash.wrong { background: var(--bg3); border-left-color: var(--red); }
+@media (max-width: 1050px) {
+  .practice-home-grid,#pka-view-home .practice-home-grid { grid-template-columns: minmax(0,1fr); }
+  #pka-view-home .practice-home-grid > section { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 768px) {
+  body.portal .chem-stat-bar { width: 100%; }
+  body.portal .chem-feedback-flash { top: auto; right: 14px; left: 14px; bottom: calc(76px + env(safe-area-inset-bottom)); max-width: none; }
+}

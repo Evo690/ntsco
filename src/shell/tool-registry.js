@@ -1,0 +1,10 @@
+/** Single registry for utility navigation, the launcher and command palette entries. */
+export const tools = [
+  { id: 'test-ids', code: '01', glyph: '#', title: 'Test registry', command: 'tests.find', group: 'exams', description: 'Look up test IDs. Inspect metadata. Download papers and solutions.', input: 'TEST ID / KEYWORD', output: 'METADATA · PDF', path: 'functions/test-ids.html' },
+  { id: 'attempt-test', code: '02', glyph: '>_', title: 'Exam runner', command: 'exam.run', group: 'exams', description: 'Reattempt a paper with a timer, question palette and review controls.', input: 'TEST PAPER ID', output: 'RESPONSES · SCORE', path: 'functions/attempt-test.html' },
+  { id: 'download-tests', code: '03', glyph: '↓', title: 'Data export', command: 'data.export', group: 'data', description: 'Configure a batch export of test results, ranks and raw responses.', input: 'YEAR / FILTERS', output: 'JSON · CSV', path: 'functions/download-tests.html' },
+  { id: 'batch-timetable', code: '04', glyph: '▦', title: 'Batch scheduler', command: 'batches.schedule', group: 'classes', description: 'Browse academic batches and inspect their weekly class schedules.', input: 'BATCH / YEAR', output: 'WEEKLY SCHEDULE', path: 'functions/batch-timetable.html' },
+  { id: 'test-schedule', code: '05', glyph: '[]', title: 'Schedule explorer', command: 'exams.schedule', group: 'exams', description: 'Search exam timing, venues, target batches and subject syllabi.', input: 'YEAR / EXAM', output: 'TIMING · SYLLABUS', path: 'functions/test-schedule.html' },
+  { id: 'classes', code: '06', glyph: '▤', title: 'Recording index', command: 'classes.list', group: 'classes', description: 'Find recorded classes by batch, subject, date or class ID.', input: 'BATCH / SUBJECT', output: 'RECORDING INDEX', path: 'functions/classes.html' },
+  { id: 'watch-recording', code: '07', glyph: '▷', title: 'Stream player', command: 'video.open', group: 'classes', description: 'Open a recording by ID. Control playback, copy links and download.', input: 'VIDEO ID', output: 'VIDEO STREAM', path: 'functions/watch-recording.html' }
+];

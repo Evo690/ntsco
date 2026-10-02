@@ -1,0 +1,72 @@
+/* Loaded-state records, shared with the portal's visual language. */
+body.tool-page .tool-heading { padding-top: 22px; padding-bottom: 22px; }
+body.tool-page .tool-heading h1 { font-size: 28px; font-weight: 500; }
+body.tool-page .tool-heading p { color: var(--text3); }
+body.tool-page .tool-io { opacity: .7; }
+body.tool-page .stat-grid { gap: 0; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+body.tool-page .stat-box { border: 0; border-right: 1px solid var(--border); border-radius: 0; background: var(--bg2); box-shadow: none; }
+body.tool-page .stat-box:last-child { border-right: 0; }
+body.tool-page :is(.mode-pill,.subject-pill,.id-badge) { border-radius: 2px; font: 9px/1.6 var(--font-mono); box-shadow: none; }
+body.tool-page :is(.theme-mode-btn,.utility-button,.action-icon-btn,.btn-download-test,.btn-download-solution) { background: var(--bg3) !important; border: 1px solid var(--border2) !important; border-radius: 3px !important; color: var(--text2) !important; box-shadow: none !important; font: 10px/1.6 var(--font-mono); min-height: 34px; }
+body.tool-page :is(.theme-mode-btn,.utility-button,.action-icon-btn,.btn-download-test,.btn-download-solution):hover { background: var(--accent-glow) !important; border-color: var(--accent) !important; color: var(--accent) !important; transform: none; }
+body.tool-page .theme-mode-btn.active { color: var(--accent) !important; border-color: var(--accent) !important; }
+body.tool-page .start-btn { color: var(--accent); background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px; }
+body.tool-test-ids .registry-metadata { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); margin-bottom: 24px; border-radius: 3px; }
+.registry-field { padding: 17px; min-width: 0; border-right: 1px solid var(--border); }
+.registry-field:last-child { border: 0; }
+body.tool-test-ids .registry-field > div:first-child { font: 9px var(--font-mono) !important; color: var(--text3); }
+body.tool-test-ids .registry-field > div:last-child { font: 13px/1.8 var(--font-mono); overflow-wrap: anywhere; }
+body.tool-test-ids .registry-files { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.registry-file { padding: 18px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-width: 0; }
+body.tool-test-ids .download-section-card { background: transparent; padding: 0; border: 0; }
+body.tool-test-ids .registry-file button { width: 100%; }
+body.tool-test-ids .registry-file span { background: transparent !important; color: var(--text3) !important; }
+body.tool-test-ids .record-actions { gap: 7px; }
+body.tool-test-ids #test-details-view { padding: 20px; }
+body.tool-test-schedule .sched-meta-grid { gap: 0; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+body.tool-test-schedule .sched-meta-box { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: var(--bg); padding: 17px; }
+body.tool-test-schedule .sched-meta-box .lbl { font: 9px var(--font-mono); color: var(--text3); }
+body.tool-test-schedule .sched-meta-box .val { font: 12px/1.8 var(--font-mono); }
+body.tool-test-schedule .syllabus-subject-card { border-radius: 3px; background: var(--bg); box-shadow: none; border: 1px solid var(--border); }
+body.tool-classes .class-card { border-radius: 3px; padding: 20px; background: var(--bg2); }
+body.tool-classes .class-card > div { min-width: 0; }
+body.tool-classes .class-card :is(.class-name,.class-subject) { font-size: 14px; overflow-wrap: anywhere; }
+body.tool-batch-timetable #timetable-grid > div { border-radius: 3px !important; background: var(--bg2) !important; padding: 18px !important; }
+body.tool-batch-timetable #timetable-grid > div > div:not(:first-child) { border-radius: 0 !important; background: transparent !important; border: 0 !important; border-left: 2px solid var(--border2) !important; }
+body.tool-batch-timetable .tt-class { border: 0; border-radius: 0; background: transparent; color: var(--text); padding-left: 0; }
+body.tool-download-tests :is(.format-card,.toggle-item,.year-pill,.job-monitor,.auth-warning) { box-shadow: none !important; border-radius: 3px; }
+body.tool-watch-recording .video-actions { flex-wrap: wrap; gap: 8px; }
+body.tool-watch-recording :is(.recent-item,.speed-btn) { border-radius: 3px; box-shadow: none; }
+@media (max-width: 1050px) {
+  body.tool-test-ids .registry-metadata { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .registry-field { border-bottom: 1px solid var(--border); }
+}
+@media (max-width: 768px) {
+  body.tool-page .tool-heading h1 { font-size: 25px; }
+  body.tool-page :is(.theme-mode-btn,.utility-button,.action-icon-btn,.btn-download-test,.btn-download-solution) { min-height: 38px; }
+  body.tool-test-ids #test-details-view { padding: 15px; }
+  body.tool-test-ids .registry-files { grid-template-columns: minmax(0,1fr); }
+  .registry-field { padding: 13px; }
+  body.tool-test-ids .record-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  body.tool-test-ids .record-actions .action-icon-btn { grid-column: 1/-1; }
+}
+/* Do not let a long selected record squash the summary row inside the scroller. */
+body.tool-page .stat-grid { flex-shrink: 0; }
+@media (max-width: 768px) {
+  body.tool-test-ids .record-actions:not([style*="none"]) { display: grid !important; }
+}
+/* Recording index: weekday-led records and native actions, not tall nested cards. */
+body.tool-classes #classes-grid { display: flex; flex-direction: column; gap: 0; }
+body.tool-classes .class-card.recording-record { --record-tone: #79dfef; display: grid; grid-template-columns: 90px minmax(0,1fr) 90px; align-items: start; gap: 24px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 23px 18px; background: var(--bg2); box-shadow: none; }
+body.tool-classes .recording-record.sub-chem { --record-tone: #bdabff; }body.tool-classes .recording-record.sub-math { --record-tone: #f5cb77; }
+body.tool-classes.light-mode .recording-record { --record-tone: #087185; }body.tool-classes.light-mode .recording-record.sub-chem { --record-tone: #7542bb; }body.tool-classes.light-mode .recording-record.sub-math { --record-tone: #926009; }
+.recording-date { border-left: 2px solid var(--record-tone); padding-left: 13px; }.recording-date strong { display: block; font: 700 22px var(--font-body); color: var(--text); }.recording-date span { display: block; margin-top: 7px; color: var(--text3); font: 8px/1.9 var(--font-mono); }
+.recording-subject { color: var(--record-tone); font: 9px/1.8 var(--font-mono); }.recording-subject span { color: var(--text3); }
+.recording-identity h3 { color: var(--text); font: 500 15px/1.6 var(--font-body); margin: 8px 0; overflow-wrap: anywhere; }.recording-identity p { color: var(--text3); font: 9px/1.8 var(--font-mono); overflow-wrap: anywhere; }
+.recording-actions { display: flex; flex-direction: column; gap: 10px; }.recording-actions button { width: 100%; margin: 0; }
+.recording-copy { color: var(--text3); border: 0; padding: 7px 0; border-radius: 3px; background: transparent; font: 9px var(--font-mono); cursor: pointer; }.recording-copy:hover { color: var(--accent); background: var(--accent-glow); }
+@media(max-width: 768px) {
+  body.tool-classes .class-card.recording-record { grid-template-columns: 55px minmax(0,1fr); gap: 15px; padding: 20px 0; }
+  .recording-date { padding-left: 8px; }.recording-date strong { font-size: 19px; }.recording-date span { font-size: 7px; }
+  .recording-actions { grid-column: 2; flex-direction: row; align-items: center; }.recording-actions button { width: auto; min-width: 70px; }
+}

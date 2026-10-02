@@ -1,0 +1,60 @@
+/* Authentication is a session console, not a marketing landing page. */
+body #login-screen { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 0; background: #0d0f11; color: #e3e8e7; overflow: auto; color-scheme: dark;
+  --bg: #0d0f11; --bg2: #131618; --bg3: #1a1e21; --border: #292f32; --border2: #404b50; --text: #e3e8e7; --text2: #9ca8ac; --text3: #7f8d91; --accent: #c3f779; --accent-text: #15200b;
+}
+.auth-masthead { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 80px; flex-shrink: 0; border-bottom: 1px solid #24292c; }
+.source-link { display: flex; gap: 12px; font: 11px var(--font-mono); color: #9ca8ac; }
+.source-link:hover { color: #c3f779; }
+.auth-stage { width: min(1040px, calc(100% - 80px)); margin: auto; padding: 55px 0; }
+.auth-context { display: flex; justify-content: space-between; align-items: center; margin-bottom: 17px; }
+.auth-context .mono { font-size: 10px; letter-spacing: 1.7px; }
+.auth-console { border: 1px solid #363e41; background: #111416; box-shadow: 0 20px 100px #0003; }
+.console-titlebar { display: flex; align-items: center; gap: 20px; padding: 0 20px; height: 43px; border-bottom: 1px solid #292f32; background: #171b1d; }
+.terminal-dots { display: flex; gap: 6px; }
+.terminal-dots i { display: block; width: 7px; height: 7px; border-radius: 50%; background: #596367; }
+.terminal-dots i:first-child { background: #8b5655; }.terminal-dots i:nth-child(2) { background: #92804c; }.terminal-dots i:last-child { background: #6f8859; }
+.console-titlebar code { font-size: 11px; color: #9aa7aa; }
+.console-state { font: 9px var(--font-mono); margin-left: auto; color: #b3bdaf; letter-spacing: 1px; }
+.console-state::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 8px; background: #c3f779; }
+.auth-console-body { display: grid; grid-template-columns: 1.2fr 1fr; }
+.auth-entry { padding: 35px 42px 30px; border-right: 1px solid #292f32; }
+.section-index { color: #829095; font: 9px var(--font-mono); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
+.section-index > span { font-size: 8px; color: #5f6b70; }
+.auth-entry h1 { font: 500 42px/1.2 var(--font-display); letter-spacing: -1.7px; margin: 21px 0 13px; display: flex; align-items: center; gap: 11px; }
+.cursor-block { display: inline-block; width: 12px; height: 31px; background: #c3f779; }
+.auth-entry > p { font-size: 12px; line-height: 1.9; color: #9ca8ac; }
+body #login-screen .login-card { background: transparent; box-shadow: none; border: 0; border-radius: 0; padding: 0; width: 100%; max-width: none; margin: 30px 0 0; display: flex; flex-direction: column; gap: 0; }
+.field-label { color: #a6b3b5; font: 10px var(--font-mono); margin-bottom: 10px; }
+.field-label::before { content: '> '; color: #c3f779; }
+.password-label { margin-top: 22px; }
+.login-field { position: relative; display: flex; align-items: center; }
+.login-field > svg { display: none; }
+#login-screen .login-input { height: 45px; width: 100%; padding: 0 14px; font: 12px var(--font-mono); background: #0c0e10; color: #e3e8e7; border: 1px solid #343d41; border-radius: 3px; }
+#login-screen .login-input::placeholder { color: #68777c; }
+#login-screen .login-input:focus { border-color: #a3cd6c; outline: 0; box-shadow: 0 0 0 2px #c3f7790c; }
+#password-toggle { position: absolute; right: 2px; width: 42px; height: 42px; display: grid; place-items: center; background: transparent; border: 0; color: #8f9d9f; }
+#password-toggle svg { fill: none; stroke: currentColor; stroke-width: 1.5; width: 16px; height: 16px; }
+#login-screen .login-btn { height: 45px; display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 16px; margin: 25px 0 0; border-radius: 3px; border: 1px solid #c3f779; background: #c3f779; color: #17210f; font: 700 12px var(--font-mono); box-shadow: none; }
+#login-screen .login-btn::after { content: '↵'; font-size: 20px; }
+#login-screen .login-btn:hover { background: #d5ff9d; border-color: #d5ff9d; transform: none; }
+#login-screen .login-btn:disabled { opacity: .5; cursor: wait; }
+#login-screen .login-error { padding: 10px 12px; margin-bottom: 20px; color: #f59a9f; background: #f37f8510; border: 1px solid #f37f8540; text-align: left; font: 11px/1.8 var(--font-mono); }
+#login-screen .login-error:empty { display: none; }
+.login-account-note { margin-top: 12px; color: #7f8d91; font-size: 10px; line-height: 1.8; }
+.auth-notice { display: flex; gap: 12px; border-top: 1px solid #292f32; margin-top: 29px; padding-top: 20px; }
+.auth-notice > span { font: 11px var(--font-mono); color: #7f8d91; }
+.auth-notice p { font-size: 10px; line-height: 1.8; color: #7f8d91; }
+.auth-manifest { padding: 35px 30px 24px; display: flex; flex-direction: column; background: #0f1214; }
+.manifest-list { margin-top: 19px; }
+.manifest-row { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px solid #22282b; }
+.manifest-row > span:first-child { font: 9px var(--font-mono); color: #627077; }
+.manifest-row strong { font-size: 12px; font-weight: 500; display: block; color: #c6d0d1; }
+.manifest-row code { display: block; font-size: 9px; color: #77868a; margin-top: 3px; }
+.manifest-glyph { margin-left: auto; font: 15px var(--font-mono); color: #abc78a; }
+.manifest-foot { display: flex; align-items: center; gap: 7px; margin-top: auto; padding-top: 23px; font: 8px var(--font-mono); color: #7e8a83; letter-spacing: .6px; }
+.console-bottom { padding: 13px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid #292f32; background: #101314; }
+.console-bottom code { font-size: 10px; color: #a1aca5; }.console-bottom code > span { color: #c3f779; }
+.console-bottom > span { font: 8px var(--font-mono); color: #65736f; letter-spacing: .5px; }
+.auth-footer { display: flex; justify-content: space-between; gap: 10px; padding-top: 20px; font: 9px var(--font-mono); color: #6f7e80; }
+.auth-footer > span { font-size: 8px; letter-spacing: 1px; }
+.manifest-row:hover { background: #c3f77905; }.manifest-row:hover strong { color: #c3f779; }

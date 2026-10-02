@@ -1,350 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Watch Recording - Portal Functions</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Stream player / ntsc_</title>
     <!-- Fonts from portal -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+
     <!-- Link portal's styles.css directly -->
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles.css?v=7c8859d79aef" />
     <!-- Standalone overrides for full screen layout and mobile behavior -->
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            height: 100dvh;
-            width: 100vw;
-            background: var(--bg);
-            -webkit-tap-highlight-color: transparent;
-        }
 
-        .app-full {
-            display: flex;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
+    <link rel="stylesheet" href="styles/watch-recording.css?v=eba658064f8e" />
+    <link rel="stylesheet" href="../tools.css?v=a474efaf662b" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  </head>
 
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            background: var(--bg2);
-            border-right: 1px solid var(--border);
-            width: 270px;
-            flex-shrink: 0;
-            border-radius: 0;
-            box-shadow: none;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .batch-list-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .batch-item-btn {
-            text-align: left;
-            padding: 10px 12px;
-            width: 100%;
-            margin-bottom: 8px;
-            cursor: pointer;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            transition: all 0.2s ease;
-        }
-
-        .batch-item-btn:hover {
-            border-color: var(--border2);
-            background: var(--bg4);
-        }
-
-        .batch-item-btn.active {
-            border-color: var(--accent);
-            background: var(--bg3);
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        .main {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            flex: 1;
-            background: var(--bg);
-            border-radius: 0;
-        }
-
-        .topbar {
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg2);
-            flex-shrink: 0;
-        }
-
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .filter-chip {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            color: var(--text2);
-            cursor: pointer;
-            transition: all 0.15s;
-            min-height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .filter-chip:hover {
-            border-color: var(--border2);
-            color: var(--text);
-        }
-
-        .filter-chip.active {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-
-        .video-container {
-            position: relative;
-            width: 100%;
-            background: #000;
-            border-radius: var(--r);
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            max-height: calc(100dvh - 230px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            outline: none;
-        }
-
-        /* Overlay for mobile drawer */
-        .overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
-            z-index: 99;
-        }
-
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--bg2);
-            border: 1px solid var(--accent);
-            color: var(--text);
-            padding: 10px 18px;
-            border-radius: 10px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 1100;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.25s ease;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media(max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transform: translateX(-100%);
-                width: 280px;
-                max-width: 85vw;
-                box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .topbar {
-                padding: 0 14px;
-            }
-
-            .content {
-                padding: 14px;
-            }
-
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 12px;
-            }
-
-            #video-actions-row {
-                width: 100%;
-                justify-content: flex-start;
-                gap: 6px;
-            }
-
-            .video-container {
-                max-height: 52vh;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="app-full">
-        <!-- Sidebar for Video ID Entry & History -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-                <div class="logo-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">VR</div>
-                <div>
-                    <div class="logo-text">Watch Recording</div>
-                    <div class="logo-sub">Portal Functions</div>
-                </div>
-            </div>
-
-            <!-- Video ID Input in Sidebar -->
-            <div style="padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
-                <div class="topbar-search-wrap" style="width: 100%; margin: 0;">
-                    <input type="text" id="video-search-input" class="topbar-search" style="width: 100%;"
-                        placeholder="Enter Video ID (e.g. 123498)..."
-                        inputmode="numeric"
-                        onkeydown="if(event.key==='Enter') loadVideoFromSidebar()">
-                </div>
-                <button class="theme-mode-btn active" onclick="loadVideoFromSidebar()"
-                    style="margin: 0; width: 100%; padding: 8px 12px; font-size: 12.5px; font-weight: 600; height: 38px;">
-                    Start Video
-                </button>
-            </div>
-
-            <!-- Recent History List in Sidebar -->
-            <div class="batch-list-scroll">
-                <div style="font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-                    Recent Recordings
-                </div>
-                <div id="recent-list" style="display: flex; flex-direction: column;"></div>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <div class="main">
-            <div class="topbar">
-                <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <path d="M3 6h14M3 10h14M3 14h14" />
-                    </svg>
-                </button>
-                <div class="topbar-title" id="page-title" style="margin-left: 8px;">Recorded Class Player</div>
-                <div style="flex: 1;"></div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div class="sync-pill" id="sync-pill">CloudFront</div>
-                    <button class="theme-mode-btn" onclick="window.close()"
-                        style="margin: 0; padding: 6px 12px; font-size: 12px;">Close Page</button>
-                </div>
-            </div>
-
-            <div class="content">
-                <div class="full-card">
-                    <!-- Quick Video Search Bar in Main Area (Especially convenient on mobile) -->
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
-                        <div class="topbar-search-wrap" style="flex: 1; margin: 0;">
-                            <input type="text" id="main-search-input" class="topbar-search" style="width: 100%; height: 38px;"
-                                placeholder="Enter Video ID (e.g. 123498)..."
-                                inputmode="numeric"
-                                onkeydown="if(event.key==='Enter') loadVideo(this.value)">
-                        </div>
-                        <button class="theme-mode-btn active" onclick="loadVideo(document.getElementById('main-search-input').value)"
-                            style="margin: 0; height: 38px; padding: 0 18px; font-size: 13px; font-weight: 600; white-space: nowrap;">
-                            Play
-                        </button>
-                    </div>
-
-                    <!-- Card Header -->
-                    <div class="card-header"
-                        style="justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                        <div>
-                            <h2 class="card-title" id="selected-video-title" style="font-size: 16px;">No Video Selected</h2>
-                            <div id="video-meta-info" style="font-size: 12px; color: var(--text3); margin-top: 4px;">
-                                Enter a Video ID above to stream the recording
-                            </div>
-                        </div>
-                        <div id="video-actions-row" style="display: none; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <button class="filter-chip active" onclick="setSpeed(1, this)">1x</button>
-                            <button class="filter-chip" onclick="setSpeed(1.25, this)">1.25x</button>
-                            <button class="filter-chip" onclick="setSpeed(1.5, this)">1.5x</button>
-                            <button class="filter-chip" onclick="setSpeed(2, this)">2x</button>
-                            <a class="theme-mode-btn active" id="btn-download" href="#" download
-                                style="margin: 0; padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Download
-                            </a>
-                            <button class="theme-mode-btn" id="btn-copy" onclick="copyVideoLink()" style="margin: 0; padding: 6px 12px; font-size: 12px;">
-                                Copy Link
-                            </button>
-                            <a class="theme-mode-btn" id="btn-new-tab" href="#" target="_blank" rel="noopener noreferrer" style="margin: 0; padding: 6px 12px; font-size: 12px; text-decoration: none;">
-                                New Tab ↗
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Placeholder / Empty State -->
-                    <div id="video-placeholder" class="empty" style="padding: 60px 20px;">
-                        Enter a Video ID above or select one from the sidebar to stream the lecture recording.
-                    </div>
-
-                    <!-- Loading State -->
-                    <div id="video-loading" style="display: none; text-align: center; color: var(--text3); font-size: 13px; padding: 60px 20px;">
-                        Fetching recording URL from Narayana servers...
-                    </div>
-
-                    <!-- Video Container -->
-                    <div id="video-container" class="video-container" style="display: none;">
-                        <video id="recording-video" controls autoplay playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" preload="auto"></video>
-                    </div>
-                </div>
-            </div>
+  <body data-tool="watch-recording" class="tool-page tool-watch-recording">
+    <header class="tool-chrome">
+      <a class="kit-brand" href="../index.html" aria-label="Back to workspace">
+        <span class="kit-brand-mark">n_</span>
+        <strong>
+          ntsc
+          <span>_</span>
+        </strong>
+        <span class="build-badge">TOOLKIT</span>
+      </a>
+      <span class="tool-breadcrumb">
+        tools
+        <span>/</span>
+        <code>video.open</code>
+      </span>
+      <div class="tool-chrome-actions">
+        <button class="tool-theme-toggle" type="button" aria-label="Switch color theme">◐</button>
+        <a class="workspace-link" href="../index.html">← workspace</a>
+      </div>
+    </header>
+    <nav class="tool-tabs" aria-label="Utility navigation" data-tool-tabs=""></nav>
+    <header class="tool-heading">
+      <div>
+        <div class="module-path">
+          ~/tools/watch-recording
+          <span>MODULE 08</span>
         </div>
+        <h1>
+          Stream player
+          <span class="heading-dot">_</span>
+        </h1>
+        <p>Open a recording by ID. Control playback, copy links and download.</p>
+      </div>
+      <div class="tool-io">
+        <span>
+          INPUT
+          <b>VIDEO ID</b>
+        </span>
+        <span>
+          OUTPUT
+          <b>VIDEO STREAM</b>
+        </span>
+      </div>
+    </header>
+    <div class="app-full tool-workbench">
+      <!-- Sidebar for Video ID Entry & History -->
+
+      <!-- Main Content Area -->
+
+      <div class="main tool-output">
+        <div class="topbar tool-output-bar">
+          <button
+            aria-expanded="false"
+            aria-controls="sidebar"
+            class="hamburger"
+            id="hamburger"
+            onclick="toggleSidebar()"
+            aria-label="Open explorer"
+          >
+            <span>☷</span>
+            Explorer
+          </button>
+          <div class="topbar-title" id="page-title" style="margin-left: 8px">OUTPUT / video.open</div>
+          <div style="flex: 1"></div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div class="sync-pill" id="sync-pill">SESSION DATA</div>
+          </div>
+        </div>
+
+        <div class="content tool-output-content">
+          <div class="full-card">
+            <!-- Quick Video Search Bar in Main Area (Especially convenient on mobile) -->
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px">
+              <div class="topbar-search-wrap" style="flex: 1; margin: 0">
+                <input
+                  type="text"
+                  id="main-search-input"
+                  class="topbar-search"
+                  style="width: 100%; height: 38px"
+                  placeholder="Enter Video ID (e.g. 123498)..."
+                  inputmode="numeric"
+                  onkeydown="if (event.key === 'Enter') loadVideo(this.value);"
+                />
+              </div>
+              <button
+                class="theme-mode-btn active"
+                onclick="loadVideo(document.getElementById('main-search-input').value)"
+                style="
+                  margin: 0;
+                  height: 38px;
+                  padding: 0 18px;
+                  font-size: 13px;
+                  font-weight: 600;
+                  white-space: nowrap;
+                "
+              >
+                Play
+              </button>
+            </div>
+
+            <!-- Card Header -->
+            <div
+              class="card-header"
+              style="
+                justify-content: space-between;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 12px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+              "
+            >
+              <div>
+                <h2 class="card-title" id="selected-video-title" style="font-size: 16px">
+                  No Video Selected
+                </h2>
+                <div id="video-meta-info" style="font-size: 12px; color: var(--text3); margin-top: 4px">
+                  Enter a Video ID above to stream the recording
+                </div>
+              </div>
+              <div
+                id="video-actions-row"
+                style="display: none; align-items: center; gap: 6px; flex-wrap: wrap"
+              >
+                <button class="filter-chip active" onclick="setSpeed(1, this)">1x</button>
+                <button class="filter-chip" onclick="setSpeed(1.25, this)">1.25x</button>
+                <button class="filter-chip" onclick="setSpeed(1.5, this)">1.5x</button>
+                <button class="filter-chip" onclick="setSpeed(2, this)">2x</button>
+                <a
+                  class="theme-mode-btn active"
+                  id="btn-download"
+                  href="#"
+                  download=""
+                  style="
+                    margin: 0;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-weight: 600;
+                  "
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download
+                </a>
+                <button
+                  class="theme-mode-btn"
+                  id="btn-copy"
+                  onclick="copyVideoLink()"
+                  style="margin: 0; padding: 6px 12px; font-size: 12px"
+                >
+                  Copy Link
+                </button>
+                <a
+                  class="theme-mode-btn"
+                  id="btn-new-tab"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="margin: 0; padding: 6px 12px; font-size: 12px; text-decoration: none"
+                >
+                  New Tab ↗
+                </a>
+              </div>
+            </div>
+
+            <!-- Placeholder / Empty State -->
+            <div id="video-placeholder" class="empty terminal-empty" style="padding: 60px 20px">
+              <span class="empty-glyph">▷</span>
+              <code>NO STREAM SELECTED</code>
+              <p>Enter a Video ID above or select one from the explorer to stream the lecture recording.</p>
+              <button class="utility-button explorer-jump" type="button">Open explorer →</button>
+            </div>
+
+            <!-- Loading State -->
+            <div
+              id="video-loading"
+              style="
+                display: none;
+                text-align: center;
+                color: var(--text3);
+                font-size: 13px;
+                padding: 60px 20px;
+              "
+            >
+              Fetching recording URL from Narayana servers...
+            </div>
+
+            <!-- Video Container -->
+            <div id="video-container" class="video-container" style="display: none">
+              <video
+                id="recording-video"
+                controls
+                autoplay
+                playsinline
+                webkit-playsinline=""
+                x5-playsinline=""
+                x5-video-player-type="h5"
+                preload="auto"
+              ></video>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="sidebar tool-inspector" id="sidebar">
+        <div class="inspector-label">
+          <span>INPUT / HISTORY</span>
+          <button type="button" class="inspector-close" onclick="closeSidebar()" aria-label="Close explorer">
+            ×
+          </button>
+        </div>
+
+        <!-- Video ID Input in Sidebar -->
+        <div
+          style="
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          "
+        >
+          <div class="topbar-search-wrap" style="width: 100%; margin: 0">
+            <input
+              type="text"
+              id="video-search-input"
+              class="topbar-search"
+              style="width: 100%"
+              placeholder="Enter Video ID (e.g. 123498)..."
+              inputmode="numeric"
+              onkeydown="if (event.key === 'Enter') loadVideoFromSidebar();"
+            />
+          </div>
+          <button
+            class="theme-mode-btn active"
+            onclick="loadVideoFromSidebar()"
+            style="
+              margin: 0;
+              width: 100%;
+              padding: 8px 12px;
+              font-size: 12.5px;
+              font-weight: 600;
+              height: 38px;
+            "
+          >
+            Start Video
+          </button>
+        </div>
+
+        <!-- Recent History List in Sidebar -->
+        <div class="batch-list-scroll">
+          <div
+            style="
+              font-size: 11px;
+              font-weight: 700;
+              color: var(--text3);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 10px;
+            "
+          >
+            Recent Recordings
+          </div>
+          <div id="recent-list" style="display: flex; flex-direction: column"></div>
+        </div>
+      </aside>
     </div>
 
     <!-- Toast Component -->
@@ -353,7 +302,7 @@
     <!-- Mobile Overlay -->
     <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-    <script src="watch-recording.js"></script>
-</body>
-
+    <script src="watch-recording.js?v=5f71cc55d903"></script>
+    <script type="module" src="../src/shell/tool-page.js?v=8a5586e6c9be"></script>
+  </body>
 </html>

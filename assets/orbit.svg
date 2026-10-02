@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" fill="none">
+<defs>
+ <radialGradient id="sun" cx=".32" cy=".25" r=".8"><stop stop-color="#ffcf8c"/><stop offset=".48" stop-color="#ff914f"/><stop offset="1" stop-color="#e5532f"/></radialGradient>
+ <linearGradient id="ring" x1="110" y1="150" x2="500" y2="350" gradientUnits="userSpaceOnUse"><stop stop-color="#fbe8ce" stop-opacity=".1"/><stop offset=".5" stop-color="#fbe8ce" stop-opacity=".9"/><stop offset="1" stop-color="#fbe8ce" stop-opacity=".2"/></linearGradient>
+ <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" stroke="#b7c7ca" stroke-opacity=".06"/></pattern>
+ <filter id="shadow"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>
+<rect width="600" height="500" fill="url(#grid)"/>
+<circle cx="300" cy="250" r="209" stroke="#d4dcd2" stroke-opacity=".12" stroke-dasharray="2 9"/>
+<circle cx="300" cy="250" r="178" stroke="#d4dcd2" stroke-opacity=".12"/>
+<path d="M300 25V65M300 435V475M75 250H115M485 250H525" stroke="#e2e3ce" stroke-opacity=".45"/>
+<ellipse cx="300" cy="372" rx="98" ry="10" fill="#000" opacity=".35" filter="url(#shadow)"/>
+<ellipse cx="300" cy="250" rx="233" ry="81" transform="rotate(-30 300 250)" stroke="url(#ring)"/>
+<circle cx="300" cy="250" r="111" fill="url(#sun)"/>
+<g stroke="#8f382c" stroke-opacity=".18"><ellipse cx="300" cy="250" rx="78" ry="111"/><ellipse cx="300" cy="250" rx="35" ry="111"/><path d="M189 250H411M198 208H402M198 292H402M226 167H374M226 333H374"/></g>
+<path d="M98 367C139 397 258 363 370 298C474 238 529 173 511 140" stroke="url(#ring)" stroke-width="1.8"/>
+<circle cx="116" cy="346" r="9" fill="#e4e9b4"/><circle cx="486" cy="143" r="5" fill="#ffae71"/>
+<path d="M450 348V366M441 357H459M141 133V145M135 139H147" stroke="#f1e9d8" stroke-width="1.5"/>
+<circle cx="417" cy="85" r="2" fill="#f1e9d8"/><circle cx="191" cy="413" r="2" fill="#f1e9d8"/>
+<g font-family="monospace" font-size="9" fill="#b5beb4" letter-spacing="2"><text x="318" y="44">YOUR NEXT CHAPTER</text><text x="56" y="425">01 — KEEP MOVING FORWARD</text></g>
+</svg>

@@ -1,575 +1,318 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Test Data - Portal Functions</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data export / ntsc_</title>
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+
     <!-- Main styles -->
-    <link rel="stylesheet" href="../styles.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow-y: auto;
-            min-height: 100vh;
-            background: var(--bg);
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text);
-        }
+    <link rel="stylesheet" href="../styles.css?v=7c8859d79aef" />
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 30px 20px 80px 20px;
-        }
+    <link rel="stylesheet" href="styles/download-tests.css?v=9f9fd11e8e3e" />
+    <link rel="stylesheet" href="../tools.css?v=a474efaf662b" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  </head>
 
-        .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
-        }
+  <body data-tool="download-tests" class="tool-page tool-download-tests">
+    <header class="tool-chrome">
+      <a class="kit-brand" href="../index.html" aria-label="Back to workspace">
+        <span class="kit-brand-mark">n_</span>
+        <strong>
+          ntsc
+          <span>_</span>
+        </strong>
+        <span class="build-badge">TOOLKIT</span>
+      </a>
+      <span class="tool-breadcrumb">
+        tools
+        <span>/</span>
+        <code>data.export</code>
+      </span>
+      <div class="tool-chrome-actions">
+        <button class="tool-theme-toggle" type="button" aria-label="Switch color theme">◐</button>
+        <a class="workspace-link" href="../index.html">← workspace</a>
+      </div>
+    </header>
+    <nav class="tool-tabs" aria-label="Utility navigation" data-tool-tabs=""></nav>
+    <header class="tool-heading">
+      <div>
+        <div class="module-path">
+          ~/tools/download-tests
+          <span>MODULE 04</span>
+        </div>
+        <h1>
+          Data export
+          <span class="heading-dot">_</span>
+        </h1>
+        <p>Configure a batch export of test results, ranks and raw responses.</p>
+      </div>
+      <div class="tool-io">
+        <span>
+          INPUT
+          <b>YEAR / FILTERS</b>
+        </span>
+        <span>
+          OUTPUT
+          <b>JSON · CSV</b>
+        </span>
+      </div>
+    </header>
+    <div class="container export-workbench">
+      <!-- HEADER -->
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+      <!-- AUTH ALERTS -->
+      <div class="auth-warning" id="auth-warning-alert">
+        <strong>[ AUTH_REQUIRED ]</strong>
+        Sign in to the workspace before starting an export.
+        <a href="../index.html">Open authentication →</a>
+      </div>
 
-        .brand-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            color: var(--accent-text);
-            border-radius: var(--r);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            font-family: 'Outfit', sans-serif;
-            box-shadow: 0 4px 12px var(--accent-glow);
-        }
+      <div class="grid-layout export-grid">
+        <!-- CONFIGURATION PANEL -->
+        <div class="full-card export-config" style="margin: 0">
+          <div
+            class="card-header"
+            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px"
+          >
+            <h2 class="card-title" style="font-size: 16px">01 / EXPORT CONFIG</h2>
+          </div>
 
-        .brand-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .brand-subtitle {
-            font-size: 12px;
-            color: var(--text3);
-        }
-
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media(max-width: 768px) {
-            .grid-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .option-section-title {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text2);
-            font-weight: 600;
-            margin-bottom: 12px;
-            border-left: 2px solid var(--accent);
-            padding-left: 8px;
-        }
-
-        .settings-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        /* Custom Toggle Switch */
-        .toggle-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            padding: 12px 16px;
-            border-radius: var(--r);
-            transition: all 0.2s;
-        }
-
-        .toggle-item:hover {
-            border-color: var(--border2);
-            background: var(--bg4);
-        }
-
-        .toggle-item.disabled {
-            opacity: 0.45;
-            pointer-events: none;
-        }
-
-        .toggle-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            padding-right: 12px;
-        }
-
-        .toggle-label {
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--text);
-        }
-
-        .toggle-description {
-            font-size: 11px;
-            color: var(--text2);
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-            flex-shrink: 0;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: var(--bg4);
-            border: 1px solid var(--border);
-            transition: .3s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: var(--text2);
-            transition: .3s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(20px);
-            background-color: var(--accent-text);
-        }
-
-        /* Year Pill selector */
-        .year-pill-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .year-pill {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .year-pill:hover {
-            border-color: var(--border2);
-            color: var(--text);
-        }
-
-        .year-pill.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: var(--accent-text);
-            box-shadow: 0 2px 8px var(--accent-glow);
-        }
-
-        /* Format Cards */
-        .format-list {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .format-card {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .format-card:hover {
-            border-color: var(--border2);
-        }
-
-        .format-card.active {
-            background: rgba(61, 127, 255, 0.08);
-            border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        .format-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .format-desc {
-            font-size: 10px;
-            color: var(--text3);
-        }
-
-        /* Progress area */
-        .progress-card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--r2);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 8px;
-            background: var(--bg3);
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .progress-bar-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), #60a5fa);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-
-        .progress-label {
-            font-weight: 500;
-            color: var(--text2);
-        }
-
-        .progress-percent {
-            font-weight: 600;
-            color: var(--accent);
-        }
-
-        /* Console Log View */
-        .console-container {
-            background: #060913;
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            padding: 12px;
-            height: 220px;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #d1d5db;
-        }
-
-        .console-line {
-            margin-bottom: 4px;
-            white-space: pre-wrap;
-        }
-
-        .console-line.info {
-            color: #60a5fa;
-        }
-
-        .console-line.success {
-            color: var(--green);
-        }
-
-        .console-line.warn {
-            color: var(--amber);
-        }
-
-        .console-line.error {
-            color: var(--red);
-        }
-
-        .action-row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .action-row button {
-            flex: 1;
-        }
-
-        /* Backwards compatibility details link */
-        .auth-warning {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid var(--red);
-            color: #fca5a5;
-            padding: 12px 16px;
-            border-radius: var(--r);
-            margin-bottom: 20px;
-            font-size: 13px;
-            display: none;
-        }
-    </style>
-</head>
-
-<body class="light-mode-override">
-    <div class="container">
-        <!-- HEADER -->
-        <header class="page-header">
-            <div class="brand">
-                <div class="brand-icon">DL</div>
-                <div>
-                    <div class="brand-title">Download Test Data</div>
-                    <div class="brand-subtitle">Portal Functions</div>
-                </div>
+          <div style="display: flex; flex-direction: column; gap: 20px">
+            <!-- Academic Years -->
+            <div>
+              <div class="option-section-title">Academic Years</div>
+              <div class="year-pill-list" id="year-pills">
+                <!-- Dynamic years -->
+              </div>
+              <div style="font-size: 11px; color: var(--text3)">
+                Select one or more academic years to scrape data from.
+              </div>
             </div>
-            <button class="theme-mode-btn" onclick="window.close()" style="margin: 0; padding: 8px 16px;">Close
-                Utility</button>
-        </header>
 
-        <!-- AUTH ALERTS -->
-        <div class="auth-warning" id="auth-warning-alert">
-            <strong>Authentication Error:</strong> No active portal session token found. Please log in on the main
-            portal page first, then refresh this page.
+            <!-- Options Switches -->
+            <div>
+              <div class="option-section-title">Elements &amp; Fields to Fetch</div>
+              <div class="settings-grid">
+                <!-- Include Leaderboard -->
+                <div class="toggle-item" id="item-leaderboard">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Include Leaderboard</div>
+                    <div class="toggle-description">Download leaderboard rank list for each test</div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Include Leaderboard" type="checkbox" id="opt-leaderboard" checked />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Include SubjectWise Marks -->
+                <div class="toggle-item" id="item-subjectwise">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Subject-wise Marks &amp; Ranks</div>
+                    <div class="toggle-description">
+                      Include personal scores, averages, and ranks for individual subjects
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input
+                      aria-label="Subject-wise Marks & Ranks"
+                      type="checkbox"
+                      id="opt-subjectwise"
+                      checked
+                    />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Include Overall Rank -->
+                <div class="toggle-item" id="item-ranks">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Overall &amp; Batch Ranks</div>
+                    <div class="toggle-description">Include personal overall rank and batch rank data</div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Overall & Batch Ranks" type="checkbox" id="opt-ranks" checked />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Include Unpublished -->
+                <div class="toggle-item" id="item-unpublished">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Include Unpublished Tests</div>
+                    <div class="toggle-description">
+                      Scrape tests that are not yet published (only metadata will be fetched)
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Include Unpublished Tests" type="checkbox" id="opt-unpublished" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Include Raw JSON -->
+                <div class="toggle-item" id="item-raw">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Include Raw Server Response</div>
+                    <div class="toggle-description">
+                      Include full raw JSON responses from portal servers (JSON files only)
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Include Raw Server Response" type="checkbox" id="opt-raw" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Discard 0 Scores -->
+                <div class="toggle-item" id="item-discard-zero">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Discard 0 Scores</div>
+                    <div class="toggle-description">
+                      Exclude tests where the student scored exactly 0 marks
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Discard 0 Scores" type="checkbox" id="opt-discard-zero" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Only IT/NT -->
+                <div class="toggle-item" id="item-only-itnt">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Only IT / NT Tests</div>
+                    <div class="toggle-description">
+                      Only include tests with "INTERNAL TEST" or "NATIONAL TEST" in their name
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input aria-label="Only IT / NT Tests" type="checkbox" id="opt-only-itnt" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Leaderboard Only (No Personal Data) -->
+                <div class="toggle-item" id="item-only-leaderboard" style="border-color: var(--accent)">
+                  <div class="toggle-info">
+                    <div class="toggle-label" style="color: var(--accent)">
+                      Leaderboard Only (No Personal Data)
+                    </div>
+                    <div class="toggle-description">
+                      Extract leaderboard rank data ONLY. All personal marks, scores, ranks, and analysis are
+                      excluded.
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input
+                      aria-label="Leaderboard Only (No Personal Data)"
+                      type="checkbox"
+                      id="opt-only-leaderboard"
+                    />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Filter by Name -->
+                <div class="toggle-item" style="flex-direction: column; align-items: flex-start; gap: 8px">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Filter by Name / Keyword</div>
+                    <div class="toggle-description">
+                      Only include tests containing this text in their name (case-insensitive, leave blank for
+                      all)
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    id="opt-name-filter"
+                    class="login-input"
+                    style="
+                      margin: 0;
+                      width: 100%;
+                      max-width: 320px;
+                      padding: 8px 12px;
+                      height: 36px;
+                      border: 1px solid var(--border);
+                      background: var(--bg);
+                      color: var(--text);
+                    "
+                    placeholder="e.g. CDF, Part Test"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Output Formats -->
+            <div>
+              <div class="option-section-title">Download Format</div>
+              <div class="format-list">
+                <div class="format-card active" data-format="json-summary" onclick="selectFormat(this)">
+                  <div class="format-name">JSON (Summary)</div>
+                  <div class="format-desc">Clean structured summary list</div>
+                </div>
+                <div class="format-card" data-format="json-full" onclick="selectFormat(this)">
+                  <div class="format-name">JSON (Full)</div>
+                  <div class="format-desc">Summary + raw server payloads</div>
+                </div>
+                <div class="format-card" data-format="csv" onclick="selectFormat(this)">
+                  <div class="format-name">CSV (Spreadsheet)</div>
+                  <div class="format-desc">Flat table view for Excel</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="grid-layout">
-            <!-- CONFIGURATION PANEL -->
-            <div class="full-card" style="margin: 0;">
-                <div class="card-header"
-                    style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
-                    <h2 class="card-title" style="font-size: 16px;">Scraper Configuration</h2>
-                </div>
+        <!-- EXECUTION & PROGRESS CARD -->
+        <div class="progress-card job-monitor">
+          <div
+            class="card-header"
+            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 4px"
+          >
+            <h2 class="card-title" style="font-size: 16px">02 / JOB MONITOR</h2>
+          </div>
 
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <!-- Academic Years -->
-                    <div>
-                        <div class="option-section-title">Academic Years</div>
-                        <div class="year-pill-list" id="year-pills">
-                            <!-- Dynamic years -->
-                        </div>
-                        <div style="font-size: 11px; color: var(--text3)">Select one or more academic years to scrape
-                            data from.</div>
-                    </div>
+          <div class="progress-header">
+            <div class="progress-label" id="progress-status">IDLE</div>
+            <div class="progress-percent" id="progress-percent">0%</div>
+          </div>
 
-                    <!-- Options Switches -->
-                    <div>
-                        <div class="option-section-title">Elements & Fields to Fetch</div>
-                        <div class="settings-grid">
-                            <!-- Include Leaderboard -->
-                            <div class="toggle-item" id="item-leaderboard">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Include Leaderboard</div>
-                                    <div class="toggle-description">Download leaderboard rank list for each test</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-leaderboard" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
 
-                            <!-- Include SubjectWise Marks -->
-                            <div class="toggle-item" id="item-subjectwise">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Subject-wise Marks & Ranks</div>
-                                    <div class="toggle-description">Include personal scores, averages, and ranks for individual subjects</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-subjectwise" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Include Overall Rank -->
-                            <div class="toggle-item" id="item-ranks">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Overall & Batch Ranks</div>
-                                    <div class="toggle-description">Include personal overall rank and batch rank data</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-ranks" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Include Unpublished -->
-                            <div class="toggle-item" id="item-unpublished">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Include Unpublished Tests</div>
-                                    <div class="toggle-description">Scrape tests that are not yet published (only
-                                        metadata will be fetched)</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-unpublished">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Include Raw JSON -->
-                            <div class="toggle-item" id="item-raw">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Include Raw Server Response</div>
-                                    <div class="toggle-description">Include full raw JSON responses from portal servers
-                                        (JSON files only)</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-raw">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Discard 0 Scores -->
-                            <div class="toggle-item" id="item-discard-zero">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Discard 0 Scores</div>
-                                    <div class="toggle-description">Exclude tests where the student scored exactly 0 marks</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-discard-zero">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Only IT/NT -->
-                            <div class="toggle-item" id="item-only-itnt">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Only IT / NT Tests</div>
-                                    <div class="toggle-description">Only include tests with "INTERNAL TEST" or "NATIONAL TEST" in their name</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-only-itnt">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Leaderboard Only (No Personal Data) -->
-                            <div class="toggle-item" id="item-only-leaderboard" style="border-color: var(--accent);">
-                                <div class="toggle-info">
-                                    <div class="toggle-label" style="color: var(--accent);">Leaderboard Only (No Personal Data)</div>
-                                    <div class="toggle-description">Extract leaderboard rank data ONLY. All personal marks, scores, ranks, and analysis are excluded.</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="opt-only-leaderboard">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Filter by Name -->
-                            <div class="toggle-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <div class="toggle-info">
-                                    <div class="toggle-label">Filter by Name / Keyword</div>
-                                    <div class="toggle-description">Only include tests containing this text in their name (case-insensitive, leave blank for all)</div>
-                                </div>
-                                <input type="text" id="opt-name-filter" class="login-input" style="margin: 0; width: 100%; max-width: 320px; padding: 8px 12px; height: 36px; border: 1px solid var(--border); background: var(--bg); color: var(--text);" placeholder="e.g. CDF, Part Test">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Output Formats -->
-                    <div>
-                        <div class="option-section-title">Download Format</div>
-                        <div class="format-list">
-                            <div class="format-card active" data-format="json-summary" onclick="selectFormat(this)">
-                                <div class="format-name">JSON (Summary)</div>
-                                <div class="format-desc">Clean structured summary list</div>
-                            </div>
-                            <div class="format-card" data-format="json-full" onclick="selectFormat(this)">
-                                <div class="format-name">JSON (Full)</div>
-                                <div class="format-desc">Summary + raw server payloads</div>
-                            </div>
-                            <div class="format-card" data-format="csv" onclick="selectFormat(this)">
-                                <div class="format-name">CSV (Spreadsheet)</div>
-                                <div class="format-desc">Flat table view for Excel</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div class="option-section-title" style="margin-bottom: 0">Live Output Terminal</div>
+          <div class="console-container" id="terminal-console">
+            <div class="console-line info">
+              <span class="terminal-prompt">›</span>
+              exporter initialized
+              <br />
+              waiting for configuration…
             </div>
+          </div>
 
-            <!-- EXECUTION & PROGRESS CARD -->
-            <div class="progress-card">
-                <div class="card-header"
-                    style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 4px;">
-                    <h2 class="card-title" style="font-size: 16px;">Execution Progress</h2>
-                </div>
-
-                <div class="progress-header">
-                    <div class="progress-label" id="progress-status">Ready to start</div>
-                    <div class="progress-percent" id="progress-percent">0%</div>
-                </div>
-
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" id="progress-bar-fill"></div>
-                </div>
-
-                <div class="option-section-title" style="margin-bottom: 0;">Live Output Terminal</div>
-                <div class="console-container" id="terminal-console">
-                    <div class="console-line info">Portal Functions System initialized. Ready.</div>
-                </div>
-
-                <div class="action-row">
-                    <button class="start-btn" id="btn-start" onclick="startScraping()" style="margin: 0;">Start Scraping
-                        & Download</button>
-                    <button class="start-btn gray" id="btn-cancel" onclick="cancelScraping()"
-                        style="margin: 0; display: none; background: var(--red); color: white; border: none;">Cancel
-                        Operation</button>
-                </div>
-            </div>
+          <div class="action-row">
+            <button class="start-btn" id="btn-start" onclick="startScraping()" style="margin: 0">
+              Start Scraping &amp; Download
+            </button>
+            <button
+              class="start-btn gray"
+              id="btn-cancel"
+              onclick="cancelScraping()"
+              style="margin: 0; display: none; background: var(--red); color: white; border: none"
+            >
+              Cancel Operation
+            </button>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Scripts -->
-    <script src="../core.js"></script>
-    <script src="../scraper.js"></script>
-    <script src="download-tests.js"></script>
-</body>
-
+    <script src="../core.js?v=31b9aa0966c2"></script>
+    <script src="../scraper.js?v=d6722f29d252"></script>
+    <script src="download-tests.js?v=5c2ca03949b2"></script>
+    <script type="module" src="../src/shell/tool-page.js?v=8a5586e6c9be"></script>
+  </body>
 </html>

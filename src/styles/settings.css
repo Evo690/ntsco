@@ -1,0 +1,87 @@
+/* Settings is an explicit control surface, not a collection of legacy cards. */
+.settings-layout { display: grid; grid-template-columns: minmax(250px,.8fr) minmax(0,1.4fr); align-items: start; gap: 20px; }
+.settings-panel { border: 1px solid var(--border); background: var(--bg2); border-radius: 4px; overflow: hidden; min-width: 0; }
+.settings-panel-heading { padding: 24px; border-bottom: 1px solid var(--border); }
+.settings-panel :is(.settings-panel-heading,.settings-toolkit-heading) code,.settings-disclosure code { color: var(--accent); font: 9px var(--font-mono); letter-spacing: .8px; }
+.settings-panel h2 { font: 500 22px/1.5 var(--font-body); letter-spacing: -.5px; margin: 10px 0 6px; }
+.settings-panel-heading p,.settings-toolkit-heading p { font: 12px/1.8 var(--font-body); color: var(--text3); }
+.settings-panel-body { padding: 24px; }
+.settings-field-label { display: block; color: var(--text3); font: 9px var(--font-mono); letter-spacing: .6px; margin-bottom: 12px; }
+.settings-appearance .theme-mode-row { margin: 0 0 24px; display: grid; grid-template-columns: 1fr 1fr; }
+.settings-appearance .theme-mode-btn { margin: 0; min-height: 40px; }
+.settings-appearance .theme-preset-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-bottom: 24px; }
+.settings-appearance .theme-preset-btn { min-height: 76px; text-align: left; }
+.setting-action-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+.setting-action-row:last-child { border-bottom: 0; }
+.setting-action-row > div { min-width: 0; }
+.setting-action-row h3,.setting-action-row > div > label { display: block; color: var(--text); font: 500 14px/1.6 var(--font-body); }
+.setting-action-row p { margin-top: 5px; font: 11px/1.8 var(--font-body); color: var(--text3); max-width: 530px; }
+.setting-action-row .console-button { flex-shrink: 0; min-width: 142px; }
+.setting-action-row :is(.switch,select) { flex-shrink: 0; }
+.settings-panel select { background: var(--bg); color: var(--text); border: 1px solid var(--border2); padding: 10px; border-radius: 3px; font: 10px var(--font-mono); }
+.settings-operation-status { font: 10px/1.8 var(--font-mono); padding: 14px 24px; color: var(--text3); }
+.settings-operation-status[data-state="success"] { color: var(--accent); }.settings-operation-status[data-state="error"] { color: var(--red); }
+.settings-toolkit-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 24px; }
+.settings-toolkit-heading > button { flex-shrink: 0; }
+.settings-toolkit-heading > button[aria-expanded="true"] > span { transform: rotate(45deg); }
+.settings-function-index { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); border-top: 1px solid var(--border); }
+.settings-tool-link { display: grid; grid-template-columns: 22px minmax(0,1fr) auto 12px; align-items: start; gap: 12px; padding: 22px; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.settings-tool-link:nth-child(odd) { border-right: 1px solid var(--border); }
+.settings-tool-link:hover { background: var(--accent-glow); }.settings-tool-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.settings-tool-code { color: var(--accent); font: 10px/1.8 var(--font-mono); }
+.settings-tool-link strong { font: 500 14px/1.5 var(--font-body); }.settings-tool-link small { display: block; color: var(--text3); font: 11px/1.8 var(--font-body); margin-top: 6px; }
+.settings-tool-link > code { color: var(--text3); font: 8px/1.8 var(--font-mono); padding-top: 3px; }
+.settings-tool-link > span:last-child { color: var(--accent); }
+.settings-quick-launches { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.settings-quick-launch { padding: 24px; min-width: 0; }.settings-quick-launch:first-child { border-right: 1px solid var(--border); }
+.settings-quick-launch > code { color: var(--text3); font: 9px var(--font-mono); }
+.settings-quick-launch h3 { font: 500 17px var(--font-body); margin-top: 12px; }
+.settings-quick-launch p { color: var(--text3); font: 11px/1.8 var(--font-body); margin: 9px 0 18px; }
+.settings-quick-launch label { display: block; color: var(--text2); font: 10px var(--font-mono); margin-bottom: 9px; }
+.settings-input-row { display: flex; gap: 8px; }.settings-input-row input { min-width: 0; width: 100%; flex: 1; background: var(--bg); border: 1px solid var(--border2); padding: 10px; border-radius: 3px; color: var(--text); font: 11px var(--font-mono); }
+.settings-input-row button { white-space: nowrap; }
+.settings-inline-status { margin-top: 12px; padding: 10px; font: 11px/1.8 var(--font-body); }
+.settings-recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; font: 9px var(--font-mono); color: var(--text3); }
+#settings-recent-recordings-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.settings-disclosure { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 100%; padding: 24px; border: 0; text-align: left; background: transparent; color: var(--text); cursor: pointer; }
+.settings-disclosure strong,.settings-disclosure small { display: block; }.settings-disclosure strong { font: 500 20px var(--font-body); margin: 12px 0 8px; }.settings-disclosure small { color: var(--text3); font: 11px/1.8 var(--font-body); }
+.settings-disclosure:hover { background: var(--bg3); }
+.settings-visitor { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 15px 0; border-top: 1px solid var(--border); font: 10px var(--font-mono); color: var(--text3); }.settings-visitor p { margin-top: 6px; font-size: 9px; }.settings-visitor strong { color: var(--text2); font-weight: 400; }
+#list-editor-root :is(input,button,label,#list-editor-items) { border-radius: 3px !important; }
+@media (max-width: 1150px) {
+  .settings-layout { grid-template-columns: minmax(0,1fr); }
+  .settings-appearance .settings-panel-body { display: block; }
+  .settings-tool-link > code { display: none; }
+  .settings-tool-link { grid-template-columns: 22px minmax(0,1fr) 12px; }
+}
+@media (max-width: 768px) {
+  .settings-panel-heading,.settings-panel-body,.settings-toolkit-heading,.settings-disclosure,.settings-quick-launch { padding: 19px; }
+  .setting-action-row { padding: 18px; gap: 16px; }
+  .settings-data .setting-action-row { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .settings-panel h2 { font-size: 21px; }
+  .settings-toolkit-heading { flex-wrap: wrap; }
+  .settings-function-index,.settings-quick-launches { grid-template-columns: minmax(0,1fr); }
+  .settings-tool-link { padding: 19px; }.settings-tool-link:nth-child(odd) { border-right: 0; }
+  .settings-quick-launch:first-child { border-right: 0; border-bottom: 1px solid var(--border); }
+  .settings-panel .setting-action-row select { max-width: 130px; }
+}
+/* Player is a body-level dialog; it must not inherit a hidden practice sheet. */
+.recording-console-overlay { position: fixed; inset: 0; z-index: 10000; padding: 24px; background: #050709d9; backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; transition: opacity .2s; }
+.player-modal-container { display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--border2); border-radius: 5px; width: 100%; max-width: 960px; max-height: 92dvh; overflow: auto; }
+.recording-console-header { display: flex; justify-content: space-between; align-items: start; gap: 18px; padding: 22px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.recording-console-header > div { min-width: 0; }.recording-console-header code { color: var(--accent); font: 10px var(--font-mono); overflow-wrap: anywhere; }.recording-console-header h2 { font: 500 23px var(--font-body); margin: 10px 0 8px; }.recording-console-header p { color: var(--text3); font: 10px/1.8 var(--font-mono); }
+.recording-console-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 22px; }
+.recording-console-screen { position: relative; flex-shrink: 0; width: 100%; aspect-ratio: 16/9; background: #050709; }
+.recording-console-screen video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.recording-screen-state { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 20px; text-align: center; color: var(--text); background: var(--bg2); font: 12px/1.8 var(--font-body); }
+.recording-screen-state code { color: var(--red); font: 9px var(--font-mono); }
+.recording-loader { width: 26px; height: 26px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+.recording-console-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 18px 22px; border-top: 1px solid var(--border); }
+.recording-speeds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }.recording-speeds > span { font: 9px var(--font-mono); color: var(--text3); margin-right: 5px; }
+.player-speed-btn,.recent-id-chip { background: var(--bg); border: 1px solid var(--border2); border-radius: 3px; color: var(--text2); font: 10px var(--font-mono); padding: 8px; cursor: pointer; }.player-speed-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+.recording-jump { display: flex; flex: 1; gap: 6px; min-width: 200px; }.recording-jump input { flex: 1; width: 100%; min-width: 0; padding: 9px; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 3px; font: 10px var(--font-mono); }
+.recording-screen-controls { display: flex; gap: 6px; }
+@media(max-width: 768px) {
+  .recording-console-overlay { padding: 12px; }.recording-console-header { padding: 18px 14px; }.recording-console-header h2 { font-size: 20px; }.recording-console-header .console-button { white-space: nowrap; padding: 7px; }
+  .recording-console-actions,.recording-console-footer { padding: 14px; }.recording-console-screen { min-height: 220px; }.recording-jump { min-width: 100%; }
+}

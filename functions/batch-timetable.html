@@ -1,202 +1,170 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batch Timetable - Portal Functions</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Batch scheduler / ntsc_</title>
     <!-- Fonts from portal -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+
     <!-- Link portal's styles.css directly -->
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles.css?v=7c8859d79aef" />
     <!-- Standalone overrides for full screen layout and mobile behavior -->
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            height: 100dvh;
-            width: 100vw;
-            background: var(--bg);
-        }
 
-        .app-full {
-            display: flex;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            background: var(--bg2);
-            border-right: 1px solid var(--border);
-            width: 260px;
-            flex-shrink: 0;
-            border-radius: 0;
-            /* Full screen override */
-            box-shadow: none;
-        }
-
-        .batch-list-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-        }
-
-        .batch-item-btn {
-            text-align: left;
-            padding: 10px 12px;
-            width: 100%;
-            margin-bottom: 8px;
-            cursor: pointer;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            transition: all 0.2s ease;
-        }
-
-        .batch-item-btn:hover {
-            border-color: var(--border2);
-            background: var(--bg4);
-        }
-
-        .batch-item-btn.active {
-            border-color: var(--accent);
-            background: var(--bg3);
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        .main {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            flex: 1;
-            background: var(--bg);
-            border-radius: 0;
-            /* Full screen override */
-        }
-
-        .topbar {
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg2);
-            flex-shrink: 0;
-        }
-
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-
-        @media(max-width:768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transform: translateX(-100%);
-                transition: transform 0.25s;
-                width: 250px;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .topbar {
-                padding: 0 16px;
-            }
-
-            .content {
-                padding: 16px;
-            }
-        }
-    </style>
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
+    <link rel="stylesheet" href="styles/batch-timetable.css?v=604abbe97784" />
+    <link rel="stylesheet" href="../tools.css?v=a474efaf662b" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  </head>
 
-<body>
-    <div class="app-full">
-        <!-- Sidebar for Batch Search & List -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-                <div class="logo-icon">FY</div>
-                <div>
-                    <div class="logo-text">Batch Timetable</div>
-                    <div class="logo-sub">Portal Functions</div>
-                </div>
-            </div>
-            <div
-                style="padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
-                <div class="topbar-search-wrap" style="width: 100%; margin: 0;">
-                    <input type="text" id="batch-search" class="topbar-search" style="width: 100%;"
-                        placeholder="Search batches..." oninput="filterBatches()">
-                </div>
-                <select id="year-selector" class="tt-select"
-                    style="width: 100%; margin: 0; height: 36px; padding: 0 10px;" onchange="filterBatches()"></select>
-            </div>
-            <div id="batch-list-scroll" class="batch-list-scroll">
-                <div id="batch-loading"
-                    style="text-align: center; color: var(--text3); font-size: 13px; padding: 20px 0;">Loading
-                    batches...</div>
-                <div id="batch-list" style="display: flex; flex-direction: column;"></div>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <div class="main">
-            <div class="topbar">
-                <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-                        stroke-width="1.8">
-                        <path d="M3 6h14M3 10h14M3 14h14" />
-                    </svg>
-                </button>
-                <div class="topbar-title" id="page-title" style="margin-left: 8px;">Weekly Timetable</div>
-                <div style="flex: 1;"></div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="sync-pill" id="sync-pill">Database</div>
-                    <button class="theme-mode-btn" onclick="window.close()"
-                        style="margin: 0; padding: 6px 12px; font-size: 12px;">Close Page</button>
-                </div>
-            </div>
-
-            <div class="content">
-                <div class="full-card">
-                    <div class="card-header"
-                        style="justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
-                        <h2 class="card-title" id="selected-batch-name" style="font-size: 16px;">No Batch Selected</h2>
-                        <div id="timetable-range" style="font-size: 12px; color: var(--text3)">Please select a batch
-                            from the sidebar</div>
-                    </div>
-                    <div style="overflow-x: auto; width: 100%;">
-                        <div id="timetable-grid" class="tt-grid" style="min-width: 600px; display: none;"></div>
-                        <div id="timetable-placeholder" class="empty" style="padding: 60px 20px;">
-                            Select an academic batch to load its weekly schedule details.
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <body data-tool="batch-timetable" class="tool-page tool-batch-timetable">
+    <header class="tool-chrome">
+      <a class="kit-brand" href="../index.html" aria-label="Back to workspace">
+        <span class="kit-brand-mark">n_</span>
+        <strong>
+          ntsc
+          <span>_</span>
+        </strong>
+        <span class="build-badge">TOOLKIT</span>
+      </a>
+      <span class="tool-breadcrumb">
+        tools
+        <span>/</span>
+        <code>batches.schedule</code>
+      </span>
+      <div class="tool-chrome-actions">
+        <button class="tool-theme-toggle" type="button" aria-label="Switch color theme">◐</button>
+        <a class="workspace-link" href="../index.html">← workspace</a>
+      </div>
+    </header>
+    <nav class="tool-tabs" aria-label="Utility navigation" data-tool-tabs=""></nav>
+    <header class="tool-heading">
+      <div>
+        <div class="module-path">
+          ~/tools/batch-timetable
+          <span>MODULE 05</span>
         </div>
+        <h1>
+          Batch scheduler
+          <span class="heading-dot">_</span>
+        </h1>
+        <p>Browse academic batches and inspect their weekly class schedules.</p>
+      </div>
+      <div class="tool-io">
+        <span>
+          INPUT
+          <b>BATCH / YEAR</b>
+        </span>
+        <span>
+          OUTPUT
+          <b>WEEKLY SCHEDULE</b>
+        </span>
+      </div>
+    </header>
+    <div class="app-full tool-workbench">
+      <!-- Sidebar for Batch Search & List -->
+
+      <!-- Main Content Area -->
+
+      <div class="main tool-output">
+        <div class="topbar tool-output-bar">
+          <button
+            aria-expanded="false"
+            aria-controls="sidebar"
+            aria-label="Open explorer"
+            class="hamburger"
+            id="hamburger"
+            onclick="toggleSidebar()"
+          >
+            <span>☷</span>
+            Explorer
+          </button>
+          <div class="topbar-title" id="page-title" style="margin-left: 8px">OUTPUT / batches.schedule</div>
+          <div style="flex: 1"></div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <div class="sync-pill" id="sync-pill">SESSION DATA</div>
+          </div>
+        </div>
+
+        <div class="content tool-output-content">
+          <div class="full-card">
+            <div
+              class="card-header"
+              style="
+                justify-content: space-between;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+              "
+            >
+              <h2 class="card-title" id="selected-batch-name" style="font-size: 16px">No Batch Selected</h2>
+              <div id="timetable-range" style="font-size: 12px; color: var(--text3)">
+                Please select a batch from the explorer
+              </div>
+            </div>
+            <div style="overflow-x: auto; width: 100%">
+              <div id="timetable-grid" class="tt-grid" style="min-width: 600px; display: none"></div>
+              <div id="timetable-placeholder" class="empty terminal-empty" style="padding: 60px 20px">
+                <span class="empty-glyph">▦</span>
+                <code>NO OBJECT SELECTED</code>
+                <p>Select an academic batch to load its weekly schedule details.</p>
+                <button class="utility-button explorer-jump" type="button">Open explorer →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="sidebar tool-inspector" id="sidebar">
+        <div class="inspector-label">
+          <span>SOURCE EXPLORER</span>
+          <button type="button" class="inspector-close" onclick="closeSidebar()" aria-label="Close explorer">
+            ×
+          </button>
+        </div>
+
+        <div
+          style="
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          "
+        >
+          <div class="topbar-search-wrap" style="width: 100%; margin: 0">
+            <input
+              type="text"
+              id="batch-search"
+              class="topbar-search"
+              style="width: 100%"
+              placeholder="Search batches..."
+              oninput="filterBatches()"
+            />
+          </div>
+          <select
+            id="year-selector"
+            class="tt-select"
+            style="width: 100%; margin: 0; height: 36px; padding: 0 10px"
+            onchange="filterBatches()"
+          ></select>
+        </div>
+        <div id="batch-list-scroll" class="batch-list-scroll">
+          <div
+            id="batch-loading"
+            style="text-align: center; color: var(--text3); font-size: 13px; padding: 20px 0"
+          >
+            Loading batches...
+          </div>
+          <div id="batch-list" style="display: flex; flex-direction: column"></div>
+        </div>
+      </aside>
     </div>
 
     <!-- Mobile Overlay -->
     <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-    <script src="batch-timetable.js"></script>
-</body>
-
+    <script src="../src/shared/schedule.js?v=5feead5b7e36"></script>
+    <script src="batch-timetable.js?v=deecfa6d56ea"></script>
+    <script type="module" src="../src/shell/tool-page.js?v=8a5586e6c9be"></script>
+  </body>
 </html>

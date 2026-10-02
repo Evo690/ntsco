@@ -1,0 +1,60 @@
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/manrope-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap; src: url('assets/fonts/manrope-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/manrope-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/manrope-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 800; font-display: swap; src: url('assets/fonts/manrope-latin-800-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/dm-sans-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('assets/fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/dm-sans-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/space-mono-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/space-mono-latin-700-normal.woff2') format('woff2'); }
+
+/* ntsc_ console design system. Functional surfaces; no gradients or decorative hero assets. */
+:root {
+  --bg: #0d0f11; --bg2: #131618; --bg3: #1a1e21; --bg4: #23292d;
+  --border: #292f32; --border2: #404b50;
+  --text: #e3e8e7; --text2: #9ca8ac; --text3: #7f8d91;
+  --accent: #c3f779; --accent2: #d5ff9d; --accent-text: #15200b;
+  --accent-glow: #c3f7790c; --green: #b5eb79; --amber: #e9bb6c; --red: #f37f85; --purple: #b5a5f8;
+  --r: 4px; --r2: 6px;
+  --font-body: 'DM Sans', sans-serif; --font-display: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --shadow-soft: none;
+  color-scheme: dark;
+}
+body.light-mode {
+  --bg: #edf0ed; --bg2: #fafcf9; --bg3: #e4eae4; --bg4: #d9e0d9;
+  --border: #cdd5cd; --border2: #97a699;
+  --text: #1b2920; --text2: #4d6255; --text3: #607567;
+  --accent: #35650e; --accent2: #274d0a; --accent-text: #f4ffdf; --accent-glow: #35650e0d;
+  --green: #3a731e; --amber: #885f14; --red: #bc394a; --purple: #7953b0;
+  color-scheme: light;
+}
+body.theme-ocean { --accent: #83dbef; --accent2: #b1eefa; --accent-glow: #83dbef0d; }
+body.theme-purple { --accent: #c4afff; --accent2: #deceff; --accent-glow: #c4afff0d; }
+body.theme-emerald { --accent: #7ae4aa; --accent2: #b3f9d1; --accent-glow: #7ae4aa0d; }
+body.light-mode.theme-ocean { --accent: #126c81; --accent2: #075365; --accent-glow: #126c810d; }
+body.light-mode.theme-purple { --accent: #7544b9; --accent2: #5d3497; --accent-glow: #7544b90d; }
+body.light-mode.theme-emerald { --accent: #1d6d40; --accent2: #124a2b; --accent-glow: #1d6d400d; }
+html, body, button, input, select, textarea { font-family: var(--font-body); }
+body { background: var(--bg); color: var(--text); }
+button, input, select, textarea { font-size: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+code, kbd, .mono { font-family: var(--font-mono); }
+.muted { color: var(--text3); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+::selection { background: #c3f77945; color: var(--text); }
+.skip-link { position: fixed; top: -80px; left: 16px; z-index: 20000; background: var(--bg2); color: var(--accent); padding: 12px 20px; border: 1px solid var(--accent); }
+.skip-link:focus { top: 12px; }
+.kit-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+.kit-brand-mark { background: var(--accent); color: var(--accent-text); width: 30px; height: 30px; display: grid; place-items: center; font: 700 17px var(--font-mono); }
+.kit-brand strong { font: 700 21px var(--font-mono); letter-spacing: -1.5px; }
+.kit-brand strong > span { color: var(--accent); }
+.build-badge, .version-tag { font: 9px var(--font-mono); color: var(--text3); letter-spacing: 1px; padding: 4px 6px; border: 1px solid var(--border); }
+.square-dot { width: 5px; height: 5px; background: var(--accent); display: inline-block; flex-shrink: 0; }
+.heading-dot { color: var(--accent); }
+.utility-button { display: inline-flex; align-items: center; justify-content: center; gap: 22px; padding: 10px 14px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); font: 11px var(--font-mono); border-radius: 3px; cursor: pointer; }
+.utility-button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.text-button { padding: 5px 0; color: var(--accent); background: transparent; border: 0; font: 10px var(--font-mono); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

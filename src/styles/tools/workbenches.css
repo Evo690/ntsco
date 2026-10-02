@@ -1,0 +1,60 @@
+/* 01 — Test registry: metadata inspector + side-by-side export artifacts. */
+.tool-test-ids .content > .full-card { padding: 0; }
+.tool-test-ids #test-details-view { padding: 22px; }
+.tool-test-ids #test-placeholder { margin: 22px; }
+.tool-test-ids .test-item { border-radius: 3px; background: var(--bg); border-color: var(--border); padding: 12px; box-shadow: none; }
+.tool-test-ids .test-item.active { border-color: var(--accent); background: var(--accent-glow); }
+.tool-test-ids .download-section-card { padding: 18px; border-radius: 3px; background: var(--bg); border: 1px solid var(--border); }
+.tool-test-ids .download-card { border-radius: 3px; background: var(--bg2); border: 1px solid var(--border); box-shadow: none; }
+.tool-test-ids :is(.meta-grid,.detail-meta-grid) { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.tool-test-ids .mode-pill { border-radius: 2px; font: 9px var(--font-mono); background: var(--accent-glow); color: var(--accent); }
+.tool-test-ids .download-progress-fill { background: var(--accent); }
+/* 03 — Export pipeline: a config editor and a persistent job monitor. */
+body.tool-download-tests { overflow-y: auto; }
+body.tool-download-tests .container.export-workbench { width: 100%; max-width: none; padding: 24px 30px 30px; margin: 0; flex: 1; }
+body.tool-download-tests .grid-layout.export-grid { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(330px,.85fr); gap: 22px; align-items: start; }
+body.tool-download-tests .export-config { padding: 22px; }
+body.tool-download-tests .card-title { font: 10px var(--font-mono) !important; letter-spacing: 1px; }
+body.tool-download-tests .options-grid { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); }
+body.tool-download-tests .toggle-item { border: 0 !important; border-bottom: 1px solid var(--border) !important; border-radius: 0; padding: 15px; background: transparent; gap: 20px; min-height: auto; }
+body.tool-download-tests .toggle-item:last-child { border-bottom: 0 !important; }.tool-download-tests .toggle-item:hover { background: var(--bg3); }
+body.tool-download-tests .toggle-label { font-size: 12px; font-weight: 500; }.tool-download-tests .toggle-description { color: var(--text3); font-size: 10px; line-height: 1.7; margin-top: 4px; max-width: 420px; }
+body.tool-download-tests .switch { flex-shrink: 0; width: 30px; height: 17px; }.tool-download-tests .switch .slider { border-radius: 2px; background: var(--border2); }.tool-download-tests .switch .slider::before { width: 11px; height: 11px; border-radius: 1px; left: 3px; bottom: 3px; background: var(--text2); }.tool-download-tests .switch input:checked+.slider { background: var(--accent); }.tool-download-tests .switch input:checked+.slider::before { transform: translateX(13px); background: var(--accent-text); }
+body.tool-download-tests .option-section-title { font: 9px var(--font-mono); color: var(--text2); letter-spacing: .8px; }
+body.tool-download-tests .year-pill { font: 10px var(--font-mono); border-radius: 3px; background: var(--bg); border: 1px solid var(--border); padding: 8px 10px; }.tool-download-tests .year-pill.active { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+body.tool-download-tests .format-list { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); }
+body.tool-download-tests .format-card { border: 0; border-right: 1px solid var(--border); border-radius: 0; padding: 14px; box-shadow: none; background: var(--bg); min-width: 0; }.tool-download-tests .format-card:last-child { border-right: 0; }.tool-download-tests .format-card.active { background: var(--accent-glow); box-shadow: inset 0 -2px var(--accent) !important; }
+body.tool-download-tests .format-name { font: 10px var(--font-mono); }.tool-download-tests .format-desc { font-size: 9px; line-height: 1.6; }
+body.tool-download-tests .job-monitor { position: sticky; top: 20px; padding: 22px; display: flex; flex-direction: column; gap: 20px; }
+body.tool-download-tests .progress-header { margin: 0; }.tool-download-tests .progress-label { font: 10px var(--font-mono); }.tool-download-tests .progress-percent { font: 26px var(--font-mono); color: var(--accent); }
+body.tool-download-tests .progress-bar-container { border-radius: 0; height: 3px; background: var(--border); }.tool-download-tests .progress-bar-fill { background: var(--accent); border-radius: 0; }
+body.tool-download-tests .console-container { height: 350px; min-height: 220px; padding: 18px; border: 1px solid var(--border); border-radius: 3px; background: #090c0d; color: #b8c4be; box-shadow: none; }.tool-download-tests .console-line { font: 10px/1.9 var(--font-mono); }.tool-download-tests .console-line.info { color: #92a99a; }.terminal-prompt { color: #c3f779; }
+body.tool-download-tests .action-row { margin: 0; }.tool-download-tests #btn-start { width: 100%; min-height: 43px; font-size: 11px; }
+body.tool-download-tests .auth-warning { background: var(--accent-glow); border: 1px solid var(--border2); border-left: 2px solid var(--amber); border-radius: 3px; color: var(--text2); padding: 14px 18px; font: 10px/1.8 var(--font-mono); margin-bottom: 20px; }.tool-download-tests .auth-warning strong { color: var(--amber); }.tool-download-tests .auth-warning a { color: var(--accent); text-decoration: underline; }
+/* 05 / 06 — Schedulers: timeline-like output and dense metadata. */
+body.tool-batch-timetable .tt-grid { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; gap: 1px; }
+body.tool-batch-timetable .tt-day, body.tool-batch-timetable .tt-col { background: var(--bg2); border-color: var(--border); border-radius: 0; }
+body.tool-batch-timetable .tt-day-header { font: 10px var(--font-mono); color: var(--text2); background: var(--bg3); border-bottom: 1px solid var(--border); }
+body.tool-batch-timetable .tt-class { background: var(--bg3); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 2px; }
+body.tool-test-schedule .sched-meta-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0; border: 1px solid var(--border); margin-bottom: 23px; }
+body.tool-test-schedule .sched-meta-box { background: var(--bg); border: 0; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; padding: 17px; }.tool-test-schedule .sched-meta-box .lbl { font: 9px var(--font-mono); color: var(--text3); }.tool-test-schedule .sched-meta-box .val { font-size: 13px; font-weight: 400; line-height: 1.7; }
+body.tool-test-schedule .schedule-item { border-radius: 3px; background: var(--bg); border-color: var(--border); }.tool-test-schedule .schedule-item.active { background: var(--accent-glow); border-color: var(--accent); }
+body.tool-test-schedule .syllabus-subject { border-radius: 3px; background: var(--bg); border: 1px solid var(--border); }
+/* 06 — Recording index: compact recording records, not coaching course tiles. */
+body.tool-classes .classes-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+body.tool-classes .class-card { padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; box-shadow: none; transition: border-color .15s; }.tool-classes .class-card:hover { transform: none; border-color: var(--accent); }
+body.tool-classes .class-subject { font-size: 13px; }.tool-classes .class-meta { font: 10px var(--font-mono); }.tool-classes .subject-pill { border-radius: 2px; font: 9px var(--font-mono); }
+body.tool-classes .card-header { align-items: flex-start; }.tool-classes #batch-filters-row { gap: 5px !important; }
+/* 07 — Stream player: a real media viewport and adjacent history/ID inspector. */
+body.tool-watch-recording .tool-output-content { padding: 22px; }
+body.tool-watch-recording .tool-output-content > .full-card { background: transparent; border: 0; padding: 0; }
+body.tool-watch-recording #video-placeholder, body.tool-watch-recording #video-loading { min-height: min(52vh,500px); aspect-ratio: 16/9; background: #080b0c; border: 1px solid var(--border); }
+body.tool-watch-recording .video-container { background: #000; border: 1px solid var(--border); border-radius: 3px; width: 100%; aspect-ratio: 16/9; max-height: none; }
+body.tool-watch-recording #recording-video { width: 100%; height: 100%; object-fit: contain; }
+body.tool-watch-recording .video-container:fullscreen { border: 0; max-height: none; }
+body.tool-watch-recording .recent-item { border: 1px solid var(--border); border-radius: 3px; background: var(--bg); }.tool-watch-recording .recent-item.active { border-color: var(--accent); background: var(--accent-glow); }
+body.tool-test-ids .full-card > .card-header { padding: 18px 20px 15px; margin-bottom: 0 !important; }
+body.tool-test-ids .test-item-card { padding: 12px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); box-shadow: none; }
+body.tool-test-ids .test-item-card.active { border-color: var(--accent); background: var(--accent-glow); }.tool-test-ids .test-item-name { font-size: 11px; }.tool-test-ids .test-item-id-label { font: 9px var(--font-mono); }
+body.tool-download-tests .console-container { white-space: normal; }.tool-download-tests .console-line { white-space: pre-wrap; }
+body.tool-download-tests .options-grid { border: 1px solid var(--border); }

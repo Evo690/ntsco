@@ -1,0 +1,377 @@
+/* --- SOLUTIONS VIEWER --- */
+.sol-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.sol-tab-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.sol-tab-btn:hover {
+  border-color: var(--border2);
+  color: var(--text);
+  background: var(--bg4);
+}
+
+.sol-tab-btn.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.sol-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.sol-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border2);
+}
+
+.sol-card.correct-card {
+  border-left: 4px solid var(--green);
+}
+
+.sol-card.incorrect-card {
+  border-left: 4px solid var(--red);
+}
+
+.sol-card.skipped-card {
+  border-left: 4px solid var(--text3);
+}
+
+.sol-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sol-card-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.sol-card-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sol-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.sol-badge.easy {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--green);
+}
+
+.sol-badge.medium {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--amber);
+}
+
+.sol-badge.hard {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
+}
+
+.sol-badge.correct {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+}
+
+.sol-badge.incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+
+.sol-badge.skipped {
+  background: var(--bg4);
+  color: var(--text3);
+}
+
+.sol-badge.time {
+  background: var(--bg4);
+  color: var(--text2);
+  font-family: 'Space Mono', monospace;
+}
+
+.sol-badge.time.over {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.sol-badge.time.under {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.sol-card-body {
+  margin-bottom: 12px;
+}
+
+.sol-answers {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.sol-ans-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sol-ans-label {
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.sol-ans-val {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg4);
+  color: var(--text);
+}
+
+.sol-ans-val.correct {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--green);
+}
+
+.sol-ans-val.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--red);
+}
+
+.sol-toggle-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.sol-toggle-btn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.sol-img-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0;
+}
+
+.sol-img-container.expanded {
+  margin-top: 12px;
+}
+
+.sol-img-wrapper {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  min-height: 80px;
+}
+
+.sol-img {
+  max-width: 100%;
+  height: auto;
+  display: none;
+  border-radius: 4px;
+}
+
+.sol-spinner {
+  border: 3px solid rgba(95, 141, 255, 0.1);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border-left-color: var(--accent);
+  animation: spin-sol 0.8s linear infinite;
+  display: none;
+  margin: 16px 0;
+}
+
+.sol-error {
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  display: none;
+  margin: 16px 0;
+}
+
+.sol-action-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.sol-action-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sol-action-btn:hover {
+  background: var(--bg4);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+@keyframes spin-sol {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- ANSWER KEY PANEL --- */
+.ak-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 16px;
+  animation: ak-fade 0.15s ease;
+}
+
+@keyframes ak-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ak-subject-block {
+  margin-bottom: 18px;
+}
+
+.ak-subject-block:last-child {
+  margin-bottom: 0;
+}
+
+.ak-subject-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+.ak-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ak-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  gap: 2px;
+}
+
+.ak-qno {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+}
+
+.ak-ans {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ak-cell.ak-correct {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.ak-cell.ak-correct .ak-ans {
+  color: var(--green);
+}
+
+.ak-cell.ak-wrong {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.ak-cell.ak-wrong .ak-ans {
+  color: var(--red);
+}
+
+.ak-cell.ak-skipped {
+  opacity: 0.5;
+}
+

@@ -1,0 +1,27 @@
+/* Weekday first; dates and session counts are intentionally secondary. */
+.agenda-day .agenda-day-identity { display: flex; flex-direction: column; gap: 7px; }
+.agenda-day .agenda-weekday { margin: 0; color: var(--text); font: 700 36px/1 var(--font-body); letter-spacing: -1px; }
+.agenda-weekday abbr { text-decoration: none; cursor: inherit; }
+.agenda-day .agenda-date { color: var(--text2); font: 11px/1.8 var(--font-mono); }
+.agenda-day .agenda-count { display: flex; flex-direction: column; gap: 9px; font-size: 8px; padding-top: 2px; }
+.agenda-count b { align-self: flex-end; padding: 3px 7px; color: var(--accent); background: var(--accent-glow); border: 1px solid var(--border2); font-weight: 400; }
+.is-today .agenda-weekday { color: var(--accent); }
+body.portal .schedule-window .card-title { line-height: 1.8; }
+#today-schedule-day { display: flex; align-items: baseline; gap: 12px; margin-top: 9px; }
+#today-schedule-day strong { color: var(--text); font: 700 29px/1 var(--font-body); letter-spacing: -.7px; }
+#today-schedule-day time { color: var(--text2); font: 10px var(--font-mono); }
+/* The standalone scheduler uses real agenda columns, not legacy inline cards. */
+body.tool-batch-timetable #timetable-grid.batch-agenda { grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 0; background: var(--bg2); border: 1px solid var(--border); }
+.batch-agenda-column { padding: 20px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-width: 0; }
+.batch-session-list { display: flex; flex-direction: column; gap: 13px; }
+.batch-session { --session-tone: #79dfef; display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 12px; border-top: 1px solid var(--border); padding-top: 13px; background: none; }
+.batch-session.tt-chem { --session-tone: #bdabff; }.batch-session.tt-math { --session-tone: #f5cb77; }
+.light-mode .batch-session { --session-tone: #087185; }.light-mode .batch-session.tt-chem { --session-tone: #7542bb; }.light-mode .batch-session.tt-math { --session-tone: #926009; }
+.batch-session > time { font: 9px/1.8 var(--font-mono); color: var(--text3); padding-top: 13px; }
+.batch-session > div { border-left: 3px solid var(--session-tone); background: color-mix(in srgb,var(--session-tone) 9%,var(--bg2)); padding: 13px; min-width: 0; }
+.batch-session h3 { font: 500 15px/1.5 var(--font-body); overflow-wrap: anywhere; color: var(--text); }.batch-session p { font: 9px/1.8 var(--font-mono); color: var(--text3); margin-top: 6px; }
+@media (max-width: 768px) {
+  .agenda-day .agenda-weekday { font-size: 34px; }
+  body.tool-batch-timetable #timetable-grid.batch-agenda { grid-template-columns: minmax(0,1fr); }
+  .batch-agenda-column { padding: 18px 14px; }
+}

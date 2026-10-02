@@ -753,47 +753,9 @@ function renderSyllabus(schedule) {
 
   const subjects = parseSyllabusSubjects(schedule.syllabus, schedule.syllabusLines);
 
-  const subjectMeta = [
-    { key: 'Maths', name: 'Mathematics', icon: '📐' },
-    { key: 'Physics', name: 'Physics', icon: '⚡' },
-    { key: 'Chemistry', name: 'Chemistry', icon: '🧪' },
-    { key: 'Biology', name: 'Biology', icon: '🌿' },
-    { key: 'General', name: 'General Topics', icon: '📝' }
-  ];
+  const names = {Maths:'Mathematics',Physics:'Physics',Chemistry:'Chemistry',Biology:'Biology',General:'General topics'};
+  container.innerHTML = buildTopicLedger(Object.entries(names).filter(([key])=>subjects[key]?.length).map(([key,subject])=>({subject,lines:subjects[key]})));
 
-  let hasContent = false;
-  let html = '';
-
-  subjectMeta.forEach(sm => {
-    const list = subjects[sm.key] || [];
-    if (list.length > 0) {
-      hasContent = true;
-      html += `
-        <div style="background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 13px;">${sm.icon}</span>
-              <span style="font-size: 13px; font-weight: 700; color: var(--text);">${sm.name}</span>
-            </div>
-            <span style="font-size: 11px; color: var(--text3);">${list.length} topic${list.length > 1 ? 's' : ''}</span>
-          </div>
-          <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: var(--text2); line-height: 1.6;">
-            ${list.map(line => `<li style="margin-bottom: 3px;">${escapeHtml(line)}</li>`).join('')}
-          </ul>
-        </div>
-      `;
-    }
-  });
-
-  if (!hasContent) {
-    html = `
-      <div style="background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; text-align: center; color: var(--text3); font-size: 13px;">
-        Standard full course curriculum applies for this examination.
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
 }
 
 // ==========================================

@@ -1,0 +1,139 @@
+/* Portal Function Cards */
+.function-nav-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.function-nav-card:hover {
+  border-color: var(--accent) !important;
+  background: var(--bg4) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.function-nav-card:active {
+  transform: scale(0.98);
+}
+
+#settings-functions-btn.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--bg3));
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+@media (max-width: 768px) {
+  .settings-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .settings-actions .theme-mode-btn {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    touch-action: manipulation;
+  }
+
+  #settings-functions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-hall-item {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .exam-hall-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 7px;
+  }
+
+  .exam-hall-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .exam-hall-name {
+    font-size: 13px;
+  }
+
+  .exam-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .exam-hall-meta {
+    font-size: 11px;
+  }
+
+  .exam-hall-actions {
+    gap: 6px;
+    margin-top: 7px;
+  }
+
+  .exam-hall-actions .start-btn,
+  .exam-syllabus-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    min-height: 28px;
+  }
+
+  .syllabus-modal-backdrop {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .syllabus-modal-card {
+    max-height: 92vh;
+    border-radius: 16px 16px 10px 10px;
+  }
+
+  .syllabus-modal-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .syllabus-modal-title {
+    font-size: 13.5px;
+  }
+
+  .syllabus-modal-header-actions {
+    gap: 6px;
+  }
+
+  .syllabus-modal-copy-btn,
+  .syllabus-modal-close-btn {
+    padding: 5px 9px;
+    font-size: 11px;
+    min-height: 28px;
+  }
+
+  .syllabus-modal-body {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .syllabus-modal-subject-card {
+    padding: 10px 11px;
+  }
+}
+

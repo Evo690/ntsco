@@ -1,0 +1,50 @@
+/* 02 — Exam runner. Preserve the timer, question states and submit gates exactly. */
+.tool-attempt-test .exam-tool-heading { display: none; }
+body.tool-attempt-test .exam-app { flex: 1; min-height: 0; height: auto; width: 100%; background: var(--bg); }
+body.tool-attempt-test .exam-header { height: 53px; min-height: 53px; padding: 0 20px; background: var(--bg2); border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; }
+body.tool-attempt-test .portal-brand-logo { width: 28px; height: 28px; background: transparent; color: var(--accent); border: 1px solid var(--border); border-radius: 3px; font: 13px var(--font-mono); box-shadow: none; }
+body.tool-attempt-test .exam-name { font-size: 12px; color: var(--text); }.tool-attempt-test .exam-badge { font: 8px var(--font-mono); border: 1px solid var(--border); background: var(--bg); color: var(--text2); border-radius: 2px; }
+body.tool-attempt-test .exam-timer-box { background: var(--bg); border: 1px solid var(--border2); color: var(--accent); border-radius: 3px; font: 13px var(--font-mono); padding: 7px 12px; }
+body.tool-attempt-test .candidate-avatar { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: 3px; font: 11px var(--font-mono); }
+body.tool-attempt-test .candidate-name { font-size: 10px; }.tool-attempt-test .topbar-back-btn { border: 1px solid var(--border); background: transparent; color: var(--text2); border-radius: 3px; font: 9px var(--font-mono); }
+body.tool-attempt-test .subject-strip { background: var(--bg); border-color: var(--border); padding: 0 20px; gap: 0; height: 41px; min-height: 41px; }
+body.tool-attempt-test .subject-tab { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--text3); font: 10px var(--font-mono); padding: 11px 20px; }
+body.tool-attempt-test .subject-tab.active { background: var(--accent-glow); color: var(--accent); border-bottom-color: var(--accent); }
+body.tool-attempt-test .exam-body { padding: 0; gap: 0; min-height: 0; background: var(--bg); }
+body.tool-attempt-test .question-section { border: 0; border-right: 1px solid var(--border); border-radius: 0; background: var(--bg); box-shadow: none; }
+body.tool-attempt-test .question-header { padding: 14px 24px; background: var(--bg2); border-color: var(--border); }
+body.tool-attempt-test .q-number-pill { background: transparent; color: var(--text); padding: 0; font: 12px var(--font-mono); border: 0; }.tool-attempt-test .q-type-pill { color: var(--text3); background: transparent; font: 9px var(--font-mono); border-radius: 2px; }
+body.tool-attempt-test .q-marks-pill { color: var(--accent); background: var(--accent-glow); font: 9px var(--font-mono); border-radius: 2px; border: 1px solid var(--border); }
+body.tool-attempt-test .zoom-btn { border-radius: 3px; color: var(--text2); background: var(--bg); border-color: var(--border); box-shadow: none; }
+body.tool-attempt-test .question-content-scroll { padding: 24px; background: var(--bg); }
+body.tool-attempt-test .question-img-card { background: #fff; padding: 20px; border: 1px solid var(--border); border-radius: 3px; box-shadow: none; min-height: 170px; }
+body.tool-attempt-test .question-img-card img { max-width: 100%; }.tool-attempt-test .question-img-card img[src=""] { visibility: hidden; }
+body.tool-attempt-test .answer-options-card { margin-top: 20px; padding: 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; box-shadow: none; }
+body.tool-attempt-test .options-title { font: 10px var(--font-mono); color: var(--text3); margin-bottom: 17px; }
+body.tool-attempt-test .option-btn { border-radius: 3px; border: 1px solid var(--border); color: var(--text); background: var(--bg); box-shadow: none; }.tool-attempt-test .option-btn.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+body.tool-attempt-test .question-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 13px 20px; }
+body.tool-attempt-test .exam-btn { min-height: 37px; border-radius: 3px; font: 10px var(--font-mono); box-shadow: none; padding: 8px 13px; }
+body.tool-attempt-test .btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border2); }.tool-attempt-test .btn-save-next { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); }.tool-attempt-test .btn-review { background: var(--bg3); color: var(--purple); border: 1px solid var(--border); }
+body.tool-attempt-test .palette-section { width: 278px; min-width: 278px; border: 0; background: var(--bg2); border-radius: 0; box-shadow: none; }
+body.tool-attempt-test .palette-stats-card { padding: 16px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: var(--bg); box-shadow: none; }
+body.tool-attempt-test .legend-item { font: 8px var(--font-mono); }.tool-attempt-test .legend-badge, body.tool-attempt-test .palette-q-btn { border-radius: 3px; font-family: var(--font-mono); box-shadow: none; }
+body.tool-attempt-test .palette-q-btn { width: 35px; height: 35px; }.tool-attempt-test .palette-grid { gap: 9px; }
+body.tool-attempt-test .palette-footer { border-top: 1px solid var(--border); padding: 16px; }
+body.tool-attempt-test .btn-submit-exam { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 3px; font: 11px var(--font-mono); padding: 12px; box-shadow: none; }
+body.tool-attempt-test .palette-expand-pill,body.tool-attempt-test .palette-toggle-btn { background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: 3px; box-shadow: none; }
+body.tool-attempt-test .exam-overlay-modal { background: #06090ddd; backdrop-filter: blur(3px); padding: 20px; }
+body.tool-attempt-test .modal-card { border: 1px solid var(--border2); border-radius: 4px !important; box-shadow: 0 30px 100px #0006; padding: 27px; text-align: left !important; }
+.gate-titlebar { display: flex; align-items: center; justify-content: space-between; color: var(--text3); font: 9px var(--font-mono); padding: 14px 20px; margin: -27px -27px 28px; border-bottom: 1px solid var(--border); background: var(--bg3); }.gate-titlebar > span:last-child { color: var(--accent); font-size: 7px; }
+#modal-passcode-lock .modal-card > div:nth-child(2) { border-radius: 3px !important; background: var(--accent-glow) !important; color: var(--accent) !important; margin-left: 0 !important; width: 42px !important; height: 42px !important; }
+body.tool-attempt-test #modal-passcode-lock h3 { font-size: 25px !important; font-weight: 500; letter-spacing: -.7px; }.tool-attempt-test #modal-passcode-lock p { font-size: 11px !important; line-height: 1.9 !important; }
+body.tool-attempt-test #modal-passcode-lock label,body.tool-attempt-test #modal-launcher label { font: 10px var(--font-mono) !important; color: var(--text2); }
+body.tool-attempt-test #gate-passcode-input,body.tool-attempt-test #launcher-test-id { height: 44px !important; font-family: var(--font-mono); }
+body.tool-attempt-test .fullscreen-exam-modal { background: var(--bg); }.tool-attempt-test .fullscreen-topbar, .tool-attempt-test .fullscreen-bottombar { background: var(--bg2); border-color: var(--border); }
+body.tool-attempt-test .option-label-card { border-radius: 3px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); box-shadow: none; }
+body.tool-attempt-test .option-label-card.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+body.tool-attempt-test .option-label-card .opt-badge { border-radius: 2px; border: 0; background: var(--bg3); color: var(--text2); font: 12px var(--font-mono); }
+body.tool-attempt-test .option-label-card.selected .opt-badge { background: var(--accent); color: var(--accent-text); }
+body.tool-attempt-test .palette-circle { border-radius: 3px; font: 11px var(--font-mono); box-shadow: none; }
+body.tool-attempt-test .palette-circle.active-q { outline: 1px solid var(--accent); outline-offset: 3px; }
+body.tool-attempt-test .subject-tab-btn { padding: 11px 18px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--text3); font: 10px var(--font-mono); }
+body.tool-attempt-test .subject-tab-btn.active { background: var(--accent-glow); border-bottom-color: var(--accent); color: var(--accent); }
